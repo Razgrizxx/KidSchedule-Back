@@ -12,6 +12,7 @@ import { RequestsModule } from './requests/requests.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { MomentsModule } from './moments/moments.module';
 import { SettingsModule } from './settings/settings.module';
+import { BlogModule } from './blog/blog.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { SettingsModule } from './settings/settings.module';
     ExpensesModule,
     MomentsModule,
     SettingsModule,
+    BlogModule,
   ],
 })
 export class AppModule {}
