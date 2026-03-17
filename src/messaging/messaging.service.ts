@@ -1,0 +1,114 @@
+import { Injectable } from '@nestjs/common';
+import { createHash } from 'crypto';
+import { PrismaService } from '../prisma/prisma.service';
+import { FamilyService } from '../family/family.service';
+import { SendMessageDto } from './dto/message.dto';
+
+@Injectable()
+export class MessagingService {
+  constructor(
+    private prisma: PrismaService,
+    private familyService: FamilyService,
+  ) {}
+
+  async send(familyId: string, senderId: string, dto: SendMessageDto) {
+    await this.familyService.assertMember(familyId, senderId);
+
+    // Get last message for hash chain
+    const lastMessage = await this.prisma.message.findFirst({
+      where: { familyId },
+      orderBy: { createdAt: 'desc' },
+      select: { contentHash: true },
+    });
+
+    const previousHash = lastMessage?.contentHash ?? '0';
+    const timestamp = new Date().toISOString();
+    const contentHash = createHash('sha256')
+      .update(`${dto.content}${timestamp}${previousHash}`)
+      .digest('hex');
+
+    return this.prisma.message.create({
+      data: {
+        familyId,
+        senderId,
+        content: dto.content,
+        attachmentUrl: dto.attachmentUrl,
+        contentHash,
+        previousHash,
+      },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+          },
+        },
+      },
+    });
+  }
+
+  async findAll(familyId: string, userId: string, cursor?: string, take = 50) {
+    await this.familyService.assertMember(familyId, userId);
+
+    const messages = await this.prisma.message.findMany({
+      where: { familyId },
+      orderBy: { createdAt: 'desc' },
+      take,
+      ...(cursor && { cursor: { id: cursor }, skip: 1 }),
+      include: {
+        sender: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+          },
+        },
+      },
+    });
+
+    return {
+      messages: messages.reverse(),
+      nextCursor: messages.length === take ? messages[0].id : null,
+    };
+  }
+
+  async verifyChain(familyId: string, userId: string) {
+    await this.familyService.assertMember(familyId, userId);
+
+    const messages = await this.prisma.message.findMany({
+      where: { familyId },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    let isValid = true;
+    const violations: string[] = [];
+
+    for (let i = 0; i < messages.length; i++) {
+      const msg = messages[i];
+      const expectedPrevHash = i === 0 ? '0' : messages[i - 1].contentHash;
+
+      if (msg.previousHash !== expectedPrevHash) {
+        isValid = false;
+        violations.push(`Message ${msg.id} has broken chain link`);
+      }
+    }
+
+    return { isValid, totalMessages: messages.length, violations };
+  }
+
+  async markRead(familyId: string, userId: string) {
+    await this.familyService.assertMember(familyId, userId);
+    await this.prisma.message.updateMany({
+      where: {
+        familyId,
+        senderId: { not: userId },
+        status: { not: 'READ' },
+      },
+      data: { status: 'READ' },
+    });
+    return { message: 'Messages marked as read' };
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx @nestjs/cli@latest new . --package-manager npm --skip-git --skip-install)",
+      "Bash(npm install:*)",
+      "Bash(npx prisma:*)",
+      "Bash(npm run:*)"
+    ]
+  }
+}

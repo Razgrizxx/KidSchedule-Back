@@ -1,0 +1,76 @@
+import { PrismaService } from '../prisma/prisma.service';
+import { FamilyService } from '../family/family.service';
+import { CreateChangeRequestDto, RespondChangeRequestDto } from './dto/change-request.dto';
+export declare class RequestsService {
+    private prisma;
+    private familyService;
+    constructor(prisma: PrismaService, familyService: FamilyService);
+    create(familyId: string, requesterId: string, dto: CreateChangeRequestDto): Promise<{
+        requester: {
+            id: string;
+            firstName: string;
+            lastName: string;
+        };
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        familyId: string;
+        status: import("@prisma/client").$Enums.ChangeRequestStatus;
+        childId: string | null;
+        type: import("@prisma/client").$Enums.ChangeRequestType;
+        originalDate: Date;
+        requestedDate: Date;
+        reason: string | null;
+        counterDate: Date | null;
+        counterReason: string | null;
+        resolvedAt: Date | null;
+        requesterId: string;
+        responderId: string | null;
+    }>;
+    findAll(familyId: string, userId: string): Promise<({
+        requester: {
+            id: string;
+            firstName: string;
+            lastName: string;
+        };
+        responder: {
+            id: string;
+            firstName: string;
+            lastName: string;
+        } | null;
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        familyId: string;
+        status: import("@prisma/client").$Enums.ChangeRequestStatus;
+        childId: string | null;
+        type: import("@prisma/client").$Enums.ChangeRequestType;
+        originalDate: Date;
+        requestedDate: Date;
+        reason: string | null;
+        counterDate: Date | null;
+        counterReason: string | null;
+        resolvedAt: Date | null;
+        requesterId: string;
+        responderId: string | null;
+    })[]>;
+    respond(familyId: string, requestId: string, responderId: string, dto: RespondChangeRequestDto): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        familyId: string;
+        status: import("@prisma/client").$Enums.ChangeRequestStatus;
+        childId: string | null;
+        type: import("@prisma/client").$Enums.ChangeRequestType;
+        originalDate: Date;
+        requestedDate: Date;
+        reason: string | null;
+        counterDate: Date | null;
+        counterReason: string | null;
+        resolvedAt: Date | null;
+        requesterId: string;
+        responderId: string | null;
+    }>;
+}
