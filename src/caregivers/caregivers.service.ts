@@ -130,8 +130,14 @@ export class CaregiversService {
   }
 
   private calculateExpiry(expiry: CaregiverLinkExpiry): Date | null {
+    const daysMap: Partial<Record<CaregiverLinkExpiry, number>> = {
+      [CaregiverLinkExpiry.SEVEN_DAYS]: 7,
+      [CaregiverLinkExpiry.THIRTY_DAYS]: 30,
+      [CaregiverLinkExpiry.NINETY_DAYS]: 90,
+      [CaregiverLinkExpiry.ONE_YEAR]: 365,
+    };
     if (expiry === CaregiverLinkExpiry.NEVER) return null;
-    const days = expiry === CaregiverLinkExpiry.SEVEN_DAYS ? 7 : 30;
+    const days = daysMap[expiry] ?? 7;
     return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
   }
 }

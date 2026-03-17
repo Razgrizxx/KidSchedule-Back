@@ -23,6 +23,8 @@ enum CaregiverVisibility {
 enum CaregiverLinkExpiry {
   SEVEN_DAYS
   THIRTY_DAYS
+  NINETY_DAYS
+  ONE_YEAR
   NEVER
 }
 
@@ -226,6 +228,7 @@ model Caregiver {
   canViewCalendar          Boolean @default(true)
   canViewHealthInfo        Boolean @default(false)
   canViewEmergencyContacts Boolean @default(false)
+  canViewAllergies         Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

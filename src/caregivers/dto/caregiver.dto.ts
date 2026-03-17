@@ -12,7 +12,7 @@ import { CaregiverLinkExpiry, CaregiverVisibility } from '@prisma/client';
 export class CreateCaregiverDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name!: string;
 
   @IsOptional()
   @IsString()
@@ -27,10 +27,10 @@ export class CreateCaregiverDto {
   relationship?: string;
 
   @IsEnum(CaregiverVisibility)
-  visibility: CaregiverVisibility;
+  visibility!: CaregiverVisibility;
 
   @IsEnum(CaregiverLinkExpiry)
-  linkExpiry: CaregiverLinkExpiry;
+  linkExpiry!: CaregiverLinkExpiry;
 
   @IsOptional()
   @IsBoolean()
@@ -43,6 +43,10 @@ export class CreateCaregiverDto {
   @IsOptional()
   @IsBoolean()
   canViewEmergencyContacts?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  canViewAllergies?: boolean;
 }
 
 export class UpdateCaregiverDto extends PartialType(CreateCaregiverDto) {}
