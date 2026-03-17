@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MailerModule } from '@nestjs-modules/mailer';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { FamilyModule } from './family/family.module';
@@ -14,6 +15,23 @@ import { MomentsModule } from './moments/moments.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        transport: {
+          host: config.get<string>('SMTP_HOST', 'smtp.mailtrap.io'),
+          port: config.get<number>('SMTP_PORT', 2525),
+          auth: {
+            user: config.get<string>('SMTP_USER'),
+            pass: config.get<string>('SMTP_PASS'),
+          },
+        },
+        defaults: {
+          from: `"KidSchedule" <${config.get<string>('SMTP_FROM', 'noreply@kidschedule.app')}>`,
+        },
+      }),
+    }),
     PrismaModule,
     AuthModule,
     FamilyModule,

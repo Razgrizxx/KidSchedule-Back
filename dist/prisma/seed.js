@@ -34,8 +34,13 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const client_1 = require("@prisma/client");
+const adapter_pg_1 = require("@prisma/adapter-pg");
 const bcrypt = __importStar(require("bcrypt"));
-const prisma = new client_1.PrismaClient();
+require("dotenv/config");
+const adapter = new adapter_pg_1.PrismaPg({
+    connectionString: process.env.DATABASE_URL,
+});
+const prisma = new client_1.PrismaClient({ adapter });
 async function main() {
     const passwordHash = await bcrypt.hash('Admin@2026!', 12);
     const user = await prisma.user.upsert({

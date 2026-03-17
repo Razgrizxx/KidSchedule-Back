@@ -46,16 +46,20 @@ exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const config_1 = require("@nestjs/config");
+const mailer_1 = require("@nestjs-modules/mailer");
 const bcrypt = __importStar(require("bcrypt"));
+const crypto = __importStar(require("crypto"));
 const prisma_service_1 = require("../prisma/prisma.service");
 let AuthService = class AuthService {
     prisma;
     jwt;
     config;
-    constructor(prisma, jwt, config) {
+    mailer;
+    constructor(prisma, jwt, config, mailer) {
         this.prisma = prisma;
         this.jwt = jwt;
         this.config = config;
+        this.mailer = mailer;
     }
     async register(dto) {
         const existing = await this.prisma.user.findUnique({
@@ -73,7 +77,7 @@ let AuthService = class AuthService {
                 passwordHash,
             },
         });
-        return this.signToken(user.id, user.email);
+        return this.signToken(user);
     }
     async login(dto) {
         const user = await this.prisma.user.findUnique({
@@ -84,7 +88,66 @@ let AuthService = class AuthService {
         const valid = await bcrypt.compare(dto.password, user.passwordHash);
         if (!valid)
             throw new common_1.UnauthorizedException('Invalid credentials');
-        return this.signToken(user.id, user.email);
+        return this.signToken(user);
+    }
+    async forgotPassword(dto) {
+        const user = await this.prisma.user.findUnique({
+            where: { email: dto.email },
+        });
+        const response = {
+            message: 'If that email is registered, a reset link has been sent.',
+        };
+        if (!user)
+            return response;
+        const token = crypto.randomBytes(32).toString('hex');
+        const expires = new Date(Date.now() + 60 * 60 * 1000);
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+                resetPasswordToken: token,
+                resetPasswordExpires: expires,
+            },
+        });
+        const frontendUrl = this.config.get('FRONTEND_URL', 'http://localhost:5173');
+        const resetUrl = `${frontendUrl}/reset-password?token=${token}`;
+        await this.mailer.sendMail({
+            to: user.email,
+            subject: 'Reset your KidSchedule password',
+            html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
+          <h2 style="color:#66CCCC;">Reset your password</h2>
+          <p>Hi ${user.firstName},</p>
+          <p>You requested a password reset. Click below to set a new password — this link expires in <strong>1 hour</strong>.</p>
+          <p style="text-align:center;margin:32px 0;">
+            <a href="${resetUrl}" style="background:#66CCCC;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;">
+              Reset Password
+            </a>
+          </p>
+          <p style="color:#94a3b8;font-size:13px;">If you didn't request this, you can safely ignore this email.</p>
+        </div>
+      `,
+        });
+        return response;
+    }
+    async resetPassword(dto) {
+        const user = await this.prisma.user.findFirst({
+            where: {
+                resetPasswordToken: dto.token,
+                resetPasswordExpires: { gt: new Date() },
+            },
+        });
+        if (!user)
+            throw new common_1.BadRequestException('Invalid or expired reset token');
+        const passwordHash = await bcrypt.hash(dto.newPassword, 12);
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+                passwordHash,
+                resetPasswordToken: null,
+                resetPasswordExpires: null,
+            },
+        });
+        return { message: 'Password updated successfully. You can now log in.' };
     }
     async sendPhoneCode(userId, phone) {
         const devMode = this.config.get('DEV_MODE') === 'true';
@@ -122,10 +185,16 @@ let AuthService = class AuthService {
         });
         return { message: 'Phone verified successfully' };
     }
-    signToken(userId, email) {
-        const payload = { sub: userId, email };
+    signToken(user) {
+        const payload = { sub: user.id, email: user.email };
         return {
             access_token: this.jwt.sign(payload),
+            user: {
+                id: user.id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+            },
         };
     }
 };
@@ -134,6 +203,7 @@ exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         jwt_1.JwtService,
-        config_1.ConfigService])
+        config_1.ConfigService,
+        mailer_1.MailerService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map
