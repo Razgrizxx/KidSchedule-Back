@@ -39,6 +39,14 @@ export class AuthService {
         email: dto.email,
         phone: dto.phone,
         passwordHash,
+        familyMemberships: {
+          create: {
+            role: 'PARENT',
+            family: {
+              create: { name: `Family of ${dto.firstName}` },
+            },
+          },
+        },
       },
     });
 
