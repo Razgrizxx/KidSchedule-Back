@@ -69,6 +69,17 @@ enum InvitationStatus {
   EXPIRED
 }
 
+enum TimeFormat {
+  TWELVE_HOUR
+  TWENTY_FOUR_HOUR
+}
+
+enum AppearanceTheme {
+  FRIENDLY
+  MODERN
+  MINIMAL
+}
+
 // ─────────────────────────────────────────
 //  USER & AUTH
 // ─────────────────────────────────────────
@@ -90,6 +101,7 @@ model User {
 
   phoneVerifications PhoneVerification[]
   familyMemberships  FamilyMember[]
+  settings           UserSettings?
   sentMessages       Message[]           @relation("SentMessages")
   sentInvitations    FamilyInvitation[]  @relation("SentInvitations")
   createdCaregivers  Caregiver[]         @relation("CreatedCaregivers")
@@ -133,6 +145,7 @@ model Family {
   expenses       Expense[]
   moments        Moment[]
   changeRequests ChangeRequest[]
+  settings       FamilySettings?
 
   @@map("families")
 }
@@ -375,4 +388,38 @@ model Moment {
   child    Child? @relation(fields: [childId], references: [id])
 
   @@map("moments")
+}
+
+// ─────────────────────────────────────────
+//  SETTINGS
+// ─────────────────────────────────────────
+
+model FamilySettings {
+  id             String   @id @default(uuid())
+  familyId       String   @unique
+  timezone       String   @default("America/New_York")
+  transitionDay  String   @default("MONDAY")
+  transitionTime String   @default("18:00")
+  weekStartsOn   String   @default("MONDAY")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  @@map("family_settings")
+}
+
+model UserSettings {
+  id                 String          @id @default(uuid())
+  userId             String          @unique
+  timeFormat         TimeFormat      @default(TWELVE_HOUR)
+  emailNotifications Boolean         @default(true)
+  pushNotifications  Boolean         @default(false)
+  appearance         AppearanceTheme @default(FRIENDLY)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
 }

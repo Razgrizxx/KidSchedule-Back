@@ -28,6 +28,30 @@ export class ScheduleService {
     const parent2Id = dto.parent2Id;
     if (!parent2Id) throw new BadRequestException('parent2Id is required');
 
+    // Load family settings for transition defaults
+    const familySettings = await this.prisma.familySettings.findUnique({
+      where: { familyId },
+    });
+
+    const WEEKDAY: Record<string, number> = {
+      SUNDAY: 0,
+      MONDAY: 1,
+      TUESDAY: 2,
+      WEDNESDAY: 3,
+      THURSDAY: 4,
+      FRIDAY: 5,
+      SATURDAY: 6,
+    };
+
+    const exchangeDay =
+      dto.exchangeDay ??
+      (familySettings?.transitionDay != null
+        ? (WEEKDAY[familySettings.transitionDay] ?? undefined)
+        : undefined);
+
+    const exchangeTime =
+      dto.exchangeTime ?? familySettings?.transitionTime ?? undefined;
+
     // Deactivate existing schedules for this child
     await this.prisma.schedule.updateMany({
       where: { childId: dto.childId, familyId, isActive: true },
@@ -44,8 +68,8 @@ export class ScheduleService {
         pattern: dto.pattern,
         startDate: new Date(dto.startDate),
         durationDays,
-        exchangeDay: dto.exchangeDay,
-        exchangeTime: dto.exchangeTime,
+        exchangeDay,
+        exchangeTime,
         parent1Id,
         parent2Id,
       },

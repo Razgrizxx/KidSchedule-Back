@@ -11,6 +11,7 @@ import { MessagingModule } from './messaging/messaging.module';
 import { RequestsModule } from './requests/requests.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { MomentsModule } from './moments/moments.module';
+import { SettingsModule } from './settings/settings.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { MomentsModule } from './moments/moments.module';
     RequestsModule,
     ExpensesModule,
     MomentsModule,
+    SettingsModule,
   ],
 })
 export class AppModule {}
