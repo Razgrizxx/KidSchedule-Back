@@ -20,6 +20,7 @@ const messaging_module_1 = require("./messaging/messaging.module");
 const requests_module_1 = require("./requests/requests.module");
 const expenses_module_1 = require("./expenses/expenses.module");
 const moments_module_1 = require("./moments/moments.module");
+const settings_module_1 = require("./settings/settings.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -54,6 +55,7 @@ exports.AppModule = AppModule = __decorate([
             requests_module_1.RequestsModule,
             expenses_module_1.ExpensesModule,
             moments_module_1.MomentsModule,
+            settings_module_1.SettingsModule,
         ],
     })
 ], AppModule);
