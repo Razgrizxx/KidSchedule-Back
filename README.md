@@ -1,102 +1,23 @@
-# KidSchedule API
+# KidSchedule — Backend API
 
-Backend REST API para **KidSchedule**, una plataforma SaaS de coparentalidad y gestión familiar. Centraliza calendarios de custodia, gastos compartidos y comunicaciones con integridad legal entre padres, facilitando la coordinación del cuidado de los hijos.
-
-## Características principales
-
-- **Autenticación JWT** con verificación de teléfono (modo dev incluido)
-- **Gestión familiar** con sistema de invitaciones por email
-- **Calendario de custodia** con generación automática de eventos según 5 patrones de rotación
-- **Mensajería inmutable** con cadena de hash SHA-256 para validez legal
-- **Cuidadores** con visibilidad compartida/privada y permisos granulares
-- **Solicitudes de cambio** con flujo de aprobación/rechazo/contrapropuesta
-- **Gastos compartidos** con calculadora de balance entre padres
-- **Galería de momentos** para compartir fotos de los hijos
+REST API for the KidSchedule co-parenting and family management platform.
+Built with **NestJS**, **Prisma v7**, and **PostgreSQL**.
 
 ---
 
-## Stack tecnológico
+## Prerequisites
 
-| Capa | Tecnología |
-|------|-----------|
-| Framework | NestJS (Node.js + TypeScript) |
-| Base de datos | PostgreSQL |
-| ORM | Prisma v7 |
-| Autenticación | JWT + Passport |
-| Validación | class-validator / class-transformer |
+| Tool | Version |
+|------|---------|
+| Node.js | 18 or later |
+| npm | 9 or later |
+| PostgreSQL | 14 or later |
 
 ---
 
-## Estructura del proyecto
+## Local Setup
 
-```
-src/
-├── main.ts                         # Entrada, configuración global (pipes, filtros, CORS)
-├── app.module.ts                   # Módulo raíz
-│
-├── prisma/                         # PrismaService (global)
-│
-├── common/
-│   ├── guards/jwt-auth.guard.ts    # Guard JWT reutilizable
-│   ├── decorators/current-user.ts  # Decorador @CurrentUser()
-│   ├── filters/                    # Filtro global de excepciones
-│   └── types/auth-user.ts          # Clase AuthUser para parámetros de controladores
-│
-├── auth/                           # Registro, login, verificación de teléfono
-├── family/                         # CRUD de familias + invitaciones
-├── children/                       # CRUD de hijos (con campo color para calendario)
-├── caregivers/                     # Cuidadores con visibilidad y permisos
-├── schedule/                       # Wizard de custodia + generador de eventos
-├── messaging/                      # Mensajería inmutable con hash chain
-├── requests/                       # Solicitudes de cambio de calendario
-├── expenses/                       # Gastos compartidos y balance
-└── moments/                        # Galería de fotos (metadatos)
-
-prisma/
-├── schema.prisma                   # Esquema completo de la base de datos
-└── seed.ts                         # Usuario inicial: Christian Javier Rizzo
-
-prisma.config.ts                    # Configuración de conexión a PostgreSQL (Prisma v7)
-```
-
----
-
-## Modelos de base de datos
-
-```
-User ─── FamilyMember ─── Family ─── Child
-                               │         └── Schedule ─── CustodyEvent
-                               │         └── Caregiver ─── ChildCaregiver
-                               │
-                               ├── Message          (hash chain SHA-256)
-                               ├── ChangeRequest    (pending/accepted/declined/counter)
-                               ├── Expense          (con splitRatio y balance)
-                               └── Moment           (galería de fotos)
-```
-
-### Patrones de custodia soportados
-
-| Patrón | Descripción |
-|--------|-------------|
-| `ALTERNATING_WEEKS` | Semanas alternas completas |
-| `TWO_TWO_THREE` | 2 días / 2 días / 3 días rotando |
-| `THREE_FOUR_FOUR_THREE` | 3-4-4-3 días por quincena |
-| `FIVE_TWO_TWO_FIVE` | 5-2-2-5 días por quincena |
-| `EVERY_OTHER_WEEKEND` | Fin de semana alterno (viernes a domingo) |
-
----
-
-## Requisitos previos
-
-- **Node.js** v18 o superior
-- **PostgreSQL** v14 o superior corriendo localmente
-- **npm** v9 o superior
-
----
-
-## Instalación y puesta en marcha
-
-### 1. Clonar e instalar dependencias
+### 1. Clone and install dependencies
 
 ```bash
 git clone <repo-url>
@@ -104,173 +25,128 @@ cd kidSchedule
 npm install
 ```
 
-### 2. Configurar variables de entorno
+### 2. Create your environment file
 
-Editar el archivo `.env` en la raíz del proyecto:
+```bash
+cp .env.example .env
+```
+
+Open `.env` and fill in your values. Minimum required:
 
 ```env
-DATABASE_URL="postgresql://postgres:christian_pg_2026!@localhost:5432/christian_db?schema=public"
-
-JWT_SECRET="kidschedule-jwt-secret-2026-super-secure"
-JWT_EXPIRES_IN="7d"
-
-NODE_ENV="development"
+DATABASE_URL=postgresql://postgres:yourpassword@localhost:5432/kidschedule_db
+JWT_SECRET=replace_with_a_long_random_string
+JWT_EXPIRES_IN=7d
 PORT=3000
-
-# En modo dev, la verificación de teléfono siempre devuelve el código "123456"
 DEV_MODE=true
 ```
 
-### 3. Crear la base de datos en PostgreSQL
+> **DEV_MODE=true** skips phone SMS verification during local development so you can register without an SMS provider.
 
-```sql
--- Conectarse a PostgreSQL y ejecutar:
-CREATE DATABASE christian_db;
+For a JWT secret you can run:
+```bash
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ```
 
-### 4. Ejecutar migraciones
+For SMTP, [Mailtrap](https://mailtrap.io) has a free sandbox that works out of the box.
+
+### 3. Create the PostgreSQL database
 
 ```bash
-npx prisma migrate dev --name init
+psql -U postgres -c "CREATE DATABASE kidschedule_db;"
 ```
 
-Esto crea todas las tablas según el esquema definido en `prisma/schema.prisma`.
-
-### 5. Cargar datos iniciales (seed)
+### 4. Push the schema and generate the Prisma client
 
 ```bash
-npm run seed
+npx prisma db push
+npx prisma generate
 ```
 
-Crea el usuario inicial:
-- **Email:** `christian@kidschedule.app`
-- **Password:** `Admin@2026!`
+### 5. Seed the database (recommended)
 
-### 6. Iniciar el servidor
+Creates a test user and a sample family so you can log in immediately.
 
 ```bash
-# Desarrollo (con hot-reload)
+npx ts-node prisma/seed.ts
+```
+
+**Seed credentials:**
+
+| Field | Value |
+|-------|-------|
+| Email | `christian@kidschedule.app` |
+| Password | `Admin@2026!` |
+
+### 6. Start the development server
+
+```bash
 npm run start:dev
-
-# Producción
-npm run build
-npm run start:prod
 ```
 
-La API queda disponible en: `http://localhost:3000/api/v1`
+API is now available at **`http://localhost:3000/api/v1`**
 
 ---
 
-## Endpoints principales
+## Scripts
 
-Todos los endpoints (excepto auth) requieren el header:
+| Command | Description |
+|---------|-------------|
+| `npm run start:dev` | Start with hot-reload |
+| `npm run start` | Start without hot-reload |
+| `npm run build` | Compile to `dist/` |
+| `npm run start:prod` | Run compiled build |
+| `npm run lint` | Lint and auto-fix |
+
+---
+
+## API Reference
+
+All endpoints are prefixed with `/api/v1`.
+
+| Module | Base path | Auth |
+|--------|-----------|------|
+| Auth | `/auth` | Public |
+| Families | `/families` | JWT |
+| Children | `/families/:id/children` | JWT |
+| Caregivers | `/families/:id/caregivers` | JWT |
+| Schedule | `/families/:id/schedules` | JWT |
+| Messaging | `/families/:id/messages` | JWT |
+| Expenses | `/families/:id/expenses` | JWT |
+| Change Requests | `/families/:id/requests` | JWT |
+| Moments | `/families/:id/moments` | JWT |
+| Settings (family) | `/families/:id/settings` | JWT |
+| Settings (user) | `/users/me/settings` | JWT |
+| Blog (read) | `/blog`, `/blog/:slug` | Public |
+| Blog (write) | `/blog` POST/PATCH/DELETE | JWT |
+
+Protected endpoints require the header:
 ```
 Authorization: Bearer <token>
 ```
 
-### Autenticación
-```
-POST   /api/v1/auth/register          # Crear cuenta
-POST   /api/v1/auth/login             # Iniciar sesión → devuelve JWT
-POST   /api/v1/auth/phone/send        # Enviar código de verificación SMS
-POST   /api/v1/auth/phone/verify      # Verificar código
-```
-
-### Familias
-```
-POST   /api/v1/families                           # Crear familia
-GET    /api/v1/families                           # Listar mis familias
-GET    /api/v1/families/:id                       # Ver familia
-POST   /api/v1/families/:id/invite                # Invitar padre por email
-POST   /api/v1/families/invitations/:token/accept # Aceptar invitación
-```
-
-### Hijos
-```
-POST   /api/v1/families/:familyId/children
-GET    /api/v1/families/:familyId/children
-PATCH  /api/v1/families/:familyId/children/:childId
-DELETE /api/v1/families/:familyId/children/:childId
-```
-
-### Calendario de custodia
-```
-POST   /api/v1/families/:familyId/schedules                    # Crear patrón → genera eventos automáticamente
-GET    /api/v1/families/:familyId/schedules                    # Listar patrones
-GET    /api/v1/families/:familyId/schedules/calendar?year=&month=  # Vista mensual
-POST   /api/v1/families/:familyId/schedules/:id/override       # Sobrescribir un día
-```
-
-### Mensajería
-```
-POST   /api/v1/families/:familyId/messages              # Enviar mensaje (inmutable)
-GET    /api/v1/families/:familyId/messages              # Historial paginado
-GET    /api/v1/families/:familyId/messages/verify-chain # Verificar integridad del hash chain
-POST   /api/v1/families/:familyId/messages/mark-read
-```
-
-### Solicitudes de cambio
-```
-POST   /api/v1/families/:familyId/requests
-GET    /api/v1/families/:familyId/requests
-POST   /api/v1/families/:familyId/requests/:id/respond  # ACCEPTED | DECLINED | COUNTER_PROPOSED
-```
-
-### Gastos
-```
-POST   /api/v1/families/:familyId/expenses
-GET    /api/v1/families/:familyId/expenses
-GET    /api/v1/families/:familyId/expenses/balance      # Quién le debe a quién
-PATCH  /api/v1/families/:familyId/expenses/:id
-DELETE /api/v1/families/:familyId/expenses/:id
-```
-
-### Cuidadores
-```
-POST   /api/v1/families/:familyId/caregivers
-GET    /api/v1/families/:familyId/caregivers            # Respeta visibilidad SHARED/PRIVATE
-PATCH  /api/v1/families/:familyId/caregivers/:id
-POST   /api/v1/families/:familyId/caregivers/:id/assign/:childId
-GET    /api/v1/caregivers/invite/:token                 # Resolución pública de link de invitación
-```
-
-### Momentos
-```
-POST   /api/v1/families/:familyId/moments
-GET    /api/v1/families/:familyId/moments?childId=      # Filtro opcional por hijo
-DELETE /api/v1/families/:familyId/moments/:id
-```
+The token is returned from `POST /auth/login`.
 
 ---
 
-## Decisiones de arquitectura
+## Project Structure
 
-### Segmentación por `familyId`
-Todos los recursos están anidados bajo `/families/:familyId`. Cada endpoint verifica que el usuario autenticado sea miembro de esa familia antes de operar, garantizando aislamiento total entre familias.
-
-### Mensajería con integridad legal
-Los mensajes no pueden editarse ni eliminarse. Cada mensaje almacena:
 ```
-contentHash = SHA256(content + timestamp + previousHash)
-```
-El primer mensaje usa `previousHash = "0"`. Esto forma una cadena verificable que detecta cualquier manipulación retroactiva del historial.
-
-### Generación de eventos de custodia
-Al crear un `Schedule`, el `ScheduleGeneratorService` genera automáticamente un registro en `CustodyEvent` por cada día del período configurado (por defecto 1 año). Esto permite consultas de calendario eficientes sin calcular el patrón en tiempo real.
-
-### Prisma v7
-La URL de conexión a la base de datos vive en `prisma.config.ts`, no en el bloque `datasource` de `schema.prisma`. Esto es un requerimiento de Prisma v7.
-
----
-
-## Scripts disponibles
-
-```bash
-npm run start:dev        # Servidor en modo desarrollo con hot-reload
-npm run build            # Compilar TypeScript a dist/
-npm run start:prod       # Servidor en modo producción desde dist/
-npm run lint             # Lint + autofix con ESLint/Prettier
-npm run seed             # Cargar datos iniciales
-npm run prisma:migrate   # Ejecutar migraciones pendientes
-npm run prisma:generate  # Regenerar cliente de Prisma
+src/
+├── auth/            # JWT auth, register, login, password reset
+├── blog/            # Public blog posts
+├── caregivers/      # Caregiver management with permissions
+├── children/        # Child profiles
+├── common/          # Guards, decorators, exception filters
+├── expenses/        # Shared expense tracking and balances
+├── family/          # Family groups and email invitations
+├── messaging/       # Immutable SHA-256 hash-chained messages
+├── moments/         # Photo gallery metadata
+├── prisma/          # PrismaService (PrismaPg adapter)
+├── requests/        # Custody change requests workflow
+├── schedule/        # Custody schedule generation (5 patterns)
+└── settings/        # Family and per-user settings
+prisma/
+├── schema.prisma    # Full Prisma data model
+└── seed.ts          # Dev seed (test user + family)
 ```
