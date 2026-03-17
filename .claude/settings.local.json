@@ -4,7 +4,13 @@
       "Bash(npx @nestjs/cli@latest new . --package-manager npm --skip-git --skip-install)",
       "Bash(npm install:*)",
       "Bash(npx prisma:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(npm create:*)",
+      "Bash(npx tailwindcss:*)",
+      "Bash(npx tsc:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm approve-builds:*)",
+      "Bash(pnpm exec:*)"
     ]
   }
 }
