@@ -9,9 +9,9 @@ export declare class FamilyController {
         members: {
             id: string;
             role: import("@prisma/client").$Enums.UserRole;
+            familyId: string;
             userId: string;
             joinedAt: Date;
-            familyId: string;
         }[];
     } & {
         id: string;
@@ -30,9 +30,9 @@ export declare class FamilyController {
         } & {
             id: string;
             role: import("@prisma/client").$Enums.UserRole;
+            familyId: string;
             userId: string;
             joinedAt: Date;
-            familyId: string;
         })[];
         children: {
             id: string;
@@ -63,9 +63,9 @@ export declare class FamilyController {
         } & {
             id: string;
             role: import("@prisma/client").$Enums.UserRole;
+            familyId: string;
             userId: string;
             joinedAt: Date;
-            familyId: string;
         })[];
         children: {
             id: string;
@@ -87,6 +87,12 @@ export declare class FamilyController {
     invite(user: AuthUser, familyId: string, dto: InviteMemberDto): Promise<{
         message: string;
         token: string;
+    }>;
+    verifyInvitation(token: string): Promise<{
+        familyId: string;
+        familyName: string;
+        inviterName: string;
+        email: string;
     }>;
     acceptInvitation(user: AuthUser, token: string): Promise<{
         message: string;

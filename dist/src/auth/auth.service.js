@@ -75,6 +75,14 @@ let AuthService = class AuthService {
                 email: dto.email,
                 phone: dto.phone,
                 passwordHash,
+                familyMemberships: {
+                    create: {
+                        role: 'PARENT',
+                        family: {
+                            create: { name: `Family of ${dto.firstName}` },
+                        },
+                    },
+                },
             },
         });
         return this.signToken(user);

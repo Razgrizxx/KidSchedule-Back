@@ -11,30 +11,41 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CaregiversService = void 0;
 const common_1 = require("@nestjs/common");
+const config_1 = require("@nestjs/config");
 const prisma_service_1 = require("../prisma/prisma.service");
 const family_service_1 = require("../family/family.service");
+const mail_service_1 = require("../mail/mail.service");
 const client_1 = require("@prisma/client");
 const uuid_1 = require("uuid");
 let CaregiversService = class CaregiversService {
     prisma;
     familyService;
-    constructor(prisma, familyService) {
+    mail;
+    config;
+    constructor(prisma, familyService, mail, config) {
         this.prisma = prisma;
         this.familyService = familyService;
+        this.mail = mail;
+        this.config = config;
     }
     async create(familyId, userId, dto) {
         await this.familyService.assertMember(familyId, userId);
         const inviteToken = (0, uuid_1.v4)();
         const linkExpiresAt = this.calculateExpiry(dto.linkExpiry);
-        return this.prisma.caregiver.create({
+        const { sendEmail, ...caregiverData } = dto;
+        const caregiver = await this.prisma.caregiver.create({
             data: {
-                ...dto,
+                ...caregiverData,
                 familyId,
                 createdBy: userId,
                 inviteToken,
                 linkExpiresAt,
             },
         });
+        if (sendEmail && caregiver.email) {
+            void this.sendCaregiverEmail(caregiver, userId, familyId, inviteToken);
+        }
+        return caregiver;
     }
     async findAll(familyId, userId) {
         await this.familyService.assertMember(familyId, userId);
@@ -111,10 +122,45 @@ let CaregiversService = class CaregiversService {
             children: caregiver.children.map((cc) => cc.child),
         };
     }
+    async sendCaregiverEmail(caregiver, userId, familyId, inviteToken) {
+        if (!caregiver.email)
+            return;
+        const [inviter, family] = await Promise.all([
+            this.prisma.user.findUnique({ where: { id: userId } }),
+            this.prisma.family.findUnique({
+                where: { id: familyId },
+                include: { children: true },
+            }),
+        ]);
+        if (!inviter || !family)
+            return;
+        const appUrl = this.config.get('APP_URL', 'http://localhost:5173');
+        await this.mail.sendCaregiverInvitation({
+            toEmail: caregiver.email,
+            caregiverName: caregiver.name,
+            inviterName: `${inviter.firstName} ${inviter.lastName}`,
+            familyName: family.name,
+            childrenNames: family.children.map((c) => c.firstName),
+            inviteToken,
+            appUrl,
+            permissions: {
+                canViewCalendar: caregiver.canViewCalendar,
+                canViewHealthInfo: caregiver.canViewHealthInfo,
+                canViewEmergencyContacts: caregiver.canViewEmergencyContacts,
+                canViewAllergies: caregiver.canViewAllergies,
+            },
+        });
+    }
     calculateExpiry(expiry) {
+        const daysMap = {
+            [client_1.CaregiverLinkExpiry.SEVEN_DAYS]: 7,
+            [client_1.CaregiverLinkExpiry.THIRTY_DAYS]: 30,
+            [client_1.CaregiverLinkExpiry.NINETY_DAYS]: 90,
+            [client_1.CaregiverLinkExpiry.ONE_YEAR]: 365,
+        };
         if (expiry === client_1.CaregiverLinkExpiry.NEVER)
             return null;
-        const days = expiry === client_1.CaregiverLinkExpiry.SEVEN_DAYS ? 7 : 30;
+        const days = daysMap[expiry] ?? 7;
         return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
     }
 };
@@ -122,6 +168,8 @@ exports.CaregiversService = CaregiversService;
 exports.CaregiversService = CaregiversService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        family_service_1.FamilyService])
+        family_service_1.FamilyService,
+        mail_service_1.MailService,
+        config_1.ConfigService])
 ], CaregiversService);
 //# sourceMappingURL=caregivers.service.js.map

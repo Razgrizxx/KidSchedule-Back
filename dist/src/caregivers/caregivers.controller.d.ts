@@ -18,6 +18,7 @@ export declare class CaregiversController {
         canViewCalendar: boolean;
         canViewHealthInfo: boolean;
         canViewEmergencyContacts: boolean;
+        canViewAllergies: boolean;
         inviteToken: string | null;
         linkExpiresAt: Date | null;
         createdBy: string;
@@ -55,6 +56,7 @@ export declare class CaregiversController {
         canViewCalendar: boolean;
         canViewHealthInfo: boolean;
         canViewEmergencyContacts: boolean;
+        canViewAllergies: boolean;
         inviteToken: string | null;
         linkExpiresAt: Date | null;
         createdBy: string;
@@ -73,6 +75,7 @@ export declare class CaregiversController {
         canViewCalendar: boolean;
         canViewHealthInfo: boolean;
         canViewEmergencyContacts: boolean;
+        canViewAllergies: boolean;
         inviteToken: string | null;
         linkExpiresAt: Date | null;
         createdBy: string;
@@ -91,6 +94,7 @@ export declare class CaregiversController {
         canViewCalendar: boolean;
         canViewHealthInfo: boolean;
         canViewEmergencyContacts: boolean;
+        canViewAllergies: boolean;
         inviteToken: string | null;
         linkExpiresAt: Date | null;
         createdBy: string;

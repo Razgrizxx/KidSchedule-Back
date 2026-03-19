@@ -54,6 +54,20 @@ async function main() {
             isVerified: true,
         },
     });
+    const existingMembership = await prisma.familyMember.findFirst({
+        where: { userId: user.id },
+    });
+    if (!existingMembership) {
+        const family = await prisma.family.create({
+            data: {
+                name: 'Family Rizzo',
+                members: {
+                    create: { userId: user.id, role: 'PARENT' },
+                },
+            },
+        });
+        console.log('Created family:', family.name);
+    }
     console.log('Seed complete. Initial user:', {
         id: user.id,
         name: `${user.firstName} ${user.lastName}`,

@@ -47,6 +47,10 @@ export class CreateCaregiverDto {
   @IsOptional()
   @IsBoolean()
   canViewAllergies?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  sendEmail?: boolean;
 }
 
 export class UpdateCaregiverDto extends PartialType(CreateCaregiverDto) {}

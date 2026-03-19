@@ -9,6 +9,8 @@ export declare class CreateCaregiverDto {
     canViewCalendar?: boolean;
     canViewHealthInfo?: boolean;
     canViewEmergencyContacts?: boolean;
+    canViewAllergies?: boolean;
+    sendEmail?: boolean;
 }
 declare const UpdateCaregiverDto_base: import("@nestjs/mapped-types").MappedType<Partial<CreateCaregiverDto>>;
 export declare class UpdateCaregiverDto extends UpdateCaregiverDto_base {

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { CaregiversService } from './caregivers.service';
 import {
   CaregiversController,
@@ -7,7 +8,7 @@ import {
 import { FamilyModule } from '../family/family.module';
 
 @Module({
-  imports: [FamilyModule],
+  imports: [ConfigModule, FamilyModule],
   providers: [CaregiversService],
   controllers: [CaregiversController, CaregiverInviteController],
 })

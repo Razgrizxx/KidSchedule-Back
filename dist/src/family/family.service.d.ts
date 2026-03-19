@@ -1,16 +1,20 @@
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
 import { CreateFamilyDto } from './dto/create-family.dto';
 import { InviteMemberDto } from './dto/invite-member.dto';
 export declare class FamilyService {
     private prisma;
-    constructor(prisma: PrismaService);
+    private mail;
+    private config;
+    constructor(prisma: PrismaService, mail: MailService, config: ConfigService);
     create(userId: string, dto: CreateFamilyDto): Promise<{
         members: {
             id: string;
             role: import("@prisma/client").$Enums.UserRole;
+            familyId: string;
             userId: string;
             joinedAt: Date;
-            familyId: string;
         }[];
     } & {
         id: string;
@@ -29,9 +33,9 @@ export declare class FamilyService {
         } & {
             id: string;
             role: import("@prisma/client").$Enums.UserRole;
+            familyId: string;
             userId: string;
             joinedAt: Date;
-            familyId: string;
         })[];
         children: {
             id: string;
@@ -62,9 +66,9 @@ export declare class FamilyService {
         } & {
             id: string;
             role: import("@prisma/client").$Enums.UserRole;
+            familyId: string;
             userId: string;
             joinedAt: Date;
-            familyId: string;
         })[];
         children: {
             id: string;
@@ -87,6 +91,12 @@ export declare class FamilyService {
         message: string;
         token: string;
     }>;
+    verifyInvitation(token: string): Promise<{
+        familyId: string;
+        familyName: string;
+        inviterName: string;
+        email: string;
+    }>;
     acceptInvitation(token: string, userId: string): Promise<{
         message: string;
         familyId: string;
@@ -94,8 +104,8 @@ export declare class FamilyService {
     assertMember(familyId: string, userId: string): Promise<{
         id: string;
         role: import("@prisma/client").$Enums.UserRole;
+        familyId: string;
         userId: string;
         joinedAt: Date;
-        familyId: string;
     }>;
 }

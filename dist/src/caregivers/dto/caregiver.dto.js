@@ -23,6 +23,8 @@ class CreateCaregiverDto {
     canViewCalendar;
     canViewHealthInfo;
     canViewEmergencyContacts;
+    canViewAllergies;
+    sendEmail;
 }
 exports.CreateCaregiverDto = CreateCaregiverDto;
 __decorate([
@@ -68,6 +70,16 @@ __decorate([
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], CreateCaregiverDto.prototype, "canViewEmergencyContacts", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateCaregiverDto.prototype, "canViewAllergies", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateCaregiverDto.prototype, "sendEmail", void 0);
 class UpdateCaregiverDto extends (0, mapped_types_1.PartialType)(CreateCaregiverDto) {
 }
 exports.UpdateCaregiverDto = UpdateCaregiverDto;

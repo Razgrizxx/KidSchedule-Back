@@ -1,10 +1,14 @@
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
+import { MailService } from '../mail/mail.service';
 import { CreateCaregiverDto, UpdateCaregiverDto } from './dto/caregiver.dto';
 export declare class CaregiversService {
     private prisma;
     private familyService;
-    constructor(prisma: PrismaService, familyService: FamilyService);
+    private mail;
+    private config;
+    constructor(prisma: PrismaService, familyService: FamilyService, mail: MailService, config: ConfigService);
     create(familyId: string, userId: string, dto: CreateCaregiverDto): Promise<{
         id: string;
         email: string | null;
@@ -19,6 +23,7 @@ export declare class CaregiversService {
         canViewCalendar: boolean;
         canViewHealthInfo: boolean;
         canViewEmergencyContacts: boolean;
+        canViewAllergies: boolean;
         inviteToken: string | null;
         linkExpiresAt: Date | null;
         createdBy: string;
@@ -56,6 +61,7 @@ export declare class CaregiversService {
         canViewCalendar: boolean;
         canViewHealthInfo: boolean;
         canViewEmergencyContacts: boolean;
+        canViewAllergies: boolean;
         inviteToken: string | null;
         linkExpiresAt: Date | null;
         createdBy: string;
@@ -74,6 +80,7 @@ export declare class CaregiversService {
         canViewCalendar: boolean;
         canViewHealthInfo: boolean;
         canViewEmergencyContacts: boolean;
+        canViewAllergies: boolean;
         inviteToken: string | null;
         linkExpiresAt: Date | null;
         createdBy: string;
@@ -92,6 +99,7 @@ export declare class CaregiversService {
         canViewCalendar: boolean;
         canViewHealthInfo: boolean;
         canViewEmergencyContacts: boolean;
+        canViewAllergies: boolean;
         inviteToken: string | null;
         linkExpiresAt: Date | null;
         createdBy: string;
@@ -122,5 +130,6 @@ export declare class CaregiversService {
             color: string;
         }[];
     }>;
+    private sendCaregiverEmail;
     private calculateExpiry;
 }

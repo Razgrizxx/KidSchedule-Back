@@ -4,8 +4,10 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
+import { MailService } from '../mail/mail.service';
 import { CreateCaregiverDto, UpdateCaregiverDto } from './dto/caregiver.dto';
 import { CaregiverLinkExpiry, CaregiverVisibility } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
@@ -15,6 +17,8 @@ export class CaregiversService {
   constructor(
     private prisma: PrismaService,
     private familyService: FamilyService,
+    private mail: MailService,
+    private config: ConfigService,
   ) {}
 
   async create(familyId: string, userId: string, dto: CreateCaregiverDto) {
@@ -23,15 +27,23 @@ export class CaregiversService {
     const inviteToken = uuidv4();
     const linkExpiresAt = this.calculateExpiry(dto.linkExpiry);
 
-    return this.prisma.caregiver.create({
+    const { sendEmail, ...caregiverData } = dto;
+
+    const caregiver = await this.prisma.caregiver.create({
       data: {
-        ...dto,
+        ...caregiverData,
         familyId,
         createdBy: userId,
         inviteToken,
         linkExpiresAt,
       },
     });
+
+    if (sendEmail && caregiver.email) {
+      void this.sendCaregiverEmail(caregiver, userId, familyId, inviteToken);
+    }
+
+    return caregiver;
   }
 
   async findAll(familyId: string, userId: string) {
@@ -127,6 +139,42 @@ export class CaregiversService {
       canViewEmergencyContacts: caregiver.canViewEmergencyContacts,
       children: caregiver.children.map((cc) => cc.child),
     };
+  }
+
+  private async sendCaregiverEmail(
+    caregiver: { id: string; name: string; email: string | null; canViewCalendar: boolean; canViewHealthInfo: boolean; canViewEmergencyContacts: boolean; canViewAllergies: boolean },
+    userId: string,
+    familyId: string,
+    inviteToken: string,
+  ): Promise<void> {
+    if (!caregiver.email) return;
+
+    const [inviter, family] = await Promise.all([
+      this.prisma.user.findUnique({ where: { id: userId } }),
+      this.prisma.family.findUnique({
+        where: { id: familyId },
+        include: { children: true },
+      }),
+    ]);
+
+    if (!inviter || !family) return;
+
+    const appUrl = this.config.get<string>('APP_URL', 'http://localhost:5173');
+    await this.mail.sendCaregiverInvitation({
+      toEmail: caregiver.email,
+      caregiverName: caregiver.name,
+      inviterName: `${inviter.firstName} ${inviter.lastName}`,
+      familyName: family.name,
+      childrenNames: family.children.map((c) => c.firstName),
+      inviteToken,
+      appUrl,
+      permissions: {
+        canViewCalendar: caregiver.canViewCalendar,
+        canViewHealthInfo: caregiver.canViewHealthInfo,
+        canViewEmergencyContacts: caregiver.canViewEmergencyContacts,
+        canViewAllergies: caregiver.canViewAllergies,
+      },
+    });
   }
 
   private calculateExpiry(expiry: CaregiverLinkExpiry): Date | null {

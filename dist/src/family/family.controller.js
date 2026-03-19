@@ -37,12 +37,16 @@ let FamilyController = class FamilyController {
     invite(user, familyId, dto) {
         return this.familyService.inviteMember(familyId, user.id, dto);
     }
+    verifyInvitation(token) {
+        return this.familyService.verifyInvitation(token);
+    }
     acceptInvitation(user, token) {
         return this.familyService.acceptInvitation(token, user.id);
     }
 };
 exports.FamilyController = FamilyController;
 __decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Post)(),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Body)()),
@@ -51,6 +55,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], FamilyController.prototype, "create", null);
 __decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Get)(),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
@@ -58,6 +63,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], FamilyController.prototype, "findAll", null);
 __decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Get)(':id'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Param)('id')),
@@ -66,6 +72,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], FamilyController.prototype, "findOne", null);
 __decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Post)(':id/invite'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Param)('id')),
@@ -75,6 +82,14 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], FamilyController.prototype, "invite", null);
 __decorate([
+    (0, common_1.Get)('invitations/:token/verify'),
+    __param(0, (0, common_1.Param)('token')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], FamilyController.prototype, "verifyInvitation", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Post)('invitations/:token/accept'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Param)('token')),
@@ -83,7 +98,6 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], FamilyController.prototype, "acceptInvitation", null);
 exports.FamilyController = FamilyController = __decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)('families'),
     __metadata("design:paramtypes", [family_service_1.FamilyService])
 ], FamilyController);

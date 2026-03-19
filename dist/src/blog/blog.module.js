@@ -6,20 +6,19 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FamilyModule = void 0;
+exports.BlogModule = void 0;
 const common_1 = require("@nestjs/common");
-const config_1 = require("@nestjs/config");
-const family_service_1 = require("./family.service");
-const family_controller_1 = require("./family.controller");
-let FamilyModule = class FamilyModule {
+const blog_controller_1 = require("./blog.controller");
+const blog_service_1 = require("./blog.service");
+const prisma_module_1 = require("../prisma/prisma.module");
+let BlogModule = class BlogModule {
 };
-exports.FamilyModule = FamilyModule;
-exports.FamilyModule = FamilyModule = __decorate([
+exports.BlogModule = BlogModule;
+exports.BlogModule = BlogModule = __decorate([
     (0, common_1.Module)({
-        imports: [config_1.ConfigModule],
-        providers: [family_service_1.FamilyService],
-        controllers: [family_controller_1.FamilyController],
-        exports: [family_service_1.FamilyService],
+        imports: [prisma_module_1.PrismaModule],
+        controllers: [blog_controller_1.BlogController],
+        providers: [blog_service_1.BlogService],
     })
-], FamilyModule);
-//# sourceMappingURL=family.module.js.map
+], BlogModule);
+//# sourceMappingURL=blog.module.js.map

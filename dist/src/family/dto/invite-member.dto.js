@@ -13,6 +13,7 @@ exports.InviteMemberDto = void 0;
 const class_validator_1 = require("class-validator");
 class InviteMemberDto {
     email;
+    sendEmail;
 }
 exports.InviteMemberDto = InviteMemberDto;
 __decorate([
@@ -20,4 +21,9 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], InviteMemberDto.prototype, "email", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], InviteMemberDto.prototype, "sendEmail", void 0);
 //# sourceMappingURL=invite-member.dto.js.map
