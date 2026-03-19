@@ -392,6 +392,8 @@ model Expense {
   date        DateTime
   receiptUrl  String?
   splitRatio  Decimal         @default(0.5) @db.Decimal(3, 2)
+  isSettled   Boolean         @default(false)
+  settledAt   DateTime?
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 

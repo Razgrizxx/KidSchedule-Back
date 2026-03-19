@@ -70,6 +70,34 @@ let ExpensesService = class ExpensesService {
         await this.prisma.expense.delete({ where: { id: expenseId } });
         return { message: 'Expense deleted' };
     }
+    async settle(familyId, expenseId, userId) {
+        await this.findOne(familyId, expenseId, userId);
+        return this.prisma.expense.update({
+            where: { id: expenseId },
+            data: { isSettled: true, settledAt: new Date() },
+            include: {
+                payer: { select: { id: true, firstName: true, lastName: true } },
+            },
+        });
+    }
+    async unsettle(familyId, expenseId, userId) {
+        await this.findOne(familyId, expenseId, userId);
+        return this.prisma.expense.update({
+            where: { id: expenseId },
+            data: { isSettled: false, settledAt: null },
+            include: {
+                payer: { select: { id: true, firstName: true, lastName: true } },
+            },
+        });
+    }
+    async settleAll(familyId, userId) {
+        await this.familyService.assertMember(familyId, userId);
+        const result = await this.prisma.expense.updateMany({
+            where: { familyId, isSettled: false },
+            data: { isSettled: true, settledAt: new Date() },
+        });
+        return { settled: result.count };
+    }
     async getBalance(familyId, userId) {
         await this.familyService.assertMember(familyId, userId);
         const members = await this.prisma.familyMember.findMany({
@@ -78,12 +106,13 @@ let ExpensesService = class ExpensesService {
                 user: { select: { id: true, firstName: true, lastName: true } },
             },
         });
-        const expenses = await this.prisma.expense.findMany({
-            where: { familyId },
-        });
+        const [pending, settled] = await Promise.all([
+            this.prisma.expense.findMany({ where: { familyId, isSettled: false } }),
+            this.prisma.expense.findMany({ where: { familyId, isSettled: true } }),
+        ]);
         const balance = {};
         members.forEach((m) => (balance[m.userId] = 0));
-        for (const expense of expenses) {
+        for (const expense of pending) {
             const amount = Number(expense.amount);
             const ratio = Number(expense.splitRatio);
             const otherShare = amount * ratio;
@@ -94,10 +123,20 @@ let ExpensesService = class ExpensesService {
                 balance[m.userId] = (balance[m.userId] ?? 0) - perPerson;
             });
         }
-        return members.map((m) => ({
-            user: m.user,
-            balance: Math.round(balance[m.userId] * 100) / 100,
-        }));
+        const totalSettled = settled.reduce((s, e) => s + Number(e.amount), 0);
+        const pendingCount = pending.length;
+        const settledCount = settled.length;
+        return {
+            members: members.map((m) => ({
+                user: m.user,
+                balance: Math.round(balance[m.userId] * 100) / 100,
+            })),
+            summary: {
+                pendingCount,
+                settledCount,
+                totalSettled: Math.round(totalSettled * 100) / 100,
+            },
+        };
     }
 };
 exports.ExpensesService = ExpensesService;

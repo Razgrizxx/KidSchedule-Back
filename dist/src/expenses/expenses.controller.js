@@ -35,6 +35,9 @@ let ExpensesController = class ExpensesController {
         const baseUrl = `${req.protocol}://${req.get('host')}`;
         return { url: `${baseUrl}/uploads/receipts/${file.filename}` };
     }
+    settleAll(user, familyId) {
+        return this.expensesService.settleAll(familyId, user.id);
+    }
     create(user, familyId, dto) {
         return this.expensesService.create(familyId, user.id, dto);
     }
@@ -49,6 +52,12 @@ let ExpensesController = class ExpensesController {
     }
     update(user, familyId, expenseId, dto) {
         return this.expensesService.update(familyId, expenseId, user.id, dto);
+    }
+    settle(user, familyId, expenseId) {
+        return this.expensesService.settle(familyId, expenseId, user.id);
+    }
+    unsettle(user, familyId, expenseId) {
+        return this.expensesService.unsettle(familyId, expenseId, user.id);
     }
     remove(user, familyId, expenseId) {
         return this.expensesService.remove(familyId, expenseId, user.id);
@@ -80,6 +89,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", void 0)
 ], ExpensesController.prototype, "uploadReceipt", null);
+__decorate([
+    (0, common_1.Post)('settle-all'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('familyId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String]),
+    __metadata("design:returntype", void 0)
+], ExpensesController.prototype, "settleAll", null);
 __decorate([
     (0, common_1.Post)(),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
@@ -124,6 +141,24 @@ __decorate([
     __metadata("design:paramtypes", [auth_user_1.AuthUser, String, String, expense_dto_1.UpdateExpenseDto]),
     __metadata("design:returntype", void 0)
 ], ExpensesController.prototype, "update", null);
+__decorate([
+    (0, common_1.Patch)(':expenseId/settle'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('familyId')),
+    __param(2, (0, common_1.Param)('expenseId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, String]),
+    __metadata("design:returntype", void 0)
+], ExpensesController.prototype, "settle", null);
+__decorate([
+    (0, common_1.Patch)(':expenseId/unsettle'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('familyId')),
+    __param(2, (0, common_1.Param)('expenseId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, String]),
+    __metadata("design:returntype", void 0)
+], ExpensesController.prototype, "unsettle", null);
 __decorate([
     (0, common_1.Delete)(':expenseId'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),

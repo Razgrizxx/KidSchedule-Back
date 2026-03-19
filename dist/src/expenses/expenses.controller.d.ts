@@ -8,6 +8,9 @@ export declare class ExpensesController {
     uploadReceipt(file: Express.Multer.File, req: Request): {
         url: string;
     };
+    settleAll(user: AuthUser, familyId: string): Promise<{
+        settled: number;
+    }>;
     create(user: AuthUser, familyId: string, dto: CreateExpenseDto): Promise<{
         id: string;
         createdAt: Date;
@@ -21,6 +24,8 @@ export declare class ExpensesController {
         description: string;
         receiptUrl: string | null;
         splitRatio: import("@prisma/client-runtime-utils").Decimal;
+        isSettled: boolean;
+        settledAt: Date | null;
         paidBy: string;
     }>;
     findAll(user: AuthUser, familyId: string): Promise<({
@@ -42,16 +47,25 @@ export declare class ExpensesController {
         description: string;
         receiptUrl: string | null;
         splitRatio: import("@prisma/client-runtime-utils").Decimal;
+        isSettled: boolean;
+        settledAt: Date | null;
         paidBy: string;
     })[]>;
     getBalance(user: AuthUser, familyId: string): Promise<{
-        user: {
-            id: string;
-            firstName: string;
-            lastName: string;
+        members: {
+            user: {
+                id: string;
+                firstName: string;
+                lastName: string;
+            };
+            balance: number;
+        }[];
+        summary: {
+            pendingCount: number;
+            settledCount: number;
+            totalSettled: number;
         };
-        balance: number;
-    }[]>;
+    }>;
     findOne(user: AuthUser, familyId: string, expenseId: string): Promise<{
         payer: {
             id: string;
@@ -71,6 +85,8 @@ export declare class ExpensesController {
         description: string;
         receiptUrl: string | null;
         splitRatio: import("@prisma/client-runtime-utils").Decimal;
+        isSettled: boolean;
+        settledAt: Date | null;
         paidBy: string;
     }>;
     update(user: AuthUser, familyId: string, expenseId: string, dto: UpdateExpenseDto): Promise<{
@@ -86,6 +102,54 @@ export declare class ExpensesController {
         description: string;
         receiptUrl: string | null;
         splitRatio: import("@prisma/client-runtime-utils").Decimal;
+        isSettled: boolean;
+        settledAt: Date | null;
+        paidBy: string;
+    }>;
+    settle(user: AuthUser, familyId: string, expenseId: string): Promise<{
+        payer: {
+            id: string;
+            firstName: string;
+            lastName: string;
+        };
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        familyId: string;
+        childId: string | null;
+        date: Date;
+        category: import("@prisma/client").$Enums.ExpenseCategory;
+        amount: import("@prisma/client-runtime-utils").Decimal;
+        currency: string;
+        description: string;
+        receiptUrl: string | null;
+        splitRatio: import("@prisma/client-runtime-utils").Decimal;
+        isSettled: boolean;
+        settledAt: Date | null;
+        paidBy: string;
+    }>;
+    unsettle(user: AuthUser, familyId: string, expenseId: string): Promise<{
+        payer: {
+            id: string;
+            firstName: string;
+            lastName: string;
+        };
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        familyId: string;
+        childId: string | null;
+        date: Date;
+        category: import("@prisma/client").$Enums.ExpenseCategory;
+        amount: import("@prisma/client-runtime-utils").Decimal;
+        currency: string;
+        description: string;
+        receiptUrl: string | null;
+        splitRatio: import("@prisma/client-runtime-utils").Decimal;
+        isSettled: boolean;
+        settledAt: Date | null;
         paidBy: string;
     }>;
     remove(user: AuthUser, familyId: string, expenseId: string): Promise<{

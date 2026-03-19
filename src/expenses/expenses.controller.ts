@@ -59,6 +59,14 @@ export class ExpensesController {
     return { url: `${baseUrl}/uploads/receipts/${file.filename}` };
   }
 
+  @Post('settle-all')
+  settleAll(
+    @CurrentUser() user: AuthUser,
+    @Param('familyId') familyId: string,
+  ) {
+    return this.expensesService.settleAll(familyId, user.id);
+  }
+
   @Post()
   create(
     @CurrentUser() user: AuthUser,
@@ -98,6 +106,24 @@ export class ExpensesController {
     @Body() dto: UpdateExpenseDto,
   ) {
     return this.expensesService.update(familyId, expenseId, user.id, dto);
+  }
+
+  @Patch(':expenseId/settle')
+  settle(
+    @CurrentUser() user: AuthUser,
+    @Param('familyId') familyId: string,
+    @Param('expenseId') expenseId: string,
+  ) {
+    return this.expensesService.settle(familyId, expenseId, user.id);
+  }
+
+  @Patch(':expenseId/unsettle')
+  unsettle(
+    @CurrentUser() user: AuthUser,
+    @Param('familyId') familyId: string,
+    @Param('expenseId') expenseId: string,
+  ) {
+    return this.expensesService.unsettle(familyId, expenseId, user.id);
   }
 
   @Delete(':expenseId')

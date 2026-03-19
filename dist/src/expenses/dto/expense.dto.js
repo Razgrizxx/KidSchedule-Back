@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateExpenseDto = exports.CreateExpenseDto = void 0;
+exports.SettleExpenseDto = exports.UpdateExpenseDto = exports.CreateExpenseDto = void 0;
 const class_validator_1 = require("class-validator");
 const mapped_types_1 = require("@nestjs/mapped-types");
 const client_1 = require("@prisma/client");
@@ -67,4 +67,13 @@ __decorate([
 class UpdateExpenseDto extends (0, mapped_types_1.PartialType)(CreateExpenseDto) {
 }
 exports.UpdateExpenseDto = UpdateExpenseDto;
+class SettleExpenseDto {
+    isSettled;
+}
+exports.SettleExpenseDto = SettleExpenseDto;
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], SettleExpenseDto.prototype, "isSettled", void 0);
 //# sourceMappingURL=expense.dto.js.map

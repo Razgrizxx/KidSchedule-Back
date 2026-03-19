@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsDateString,
   IsDecimal,
   IsEnum,
@@ -48,3 +49,9 @@ export class CreateExpenseDto {
 }
 
 export class UpdateExpenseDto extends PartialType(CreateExpenseDto) {}
+
+export class SettleExpenseDto {
+  @IsOptional()
+  @IsBoolean()
+  isSettled?: boolean;
+}

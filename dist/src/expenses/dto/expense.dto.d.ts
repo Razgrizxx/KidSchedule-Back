@@ -12,4 +12,7 @@ export declare class CreateExpenseDto {
 declare const UpdateExpenseDto_base: import("@nestjs/mapped-types").MappedType<Partial<CreateExpenseDto>>;
 export declare class UpdateExpenseDto extends UpdateExpenseDto_base {
 }
+export declare class SettleExpenseDto {
+    isSettled?: boolean;
+}
 export {};

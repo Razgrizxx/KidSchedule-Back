@@ -69,9 +69,43 @@ export class ExpensesService {
     return { message: 'Expense deleted' };
   }
 
+  /** Mark a single expense as settled. */
+  async settle(familyId: string, expenseId: string, userId: string) {
+    await this.findOne(familyId, expenseId, userId);
+    return this.prisma.expense.update({
+      where: { id: expenseId },
+      data: { isSettled: true, settledAt: new Date() },
+      include: {
+        payer: { select: { id: true, firstName: true, lastName: true } },
+      },
+    });
+  }
+
+  /** Mark a single expense as unsettled (undo). */
+  async unsettle(familyId: string, expenseId: string, userId: string) {
+    await this.findOne(familyId, expenseId, userId);
+    return this.prisma.expense.update({
+      where: { id: expenseId },
+      data: { isSettled: false, settledAt: null },
+      include: {
+        payer: { select: { id: true, firstName: true, lastName: true } },
+      },
+    });
+  }
+
+  /** Settle all currently unsettled expenses in the family. */
+  async settleAll(familyId: string, userId: string) {
+    await this.familyService.assertMember(familyId, userId);
+    const result = await this.prisma.expense.updateMany({
+      where: { familyId, isSettled: false },
+      data: { isSettled: true, settledAt: new Date() },
+    });
+    return { settled: result.count };
+  }
+
   /**
-   * Calculate balance: for each expense, the payer is owed (amount * splitRatio) by the other parent.
-   * Returns net balance per user (positive = owed money, negative = owes money).
+   * Returns the net pending balance per family member (unsettled expenses only),
+   * plus a settled total for context.
    */
   async getBalance(familyId: string, userId: string) {
     await this.familyService.assertMember(familyId, userId);
@@ -83,22 +117,22 @@ export class ExpensesService {
       },
     });
 
-    const expenses = await this.prisma.expense.findMany({
-      where: { familyId },
-    });
+    const [pending, settled] = await Promise.all([
+      this.prisma.expense.findMany({ where: { familyId, isSettled: false } }),
+      this.prisma.expense.findMany({ where: { familyId, isSettled: true } }),
+    ]);
 
+    // Calculate pending balance per member
     const balance: Record<string, number> = {};
     members.forEach((m) => (balance[m.userId] = 0));
 
-    for (const expense of expenses) {
+    for (const expense of pending) {
       const amount = Number(expense.amount);
       const ratio = Number(expense.splitRatio);
       const otherShare = amount * ratio;
 
-      // Payer is owed otherShare from the other party
       balance[expense.paidBy] = (balance[expense.paidBy] ?? 0) + otherShare;
 
-      // Distribute the debt among other members
       const others = members.filter((m) => m.userId !== expense.paidBy);
       const perPerson = otherShare / (others.length || 1);
       others.forEach((m) => {
@@ -106,9 +140,21 @@ export class ExpensesService {
       });
     }
 
-    return members.map((m) => ({
-      user: m.user,
-      balance: Math.round(balance[m.userId] * 100) / 100,
-    }));
+    // Total settled amount (sum of all settled expense amounts)
+    const totalSettled = settled.reduce((s, e) => s + Number(e.amount), 0);
+    const pendingCount = pending.length;
+    const settledCount = settled.length;
+
+    return {
+      members: members.map((m) => ({
+        user: m.user,
+        balance: Math.round(balance[m.userId] * 100) / 100,
+      })),
+      summary: {
+        pendingCount,
+        settledCount,
+        totalSettled: Math.round(totalSettled * 100) / 100,
+      },
+    };
   }
 }
