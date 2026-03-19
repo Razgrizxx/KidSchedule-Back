@@ -22,6 +22,9 @@ export declare class JwtStrategy extends JwtStrategy_base {
         isVerified: boolean;
         resetPasswordToken: string | null;
         resetPasswordExpires: Date | null;
+        googleRefreshToken: string | null;
+        googleAccessToken: string | null;
+        googleTokenExpiry: Date | null;
         createdAt: Date;
         updatedAt: Date;
     }>;

@@ -37,6 +37,7 @@ export declare class EventsController {
         allDay: boolean;
         notes: string | null;
         assignedToId: string | null;
+        googleEventId: string | null;
     }>;
     findAll(user: AuthUser, familyId: string, month?: string): Promise<({
         children: ({
@@ -71,6 +72,7 @@ export declare class EventsController {
         allDay: boolean;
         notes: string | null;
         assignedToId: string | null;
+        googleEventId: string | null;
     })[]>;
     update(user: AuthUser, familyId: string, eventId: string, dto: UpdateEventDto): Promise<{
         children: ({
@@ -105,6 +107,7 @@ export declare class EventsController {
         allDay: boolean;
         notes: string | null;
         assignedToId: string | null;
+        googleEventId: string | null;
     }>;
     getHolidays(user: AuthUser, familyId: string, yearStr?: string, country?: string): Promise<{
         isTransitionDay: boolean;

@@ -9,6 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
+const event_emitter_1 = require("@nestjs/event-emitter");
 const prisma_module_1 = require("./prisma/prisma.module");
 const mail_module_1 = require("./mail/mail.module");
 const auth_module_1 = require("./auth/auth.module");
@@ -24,6 +25,7 @@ const settings_module_1 = require("./settings/settings.module");
 const blog_module_1 = require("./blog/blog.module");
 const caregiver_portal_module_1 = require("./caregiver-portal/caregiver-portal.module");
 const events_module_1 = require("./events/events.module");
+const google_module_1 = require("./google/google.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -31,6 +33,7 @@ exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
             config_1.ConfigModule.forRoot({ isGlobal: true }),
+            event_emitter_1.EventEmitterModule.forRoot(),
             mail_module_1.MailModule,
             prisma_module_1.PrismaModule,
             auth_module_1.AuthModule,
@@ -46,6 +49,7 @@ exports.AppModule = AppModule = __decorate([
             blog_module_1.BlogModule,
             caregiver_portal_module_1.CaregiverPortalModule,
             events_module_1.EventsModule,
+            google_module_1.GoogleModule,
         ],
     })
 ], AppModule);

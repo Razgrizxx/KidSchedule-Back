@@ -1,10 +1,12 @@
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
 import { BulkImportDto, CreateEventDto, UpdateEventDto } from './dto/event.dto';
 export declare class EventsService {
     private prisma;
     private familyService;
-    constructor(prisma: PrismaService, familyService: FamilyService);
+    private eventEmitter;
+    constructor(prisma: PrismaService, familyService: FamilyService, eventEmitter: EventEmitter2);
     create(familyId: string, userId: string, dto: CreateEventDto): Promise<{
         children: ({
             child: {
@@ -38,6 +40,7 @@ export declare class EventsService {
         allDay: boolean;
         notes: string | null;
         assignedToId: string | null;
+        googleEventId: string | null;
     }>;
     findAll(familyId: string, userId: string, month?: string): Promise<({
         children: ({
@@ -72,6 +75,7 @@ export declare class EventsService {
         allDay: boolean;
         notes: string | null;
         assignedToId: string | null;
+        googleEventId: string | null;
     })[]>;
     update(familyId: string, eventId: string, userId: string, dto: UpdateEventDto): Promise<{
         children: ({
@@ -106,6 +110,7 @@ export declare class EventsService {
         allDay: boolean;
         notes: string | null;
         assignedToId: string | null;
+        googleEventId: string | null;
     }>;
     getHolidays(familyId: string, userId: string, year: number, country?: string): Promise<{
         isTransitionDay: boolean;

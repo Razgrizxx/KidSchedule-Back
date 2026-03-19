@@ -11,20 +11,23 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EventsService = void 0;
 const common_1 = require("@nestjs/common");
+const event_emitter_1 = require("@nestjs/event-emitter");
 const prisma_service_1 = require("../prisma/prisma.service");
 const family_service_1 = require("../family/family.service");
 const holidays_data_1 = require("./holidays.data");
 let EventsService = class EventsService {
     prisma;
     familyService;
-    constructor(prisma, familyService) {
+    eventEmitter;
+    constructor(prisma, familyService, eventEmitter) {
         this.prisma = prisma;
         this.familyService = familyService;
+        this.eventEmitter = eventEmitter;
     }
     async create(familyId, userId, dto) {
         await this.familyService.assertMember(familyId, userId);
         const { childIds, ...rest } = dto;
-        return this.prisma.event.create({
+        const event = await this.prisma.event.create({
             data: {
                 familyId,
                 createdBy: userId,
@@ -40,6 +43,11 @@ let EventsService = class EventsService {
                 assignedTo: { select: { id: true, firstName: true, lastName: true } },
             },
         });
+        this.eventEmitter.emit('calendar.event.upsert', {
+            eventId: event.id,
+            userId,
+        });
+        return event;
     }
     async findAll(familyId, userId, month) {
         await this.familyService.assertMember(familyId, userId);
@@ -62,7 +70,7 @@ let EventsService = class EventsService {
     async update(familyId, eventId, userId, dto) {
         await this.familyService.assertMember(familyId, userId);
         const { childIds, startAt, endAt, ...rest } = dto;
-        return this.prisma.$transaction(async (tx) => {
+        const event = await this.prisma.$transaction(async (tx) => {
             if (childIds !== undefined) {
                 await tx.eventChild.deleteMany({ where: { eventId } });
                 await tx.eventChild.createMany({
@@ -82,6 +90,11 @@ let EventsService = class EventsService {
                 },
             });
         });
+        this.eventEmitter.emit('calendar.event.upsert', {
+            eventId: event.id,
+            userId,
+        });
+        return event;
     }
     async getHolidays(familyId, userId, year, country) {
         await this.familyService.assertMember(familyId, userId);
@@ -142,6 +155,7 @@ exports.EventsService = EventsService;
 exports.EventsService = EventsService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        family_service_1.FamilyService])
+        family_service_1.FamilyService,
+        event_emitter_1.EventEmitter2])
 ], EventsService);
 //# sourceMappingURL=events.service.js.map

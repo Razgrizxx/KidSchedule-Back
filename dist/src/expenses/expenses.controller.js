@@ -14,15 +14,26 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ExpensesController = void 0;
 const common_1 = require("@nestjs/common");
+const platform_express_1 = require("@nestjs/platform-express");
+const multer_1 = require("multer");
+const path_1 = require("path");
+const fs_1 = require("fs");
 const expenses_service_1 = require("./expenses.service");
 const expense_dto_1 = require("./dto/expense.dto");
 const jwt_auth_guard_1 = require("../common/guards/jwt-auth.guard");
 const current_user_decorator_1 = require("../common/decorators/current-user.decorator");
 const auth_user_1 = require("../common/types/auth-user");
+const ALLOWED_MIMETYPES = [
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf',
+];
 let ExpensesController = class ExpensesController {
     expensesService;
     constructor(expensesService) {
         this.expensesService = expensesService;
+    }
+    uploadReceipt(file, req) {
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        return { url: `${baseUrl}/uploads/receipts/${file.filename}` };
     }
     create(user, familyId, dto) {
         return this.expensesService.create(familyId, user.id, dto);
@@ -44,6 +55,31 @@ let ExpensesController = class ExpensesController {
     }
 };
 exports.ExpensesController = ExpensesController;
+__decorate([
+    (0, common_1.Post)('upload'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {
+        storage: (0, multer_1.diskStorage)({
+            destination: (_req, _file, cb) => {
+                const dest = 'uploads/receipts';
+                (0, fs_1.mkdirSync)(dest, { recursive: true });
+                cb(null, dest);
+            },
+            filename: (_req, file, cb) => {
+                const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+                cb(null, `receipt-${unique}${(0, path_1.extname)(file.originalname)}`);
+            },
+        }),
+        fileFilter: (_req, file, cb) => {
+            cb(null, ALLOWED_MIMETYPES.includes(file.mimetype));
+        },
+        limits: { fileSize: 10 * 1024 * 1024 },
+    })),
+    __param(0, (0, common_1.UploadedFile)()),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], ExpensesController.prototype, "uploadReceipt", null);
 __decorate([
     (0, common_1.Post)(),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
