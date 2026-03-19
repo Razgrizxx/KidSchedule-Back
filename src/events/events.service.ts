@@ -1,21 +1,24 @@
 import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EventType, EventVisibility, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
 import { BulkImportDto, CreateEventDto, UpdateEventDto } from './dto/event.dto';
 import { getHolidaysForYear } from './holidays.data';
+import type { CalendarEventUpsertPayload } from '../google/google-calendar-sync.service';
 
 @Injectable()
 export class EventsService {
   constructor(
     private prisma: PrismaService,
     private familyService: FamilyService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async create(familyId: string, userId: string, dto: CreateEventDto) {
     await this.familyService.assertMember(familyId, userId);
     const { childIds, ...rest } = dto;
-    return this.prisma.event.create({
+    const event = await this.prisma.event.create({
       data: {
         familyId,
         createdBy: userId,
@@ -31,6 +34,11 @@ export class EventsService {
         assignedTo: { select: { id: true, firstName: true, lastName: true } },
       },
     });
+    this.eventEmitter.emit('calendar.event.upsert', {
+      eventId: event.id,
+      userId,
+    } satisfies CalendarEventUpsertPayload);
+    return event;
   }
 
   async findAll(familyId: string, userId: string, month?: string) {
@@ -59,7 +67,7 @@ export class EventsService {
     await this.familyService.assertMember(familyId, userId);
     const { childIds, startAt, endAt, ...rest } = dto;
 
-    return this.prisma.$transaction(async (tx) => {
+    const event = await this.prisma.$transaction(async (tx) => {
       if (childIds !== undefined) {
         await tx.eventChild.deleteMany({ where: { eventId } });
         await tx.eventChild.createMany({
@@ -79,6 +87,11 @@ export class EventsService {
         },
       });
     });
+    this.eventEmitter.emit('calendar.event.upsert', {
+      eventId: event.id,
+      userId,
+    } satisfies CalendarEventUpsertPayload);
+    return event;
   }
 
   async getHolidays(familyId: string, userId: string, year: number, country?: string) {

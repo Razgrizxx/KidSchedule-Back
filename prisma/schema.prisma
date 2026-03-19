@@ -121,6 +121,10 @@ model User {
   isVerified           Boolean   @default(false)
   resetPasswordToken   String?
   resetPasswordExpires DateTime?
+  // Google Calendar integration (tokens stored AES-256 encrypted)
+  googleRefreshToken   String?
+  googleAccessToken    String?
+  googleTokenExpiry    DateTime?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
@@ -491,9 +495,10 @@ model Event {
   endAt        DateTime
   allDay       Boolean         @default(false)
   repeat       RepeatPattern   @default(NONE)
-  notes        String?
-  assignedToId String?
-  createdAt    DateTime        @default(now())
+  notes         String?
+  assignedToId  String?
+  googleEventId String?        // Google Calendar event ID for bi-directional sync
+  createdAt     DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 
   family     Family       @relation(fields: [familyId], references: [id], onDelete: Cascade)

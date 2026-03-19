@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { PrismaModule } from './prisma/prisma.module';
 import { MailModule } from './mail/mail.module';
 import { AuthModule } from './auth/auth.module';
@@ -15,10 +16,12 @@ import { SettingsModule } from './settings/settings.module';
 import { BlogModule } from './blog/blog.module';
 import { CaregiverPortalModule } from './caregiver-portal/caregiver-portal.module';
 import { EventsModule } from './events/events.module';
+import { GoogleModule } from './google/google.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    EventEmitterModule.forRoot(),
     MailModule,
     PrismaModule,
     AuthModule,
@@ -34,6 +37,7 @@ import { EventsModule } from './events/events.module';
     BlogModule,
     CaregiverPortalModule,
     EventsModule,
+    GoogleModule,
   ],
 })
 export class AppModule {}
