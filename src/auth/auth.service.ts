@@ -213,6 +213,7 @@ export class AuthService {
     firstName: string;
     lastName: string;
     email: string;
+    isVerified: boolean;
   }) {
     const payload = { sub: user.id, email: user.email };
     return {
@@ -222,6 +223,7 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
+        isVerified: user.isVerified,
       },
     };
   }

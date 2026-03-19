@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const messaging_service_1 = require("./messaging.service");
 const message_dto_1 = require("./dto/message.dto");
 const jwt_auth_guard_1 = require("../common/guards/jwt-auth.guard");
+const phone_verified_guard_1 = require("../common/guards/phone-verified.guard");
 const current_user_decorator_1 = require("../common/decorators/current-user.decorator");
 const auth_user_1 = require("../common/types/auth-user");
 let MessagingController = class MessagingController {
@@ -74,7 +75,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], MessagingController.prototype, "markRead", null);
 exports.MessagingController = MessagingController = __decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, phone_verified_guard_1.PhoneVerifiedGuard),
     (0, common_1.Controller)('families/:familyId/messages'),
     __metadata("design:paramtypes", [messaging_service_1.MessagingService])
 ], MessagingController);

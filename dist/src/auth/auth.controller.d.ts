@@ -15,6 +15,7 @@ export declare class AuthController {
             firstName: string;
             lastName: string;
             email: string;
+            isVerified: boolean;
         };
     }>;
     login(dto: LoginDto): Promise<{
@@ -24,6 +25,7 @@ export declare class AuthController {
             firstName: string;
             lastName: string;
             email: string;
+            isVerified: boolean;
         };
     }>;
     forgotPassword(dto: ForgotPasswordDto): Promise<{

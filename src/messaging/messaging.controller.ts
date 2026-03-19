@@ -10,10 +10,11 @@ import {
 import { MessagingService } from './messaging.service';
 import { SendMessageDto } from './dto/message.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { PhoneVerifiedGuard } from '../common/guards/phone-verified.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthUser } from '../common/types/auth-user';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
 @Controller('families/:familyId/messages')
 export class MessagingController {
   constructor(private messagingService: MessagingService) {}
