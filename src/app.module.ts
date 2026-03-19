@@ -13,6 +13,7 @@ import { ExpensesModule } from './expenses/expenses.module';
 import { MomentsModule } from './moments/moments.module';
 import { SettingsModule } from './settings/settings.module';
 import { BlogModule } from './blog/blog.module';
+import { CaregiverPortalModule } from './caregiver-portal/caregiver-portal.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { BlogModule } from './blog/blog.module';
     MomentsModule,
     SettingsModule,
     BlogModule,
+    CaregiverPortalModule,
   ],
 })
 export class AppModule {}
