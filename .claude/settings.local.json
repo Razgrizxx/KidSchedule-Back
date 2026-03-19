@@ -14,7 +14,8 @@
       "Bash(npx ts-node:*)",
       "Bash(npx tsx:*)",
       "Bash(npx eslint:*)",
-      "Bash(grep -v \"^$\")"
+      "Bash(grep -v \"^$\")",
+      "Bash(npx shadcn@latest add textarea --yes)"
     ]
   }
 }

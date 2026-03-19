@@ -14,6 +14,7 @@ import { MomentsModule } from './moments/moments.module';
 import { SettingsModule } from './settings/settings.module';
 import { BlogModule } from './blog/blog.module';
 import { CaregiverPortalModule } from './caregiver-portal/caregiver-portal.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { CaregiverPortalModule } from './caregiver-portal/caregiver-portal.modul
     SettingsModule,
     BlogModule,
     CaregiverPortalModule,
+    EventsModule,
   ],
 })
 export class AppModule {}

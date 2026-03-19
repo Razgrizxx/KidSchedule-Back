@@ -76,6 +76,29 @@ enum TimeFormat {
   TWENTY_FOUR_HOUR
 }
 
+enum EventType {
+  CUSTODY_TIME
+  SCHOOL
+  MEDICAL
+  ACTIVITY
+  VACATION
+  OTHER
+}
+
+enum EventVisibility {
+  SHARED
+  PRIVATE
+}
+
+enum RepeatPattern {
+  NONE
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  YEARLY
+}
+
 enum AppearanceTheme {
   FRIENDLY
   MODERN
@@ -111,6 +134,8 @@ model User {
   moments            Moment[]
   changeRequests     ChangeRequest[]     @relation("RequesterChangeRequests")
   respondedRequests  ChangeRequest[]     @relation("ResponderChangeRequests")
+  createdEvents      Event[]             @relation("CreatedEvents")
+  assignedEvents     Event[]             @relation("AssignedEvents")
 
   @@map("users")
 }
@@ -148,6 +173,7 @@ model Family {
   moments        Moment[]
   changeRequests ChangeRequest[]
   settings       FamilySettings?
+  events         Event[]
 
   @@map("families")
 }
@@ -203,6 +229,7 @@ model Child {
   custodyEvents CustodyEvent[]
   caregivers    ChildCaregiver[]
   moments       Moment[]
+  eventChildren EventChild[]
 
   @@map("children")
 }
@@ -447,4 +474,44 @@ model Post {
   updatedAt   DateTime  @updatedAt
 
   @@map("posts")
+}
+
+// ─────────────────────────────────────────
+//  EVENTS
+// ─────────────────────────────────────────
+
+model Event {
+  id           String          @id @default(uuid())
+  familyId     String
+  createdBy    String
+  title        String
+  type         EventType       @default(CUSTODY_TIME)
+  visibility   EventVisibility @default(SHARED)
+  startAt      DateTime
+  endAt        DateTime
+  allDay       Boolean         @default(false)
+  repeat       RepeatPattern   @default(NONE)
+  notes        String?
+  assignedToId String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  family     Family       @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  creator    User         @relation("CreatedEvents", fields: [createdBy], references: [id])
+  assignedTo User?        @relation("AssignedEvents", fields: [assignedToId], references: [id])
+  children   EventChild[]
+
+  @@map("events")
+}
+
+model EventChild {
+  id      String @id @default(uuid())
+  eventId String
+  childId String
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, childId])
+  @@map("event_children")
 }

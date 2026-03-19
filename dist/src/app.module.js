@@ -23,6 +23,7 @@ const moments_module_1 = require("./moments/moments.module");
 const settings_module_1 = require("./settings/settings.module");
 const blog_module_1 = require("./blog/blog.module");
 const caregiver_portal_module_1 = require("./caregiver-portal/caregiver-portal.module");
+const events_module_1 = require("./events/events.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -44,6 +45,7 @@ exports.AppModule = AppModule = __decorate([
             settings_module_1.SettingsModule,
             blog_module_1.BlogModule,
             caregiver_portal_module_1.CaregiverPortalModule,
+            events_module_1.EventsModule,
         ],
     })
 ], AppModule);
