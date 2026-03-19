@@ -1,5 +1,5 @@
 import { EventsService } from './events.service';
-import { CreateEventDto, UpdateEventDto } from './dto/event.dto';
+import { BulkImportDto, CreateEventDto, UpdateEventDto } from './dto/event.dto';
 import { AuthUser } from '../common/types/auth-user';
 export declare class EventsController {
     private eventsService;
@@ -105,6 +105,18 @@ export declare class EventsController {
         allDay: boolean;
         notes: string | null;
         assignedToId: string | null;
+    }>;
+    getHolidays(user: AuthUser, familyId: string, yearStr?: string, country?: string): Promise<{
+        isTransitionDay: boolean;
+        id: string;
+        date: string;
+        name: string;
+        country: "AR" | "US";
+        category: "NATIONAL" | "SCHOOL";
+    }[]>;
+    bulkCreate(user: AuthUser, familyId: string, dto: BulkImportDto): Promise<{
+        created: number;
+        skipped: number;
     }>;
     remove(user: AuthUser, familyId: string, eventId: string): Promise<{
         message: string;

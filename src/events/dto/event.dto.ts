@@ -49,3 +49,27 @@ export class CreateEventDto {
 }
 
 export class UpdateEventDto extends PartialType(CreateEventDto) {}
+
+export class BulkImportItemDto {
+  @IsString()
+  @IsNotEmpty()
+  title: string;
+
+  @IsISO8601()
+  date: string;
+
+  @IsString()
+  type: string;
+}
+
+export class BulkImportDto {
+  @IsArray()
+  events: BulkImportItemDto[];
+
+  @IsArray()
+  @IsUUID('4', { each: true })
+  childIds: string[];
+
+  @IsEnum(EventVisibility)
+  visibility: EventVisibility;
+}

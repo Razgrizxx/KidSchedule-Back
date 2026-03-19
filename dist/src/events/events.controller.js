@@ -33,6 +33,13 @@ let EventsController = class EventsController {
     update(user, familyId, eventId, dto) {
         return this.eventsService.update(familyId, eventId, user.id, dto);
     }
+    getHolidays(user, familyId, yearStr, country) {
+        const year = yearStr ? parseInt(yearStr, 10) : new Date().getFullYear();
+        return this.eventsService.getHolidays(familyId, user.id, year, country);
+    }
+    bulkCreate(user, familyId, dto) {
+        return this.eventsService.bulkCreate(familyId, user.id, dto);
+    }
     remove(user, familyId, eventId) {
         return this.eventsService.remove(familyId, eventId, user.id);
     }
@@ -66,6 +73,25 @@ __decorate([
     __metadata("design:paramtypes", [auth_user_1.AuthUser, String, String, event_dto_1.UpdateEventDto]),
     __metadata("design:returntype", void 0)
 ], EventsController.prototype, "update", null);
+__decorate([
+    (0, common_1.Get)('holidays'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('familyId')),
+    __param(2, (0, common_1.Query)('year')),
+    __param(3, (0, common_1.Query)('country')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, String, String]),
+    __metadata("design:returntype", void 0)
+], EventsController.prototype, "getHolidays", null);
+__decorate([
+    (0, common_1.Post)('bulk'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('familyId')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, event_dto_1.BulkImportDto]),
+    __metadata("design:returntype", void 0)
+], EventsController.prototype, "bulkCreate", null);
 __decorate([
     (0, common_1.Delete)(':eventId'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),

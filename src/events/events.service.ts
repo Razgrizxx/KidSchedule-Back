@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { EventType, EventVisibility, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
-import { CreateEventDto, UpdateEventDto } from './dto/event.dto';
+import { BulkImportDto, CreateEventDto, UpdateEventDto } from './dto/event.dto';
+import { getHolidaysForYear } from './holidays.data';
 
 @Injectable()
 export class EventsService {
@@ -78,6 +79,64 @@ export class EventsService {
         },
       });
     });
+  }
+
+  async getHolidays(familyId: string, userId: string, year: number, country?: string) {
+    await this.familyService.assertMember(familyId, userId);
+
+    const settings = await this.prisma.familySettings.findUnique({ where: { familyId } });
+    const transitionDay = settings?.transitionDay ?? 'MONDAY';
+    const DAY_MAP: Record<string, number> = {
+      SUNDAY: 0, MONDAY: 1, TUESDAY: 2, WEDNESDAY: 3, THURSDAY: 4, FRIDAY: 5, SATURDAY: 6,
+    };
+    const transitionDayNum = DAY_MAP[transitionDay] ?? 1;
+
+    const all = getHolidaysForYear(year);
+    const filtered = country ? all.filter((h) => h.country === country) : all;
+
+    return filtered.map((h) => ({
+      ...h,
+      // Parse date at noon UTC to avoid timezone off-by-one
+      isTransitionDay: new Date(h.date + 'T12:00:00Z').getDay() === transitionDayNum,
+    }));
+  }
+
+  async bulkCreate(familyId: string, userId: string, dto: BulkImportDto) {
+    await this.familyService.assertMember(familyId, userId);
+
+    let created = 0;
+    let skipped = 0;
+
+    for (const item of dto.events) {
+      const startAt = new Date(item.date + 'T00:00:00.000Z');
+      const endAt = new Date(item.date + 'T23:59:59.000Z');
+
+      const existing = await this.prisma.event.findFirst({
+        where: { familyId, title: item.title, startAt: { gte: startAt, lte: endAt } },
+      });
+
+      if (existing) { skipped++; continue; }
+
+      await this.prisma.event.create({
+        data: {
+          familyId,
+          createdBy: userId,
+          title: item.title,
+          type: item.type as EventType,
+          visibility: dto.visibility as EventVisibility,
+          startAt,
+          endAt,
+          allDay: true,
+          repeat: 'NONE',
+          ...(dto.childIds.length > 0 && {
+            children: { create: dto.childIds.map((childId) => ({ childId })) },
+          }),
+        },
+      });
+      created++;
+    }
+
+    return { created, skipped };
   }
 
   async remove(familyId: string, eventId: string, userId: string) {

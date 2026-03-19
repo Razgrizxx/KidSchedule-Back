@@ -14,4 +14,14 @@ export declare class CreateEventDto {
 declare const UpdateEventDto_base: import("@nestjs/mapped-types").MappedType<Partial<CreateEventDto>>;
 export declare class UpdateEventDto extends UpdateEventDto_base {
 }
+export declare class BulkImportItemDto {
+    title: string;
+    date: string;
+    type: string;
+}
+export declare class BulkImportDto {
+    events: BulkImportItemDto[];
+    childIds: string[];
+    visibility: EventVisibility;
+}
 export {};

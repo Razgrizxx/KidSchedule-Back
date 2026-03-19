@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { EventsService } from './events.service';
-import { CreateEventDto, UpdateEventDto } from './dto/event.dto';
+import { BulkImportDto, CreateEventDto, UpdateEventDto } from './dto/event.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthUser } from '../common/types/auth-user';
@@ -36,6 +36,26 @@ export class EventsController {
     @Body() dto: UpdateEventDto,
   ) {
     return this.eventsService.update(familyId, eventId, user.id, dto);
+  }
+
+  @Get('holidays')
+  getHolidays(
+    @CurrentUser() user: AuthUser,
+    @Param('familyId') familyId: string,
+    @Query('year') yearStr?: string,
+    @Query('country') country?: string,
+  ) {
+    const year = yearStr ? parseInt(yearStr, 10) : new Date().getFullYear();
+    return this.eventsService.getHolidays(familyId, user.id, year, country);
+  }
+
+  @Post('bulk')
+  bulkCreate(
+    @CurrentUser() user: AuthUser,
+    @Param('familyId') familyId: string,
+    @Body() dto: BulkImportDto,
+  ) {
+    return this.eventsService.bulkCreate(familyId, user.id, dto);
   }
 
   @Delete(':eventId')

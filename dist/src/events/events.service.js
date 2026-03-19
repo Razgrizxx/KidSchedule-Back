@@ -13,6 +13,7 @@ exports.EventsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const family_service_1 = require("../family/family.service");
+const holidays_data_1 = require("./holidays.data");
 let EventsService = class EventsService {
     prisma;
     familyService;
@@ -81,6 +82,55 @@ let EventsService = class EventsService {
                 },
             });
         });
+    }
+    async getHolidays(familyId, userId, year, country) {
+        await this.familyService.assertMember(familyId, userId);
+        const settings = await this.prisma.familySettings.findUnique({ where: { familyId } });
+        const transitionDay = settings?.transitionDay ?? 'MONDAY';
+        const DAY_MAP = {
+            SUNDAY: 0, MONDAY: 1, TUESDAY: 2, WEDNESDAY: 3, THURSDAY: 4, FRIDAY: 5, SATURDAY: 6,
+        };
+        const transitionDayNum = DAY_MAP[transitionDay] ?? 1;
+        const all = (0, holidays_data_1.getHolidaysForYear)(year);
+        const filtered = country ? all.filter((h) => h.country === country) : all;
+        return filtered.map((h) => ({
+            ...h,
+            isTransitionDay: new Date(h.date + 'T12:00:00Z').getDay() === transitionDayNum,
+        }));
+    }
+    async bulkCreate(familyId, userId, dto) {
+        await this.familyService.assertMember(familyId, userId);
+        let created = 0;
+        let skipped = 0;
+        for (const item of dto.events) {
+            const startAt = new Date(item.date + 'T00:00:00.000Z');
+            const endAt = new Date(item.date + 'T23:59:59.000Z');
+            const existing = await this.prisma.event.findFirst({
+                where: { familyId, title: item.title, startAt: { gte: startAt, lte: endAt } },
+            });
+            if (existing) {
+                skipped++;
+                continue;
+            }
+            await this.prisma.event.create({
+                data: {
+                    familyId,
+                    createdBy: userId,
+                    title: item.title,
+                    type: item.type,
+                    visibility: dto.visibility,
+                    startAt,
+                    endAt,
+                    allDay: true,
+                    repeat: 'NONE',
+                    ...(dto.childIds.length > 0 && {
+                        children: { create: dto.childIds.map((childId) => ({ childId })) },
+                    }),
+                },
+            });
+            created++;
+        }
+        return { created, skipped };
     }
     async remove(familyId, eventId, userId) {
         await this.familyService.assertMember(familyId, userId);

@@ -1,6 +1,6 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
-import { CreateEventDto, UpdateEventDto } from './dto/event.dto';
+import { BulkImportDto, CreateEventDto, UpdateEventDto } from './dto/event.dto';
 export declare class EventsService {
     private prisma;
     private familyService;
@@ -106,6 +106,18 @@ export declare class EventsService {
         allDay: boolean;
         notes: string | null;
         assignedToId: string | null;
+    }>;
+    getHolidays(familyId: string, userId: string, year: number, country?: string): Promise<{
+        isTransitionDay: boolean;
+        id: string;
+        date: string;
+        name: string;
+        country: "AR" | "US";
+        category: "NATIONAL" | "SCHOOL";
+    }[]>;
+    bulkCreate(familyId: string, userId: string, dto: BulkImportDto): Promise<{
+        created: number;
+        skipped: number;
     }>;
     remove(familyId: string, eventId: string, userId: string): Promise<{
         message: string;
