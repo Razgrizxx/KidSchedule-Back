@@ -9,8 +9,9 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateEventDto = void 0;
+exports.UpdateEventDto = exports.CreateEventDto = void 0;
 const class_validator_1 = require("class-validator");
+const mapped_types_1 = require("@nestjs/mapped-types");
 const client_1 = require("@prisma/client");
 class CreateEventDto {
     title;
@@ -70,4 +71,7 @@ __decorate([
     (0, class_validator_1.IsUUID)('4', { each: true }),
     __metadata("design:type", Array)
 ], CreateEventDto.prototype, "childIds", void 0);
+class UpdateEventDto extends (0, mapped_types_1.PartialType)(CreateEventDto) {
+}
+exports.UpdateEventDto = UpdateEventDto;
 //# sourceMappingURL=event.dto.js.map

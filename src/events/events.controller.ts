@@ -1,6 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { EventsService } from './events.service';
-import { CreateEventDto } from './dto/event.dto';
+import { CreateEventDto, UpdateEventDto } from './dto/event.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthUser } from '../common/types/auth-user';
@@ -26,6 +26,16 @@ export class EventsController {
     @Query('month') month?: string,
   ) {
     return this.eventsService.findAll(familyId, user.id, month);
+  }
+
+  @Patch(':eventId')
+  update(
+    @CurrentUser() user: AuthUser,
+    @Param('familyId') familyId: string,
+    @Param('eventId') eventId: string,
+    @Body() dto: UpdateEventDto,
+  ) {
+    return this.eventsService.update(familyId, eventId, user.id, dto);
   }
 
   @Delete(':eventId')

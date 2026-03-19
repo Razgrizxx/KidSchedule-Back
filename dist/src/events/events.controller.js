@@ -30,6 +30,9 @@ let EventsController = class EventsController {
     findAll(user, familyId, month) {
         return this.eventsService.findAll(familyId, user.id, month);
     }
+    update(user, familyId, eventId, dto) {
+        return this.eventsService.update(familyId, eventId, user.id, dto);
+    }
     remove(user, familyId, eventId) {
         return this.eventsService.remove(familyId, eventId, user.id);
     }
@@ -53,6 +56,16 @@ __decorate([
     __metadata("design:paramtypes", [auth_user_1.AuthUser, String, String]),
     __metadata("design:returntype", void 0)
 ], EventsController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Patch)(':eventId'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('familyId')),
+    __param(2, (0, common_1.Param)('eventId')),
+    __param(3, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, String, event_dto_1.UpdateEventDto]),
+    __metadata("design:returntype", void 0)
+], EventsController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':eventId'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
-import { CreateEventDto } from './dto/event.dto';
+import { CreateEventDto, UpdateEventDto } from './dto/event.dto';
 
 @Injectable()
 export class EventsService {
@@ -51,6 +51,32 @@ export class EventsService {
         children: { include: { child: { select: { id: true, firstName: true, lastName: true, color: true } } } },
         assignedTo: { select: { id: true, firstName: true, lastName: true } },
       },
+    });
+  }
+
+  async update(familyId: string, eventId: string, userId: string, dto: UpdateEventDto) {
+    await this.familyService.assertMember(familyId, userId);
+    const { childIds, startAt, endAt, ...rest } = dto;
+
+    return this.prisma.$transaction(async (tx) => {
+      if (childIds !== undefined) {
+        await tx.eventChild.deleteMany({ where: { eventId } });
+        await tx.eventChild.createMany({
+          data: childIds.map((childId) => ({ eventId, childId })),
+        });
+      }
+      return tx.event.update({
+        where: { id: eventId, familyId },
+        data: {
+          ...rest,
+          ...(startAt && { startAt: new Date(startAt) }),
+          ...(endAt && { endAt: new Date(endAt) }),
+        },
+        include: {
+          children: { include: { child: { select: { id: true, firstName: true, lastName: true, color: true } } } },
+          assignedTo: { select: { id: true, firstName: true, lastName: true } },
+        },
+      });
     });
   }
 

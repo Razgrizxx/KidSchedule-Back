@@ -8,6 +8,7 @@ import {
   IsArray,
   IsNotEmpty,
 } from 'class-validator';
+import { PartialType } from '@nestjs/mapped-types';
 import { EventType, EventVisibility, RepeatPattern } from '@prisma/client';
 
 export class CreateEventDto {
@@ -46,3 +47,5 @@ export class CreateEventDto {
   @IsUUID('4', { each: true })
   childIds: string[];
 }
+
+export class UpdateEventDto extends PartialType(CreateEventDto) {}
