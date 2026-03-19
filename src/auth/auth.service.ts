@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { MailerService } from '@nestjs-modules/mailer';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
+import * as twilio from 'twilio';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -139,43 +140,65 @@ export class AuthService {
     return { message: 'Password updated successfully. You can now log in.' };
   }
 
+  private getTwilioClient() {
+    const sid = this.config.get<string>('TWILIO_ACCOUNT_SID');
+    const token = this.config.get<string>('TWILIO_AUTH_TOKEN');
+    if (!sid || !token) return null;
+    return twilio.default(sid, token);
+  }
+
   async sendPhoneCode(userId: string, phone: string) {
     const devMode = this.config.get<string>('DEV_MODE') === 'true';
+    const serviceSid = this.config.get<string>('TWILIO_VERIFY_SERVICE_SID');
+    const client = this.getTwilioClient();
+
+    if (!devMode && client && serviceSid) {
+      await client.verify.v2.services(serviceSid).verifications.create({
+        to: phone,
+        channel: 'sms',
+      });
+      return { message: 'Code sent' };
+    }
+
+    // Dev / no-Twilio fallback: store code in DB
     const code = devMode
       ? '123456'
       : Math.floor(100000 + Math.random() * 900000).toString();
-
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
     await this.prisma.phoneVerification.create({
       data: { userId, phone, code, expiresAt },
     });
-
-    if (!devMode) {
-      // TODO: integrate SMS provider (Twilio/SNS) here
-    }
-
     return { message: 'Code sent', ...(devMode && { code }) };
   }
 
   async verifyPhone(userId: string, phone: string, code: string) {
-    const record = await this.prisma.phoneVerification.findFirst({
-      where: {
-        userId,
-        phone,
-        code,
-        verified: false,
-        expiresAt: { gt: new Date() },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const devMode = this.config.get<string>('DEV_MODE') === 'true';
+    const serviceSid = this.config.get<string>('TWILIO_VERIFY_SERVICE_SID');
+    const client = this.getTwilioClient();
 
-    if (!record) throw new BadRequestException('Invalid or expired code');
-
-    await this.prisma.phoneVerification.update({
-      where: { id: record.id },
-      data: { verified: true },
-    });
+    if (!devMode && client && serviceSid) {
+      const check = await client.verify.v2
+        .services(serviceSid)
+        .verificationChecks.create({ to: phone, code });
+      if (check.status !== 'approved')
+        throw new BadRequestException('Invalid or expired code');
+    } else {
+      const record = await this.prisma.phoneVerification.findFirst({
+        where: {
+          userId,
+          phone,
+          code,
+          verified: false,
+          expiresAt: { gt: new Date() },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (!record) throw new BadRequestException('Invalid or expired code');
+      await this.prisma.phoneVerification.update({
+        where: { id: record.id },
+        data: { verified: true },
+      });
+    }
 
     await this.prisma.user.update({
       where: { id: userId },

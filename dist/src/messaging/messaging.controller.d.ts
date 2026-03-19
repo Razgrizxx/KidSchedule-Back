@@ -21,6 +21,7 @@ export declare class MessagingController {
         senderId: string;
         contentHash: string;
         previousHash: string;
+        isSystemMessage: boolean;
     }>;
     findAll(user: AuthUser, familyId: string, cursor?: string, take?: string): Promise<{
         messages: ({
@@ -40,6 +41,7 @@ export declare class MessagingController {
             senderId: string;
             contentHash: string;
             previousHash: string;
+            isSystemMessage: boolean;
         })[];
         nextCursor: string | null;
     }>;

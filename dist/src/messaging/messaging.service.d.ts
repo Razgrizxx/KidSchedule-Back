@@ -22,6 +22,7 @@ export declare class MessagingService {
         senderId: string;
         contentHash: string;
         previousHash: string;
+        isSystemMessage: boolean;
     }>;
     findAll(familyId: string, userId: string, cursor?: string, take?: number): Promise<{
         messages: ({
@@ -41,6 +42,7 @@ export declare class MessagingService {
             senderId: string;
             contentHash: string;
             previousHash: string;
+            isSystemMessage: boolean;
         })[];
         nextCursor: string | null;
     }>;
@@ -49,6 +51,18 @@ export declare class MessagingService {
         totalMessages: number;
         violations: string[];
     }>;
+    sendSystemMessage(familyId: string, content: string): Promise<{
+        id: string;
+        createdAt: Date;
+        familyId: string;
+        status: import("@prisma/client").$Enums.MessageStatus;
+        content: string;
+        attachmentUrl: string | null;
+        senderId: string;
+        contentHash: string;
+        previousHash: string;
+        isSystemMessage: boolean;
+    } | undefined>;
     markRead(familyId: string, userId: string): Promise<{
         message: string;
     }>;

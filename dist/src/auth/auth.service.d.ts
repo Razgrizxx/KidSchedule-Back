@@ -36,6 +36,7 @@ export declare class AuthService {
     resetPassword(dto: ResetPasswordDto): Promise<{
         message: string;
     }>;
+    private getTwilioClient;
     sendPhoneCode(userId: string, phone: string): Promise<{
         code?: string | undefined;
         message: string;

@@ -95,6 +95,34 @@ let MessagingService = class MessagingService {
         }
         return { isValid, totalMessages: messages.length, violations };
     }
+    async sendSystemMessage(familyId, content) {
+        const lastMessage = await this.prisma.message.findFirst({
+            where: { familyId },
+            orderBy: { createdAt: 'desc' },
+            select: { contentHash: true },
+        });
+        const previousHash = lastMessage?.contentHash ?? '0';
+        const timestamp = new Date().toISOString();
+        const contentHash = (0, crypto_1.createHash)('sha256')
+            .update(`${content}${timestamp}${previousHash}`)
+            .digest('hex');
+        const member = await this.prisma.familyMember.findFirst({
+            where: { familyId },
+        });
+        if (!member)
+            return;
+        return this.prisma.message.create({
+            data: {
+                familyId,
+                senderId: member.userId,
+                content,
+                contentHash,
+                previousHash,
+                isSystemMessage: true,
+                status: 'DELIVERED',
+            },
+        });
+    }
     async markRead(familyId, userId) {
         await this.familyService.assertMember(familyId, userId);
         await this.prisma.message.updateMany({

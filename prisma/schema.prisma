@@ -332,15 +332,16 @@ model CustodyEvent {
 // ─────────────────────────────────────────
 
 model Message {
-  id           String        @id @default(uuid())
-  familyId     String
-  senderId     String
-  content      String
-  status       MessageStatus @default(SENT)
-  contentHash  String
-  previousHash String        @default("0")
-  attachmentUrl String?
-  createdAt    DateTime      @default(now())
+  id              String        @id @default(uuid())
+  familyId        String
+  senderId        String
+  content         String
+  status          MessageStatus @default(SENT)
+  contentHash     String
+  previousHash    String        @default("0")
+  attachmentUrl   String?
+  isSystemMessage Boolean       @default(false)
+  createdAt       DateTime      @default(now())
 
   family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
   sender User   @relation("SentMessages", fields: [senderId], references: [id])

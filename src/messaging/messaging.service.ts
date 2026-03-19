@@ -99,6 +99,39 @@ export class MessagingService {
     return { isValid, totalMessages: messages.length, violations };
   }
 
+  /** Emit an immutable audit log entry (system message). */
+  async sendSystemMessage(familyId: string, content: string) {
+    const lastMessage = await this.prisma.message.findFirst({
+      where: { familyId },
+      orderBy: { createdAt: 'desc' },
+      select: { contentHash: true },
+    });
+
+    const previousHash = lastMessage?.contentHash ?? '0';
+    const timestamp = new Date().toISOString();
+    const contentHash = createHash('sha256')
+      .update(`${content}${timestamp}${previousHash}`)
+      .digest('hex');
+
+    // System messages are sent on behalf of the first family member
+    const member = await this.prisma.familyMember.findFirst({
+      where: { familyId },
+    });
+    if (!member) return;
+
+    return this.prisma.message.create({
+      data: {
+        familyId,
+        senderId: member.userId,
+        content,
+        contentHash,
+        previousHash,
+        isSystemMessage: true,
+        status: 'DELIVERED',
+      },
+    });
+  }
+
   async markRead(familyId: string, userId: string) {
     await this.familyService.assertMember(familyId, userId);
     await this.prisma.message.updateMany({
