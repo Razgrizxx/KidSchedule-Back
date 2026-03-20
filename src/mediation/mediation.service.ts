@@ -168,12 +168,19 @@ export class MediationService {
       data: { status: 'REJECTED' },
     });
 
-    return this.prisma.resolutionProposal.create({
+    const proposal = await this.prisma.resolutionProposal.create({
       data: { sessionId, proposedBy: userId, summary: dto.summary },
       include: {
         proposer: { select: { id: true, firstName: true, lastName: true } },
       },
     });
+
+    this.chatGateway.emitToFamily(familyId, 'new_mediation_proposal', {
+      sessionId,
+      proposal,
+    });
+
+    return proposal;
   }
 
   async respondProposal(
@@ -231,6 +238,14 @@ export class MediationService {
         payload: { sessionId, topic: proposal.session.topic },
       });
     }
+
+    // Always notify both parents of the proposal response
+    this.chatGateway.emitToFamily(familyId, 'new_mediation_proposal_response', {
+      sessionId,
+      proposalId,
+      status: dto.action,
+      sessionStatus: dto.action === 'ACCEPTED' ? 'RESOLVED' : undefined,
+    });
 
     return updated;
   }
