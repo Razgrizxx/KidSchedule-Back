@@ -360,8 +360,9 @@ model ChangeRequest {
   responderId   String?
   type          ChangeRequestType
   status        ChangeRequestStatus @default(PENDING)
-  originalDate  DateTime
-  requestedDate DateTime
+  originalDate    DateTime?
+  requestedDate   DateTime
+  requestedDateTo DateTime?
   childId       String?
   reason        String?
   counterDate   DateTime?

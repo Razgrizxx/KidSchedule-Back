@@ -1,10 +1,12 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
+import { MessagingService } from '../messaging/messaging.service';
 import { CreateChangeRequestDto, RespondChangeRequestDto } from './dto/change-request.dto';
 export declare class RequestsService {
     private prisma;
     private familyService;
-    constructor(prisma: PrismaService, familyService: FamilyService);
+    private messaging;
+    constructor(prisma: PrismaService, familyService: FamilyService, messaging: MessagingService);
     create(familyId: string, requesterId: string, dto: CreateChangeRequestDto): Promise<{
         requester: {
             id: string;
@@ -19,8 +21,9 @@ export declare class RequestsService {
         status: import("@prisma/client").$Enums.ChangeRequestStatus;
         childId: string | null;
         type: import("@prisma/client").$Enums.ChangeRequestType;
-        originalDate: Date;
+        originalDate: Date | null;
         requestedDate: Date;
+        requestedDateTo: Date | null;
         reason: string | null;
         counterDate: Date | null;
         counterReason: string | null;
@@ -47,8 +50,9 @@ export declare class RequestsService {
         status: import("@prisma/client").$Enums.ChangeRequestStatus;
         childId: string | null;
         type: import("@prisma/client").$Enums.ChangeRequestType;
-        originalDate: Date;
+        originalDate: Date | null;
         requestedDate: Date;
+        requestedDateTo: Date | null;
         reason: string | null;
         counterDate: Date | null;
         counterReason: string | null;
@@ -64,8 +68,9 @@ export declare class RequestsService {
         status: import("@prisma/client").$Enums.ChangeRequestStatus;
         childId: string | null;
         type: import("@prisma/client").$Enums.ChangeRequestType;
-        originalDate: Date;
+        originalDate: Date | null;
         requestedDate: Date;
+        requestedDateTo: Date | null;
         reason: string | null;
         counterDate: Date | null;
         counterReason: string | null;
@@ -73,4 +78,6 @@ export declare class RequestsService {
         requesterId: string;
         responderId: string | null;
     }>;
+    private applyCalendarOverrides;
+    private sendStatusMessage;
 }

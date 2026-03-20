@@ -19,6 +19,7 @@ exports.MessagingModule = MessagingModule = __decorate([
         imports: [family_module_1.FamilyModule],
         providers: [messaging_service_1.MessagingService],
         controllers: [messaging_controller_1.MessagingController],
+        exports: [messaging_service_1.MessagingService],
     })
 ], MessagingModule);
 //# sourceMappingURL=messaging.module.js.map

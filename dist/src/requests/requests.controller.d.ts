@@ -18,8 +18,9 @@ export declare class RequestsController {
         status: import("@prisma/client").$Enums.ChangeRequestStatus;
         childId: string | null;
         type: import("@prisma/client").$Enums.ChangeRequestType;
-        originalDate: Date;
+        originalDate: Date | null;
         requestedDate: Date;
+        requestedDateTo: Date | null;
         reason: string | null;
         counterDate: Date | null;
         counterReason: string | null;
@@ -46,8 +47,9 @@ export declare class RequestsController {
         status: import("@prisma/client").$Enums.ChangeRequestStatus;
         childId: string | null;
         type: import("@prisma/client").$Enums.ChangeRequestType;
-        originalDate: Date;
+        originalDate: Date | null;
         requestedDate: Date;
+        requestedDateTo: Date | null;
         reason: string | null;
         counterDate: Date | null;
         counterReason: string | null;
@@ -63,8 +65,9 @@ export declare class RequestsController {
         status: import("@prisma/client").$Enums.ChangeRequestStatus;
         childId: string | null;
         type: import("@prisma/client").$Enums.ChangeRequestType;
-        originalDate: Date;
+        originalDate: Date | null;
         requestedDate: Date;
+        requestedDateTo: Date | null;
         reason: string | null;
         counterDate: Date | null;
         counterReason: string | null;

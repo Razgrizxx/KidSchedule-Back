@@ -16,6 +16,7 @@ class CreateChangeRequestDto {
     type;
     originalDate;
     requestedDate;
+    requestedDateTo;
     childId;
     reason;
 }
@@ -25,6 +26,7 @@ __decorate([
     __metadata("design:type", String)
 ], CreateChangeRequestDto.prototype, "type", void 0);
 __decorate([
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], CreateChangeRequestDto.prototype, "originalDate", void 0);
@@ -32,6 +34,11 @@ __decorate([
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], CreateChangeRequestDto.prototype, "requestedDate", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", String)
+], CreateChangeRequestDto.prototype, "requestedDateTo", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsUUID)(),

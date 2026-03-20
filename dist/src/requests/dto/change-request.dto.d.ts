@@ -1,8 +1,9 @@
 import { ChangeRequestType } from '@prisma/client';
 export declare class CreateChangeRequestDto {
     type: ChangeRequestType;
-    originalDate: string;
+    originalDate?: string;
     requestedDate: string;
+    requestedDateTo?: string;
     childId?: string;
     reason?: string;
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { RequestsService } from './requests.service';
 import {
   CreateChangeRequestDto,
@@ -27,7 +27,7 @@ export class RequestsController {
     return this.requestsService.findAll(familyId, user.id);
   }
 
-  @Post(':requestId/respond')
+  @Patch(':requestId/respond')
   respond(
     @CurrentUser() user: AuthUser,
     @Param('familyId') familyId: string,

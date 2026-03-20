@@ -7,5 +7,6 @@ import { FamilyModule } from '../family/family.module';
   imports: [FamilyModule],
   providers: [MessagingService],
   controllers: [MessagingController],
+  exports: [MessagingService],
 })
 export class MessagingModule {}

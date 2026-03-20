@@ -12,11 +12,16 @@ export class CreateChangeRequestDto {
   @IsEnum(ChangeRequestType)
   type: ChangeRequestType;
 
+  @IsOptional()
   @IsDateString()
-  originalDate: string;
+  originalDate?: string;
 
   @IsDateString()
   requestedDate: string;
+
+  @IsOptional()
+  @IsDateString()
+  requestedDateTo?: string;
 
   @IsOptional()
   @IsUUID()
