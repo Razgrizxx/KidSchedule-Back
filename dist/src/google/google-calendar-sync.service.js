@@ -19,14 +19,27 @@ const prisma_service_1 = require("../prisma/prisma.service");
 const google_auth_service_1 = require("./google-auth.service");
 const crypto_util_1 = require("./crypto.util");
 const EVENT_TYPE_COLOR = {
-    CUSTODY_TIME: '1',
-    SCHOOL: '9',
+    CUSTODY_TIME: '9',
+    SCHOOL: '2',
     MEDICAL: '11',
     ACTIVITY: '5',
     VACATION: '7',
-    OTHER: '2',
+    OTHER: '8',
 };
-const CUSTODY_COLOR_ID = '1';
+const CHILD_COLOR_PALETTE = [
+    '9',
+    '11',
+    '5',
+    '7',
+    '3',
+    '6',
+    '10',
+    '4',
+    '2',
+    '1',
+    '8',
+];
+const KIDSCHEDULE_CALENDAR_NAME = 'KidSchedule';
 let GoogleCalendarSyncService = GoogleCalendarSyncService_1 = class GoogleCalendarSyncService {
     prisma;
     config;
@@ -51,25 +64,11 @@ let GoogleCalendarSyncService = GoogleCalendarSyncService_1 = class GoogleCalend
         try {
             const oauth2Client = await this.getRefreshedClient(user);
             const calendar = googleapis_1.google.calendar({ version: 'v3', auth: oauth2Client });
+            const calendarId = await this.getOrCreateKidScheduleCalendar(calendar, user);
             const googleEvent = this.mapToGoogleEvent(event);
-            if (event.googleEventId) {
-                await calendar.events.patch({
-                    calendarId: 'primary',
-                    eventId: event.googleEventId,
-                    requestBody: googleEvent,
-                });
-            }
-            else {
-                const response = await calendar.events.insert({
-                    calendarId: 'primary',
-                    requestBody: googleEvent,
-                });
-                if (response.data.id) {
-                    await this.prisma.event.update({
-                        where: { id: eventId },
-                        data: { googleEventId: response.data.id },
-                    });
-                }
+            const newId = await this.upsertGoogleEvent(calendar, calendarId, event.googleEventId, googleEvent);
+            if (newId && newId !== event.googleEventId) {
+                await this.prisma.event.update({ where: { id: eventId }, data: { googleEventId: newId } });
             }
         }
         catch (err) {
@@ -78,24 +77,67 @@ let GoogleCalendarSyncService = GoogleCalendarSyncService_1 = class GoogleCalend
     }
     async syncAllEvents(familyId, userId, cleanup = false) {
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
-        if (!user?.googleRefreshToken) {
+        if (!user?.googleRefreshToken)
             return { synced: 0, custodySynced: 0 };
-        }
         const oauth2Client = await this.getRefreshedClient(user);
         const calendar = googleapis_1.google.calendar({ version: 'v3', auth: oauth2Client });
+        const calendarId = await this.getOrCreateKidScheduleCalendar(calendar, user);
+        const childColorMap = await this.buildChildColorMap(familyId);
+        this.logger.log(`Export started — calendarId: ${calendarId}, cleanup: ${cleanup}, childColorMap: ${JSON.stringify(childColorMap)}`);
         const [synced, custodySynced] = await Promise.all([
-            this.syncRegularEvents(familyId, calendar, cleanup),
-            this.syncCustodyBlocks(familyId, calendar, cleanup),
+            this.syncRegularEvents(familyId, calendar, calendarId, cleanup),
+            this.syncCustodyBlocks(familyId, calendar, calendarId, childColorMap, cleanup),
         ]);
+        this.logger.log(`Export done — regular: ${synced}, custody blocks: ${custodySynced}`);
         return { synced, custodySynced };
     }
-    async syncRegularEvents(familyId, calendar, cleanup) {
+    async getOrCreateKidScheduleCalendar(calendar, user) {
+        if (user.googleCalendarId) {
+            try {
+                await calendar.calendarList.get({ calendarId: user.googleCalendarId });
+                return user.googleCalendarId;
+            }
+            catch {
+            }
+        }
+        const created = await calendar.calendars.insert({
+            requestBody: {
+                summary: KIDSCHEDULE_CALENDAR_NAME,
+                description: 'Family custody schedule and events synced from KidSchedule',
+            },
+        });
+        const calendarId = created.data.id;
+        await calendar.calendarList.patch({
+            calendarId,
+            requestBody: { backgroundColor: '#0B8043', foregroundColor: '#ffffff' },
+        }).catch(() => { });
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: { googleCalendarId: calendarId },
+        });
+        user.googleCalendarId = calendarId;
+        this.logger.log(`Created KidSchedule calendar: ${calendarId}`);
+        return calendarId;
+    }
+    async buildChildColorMap(familyId) {
+        const children = await this.prisma.child.findMany({
+            where: { familyId },
+            orderBy: { createdAt: 'asc' },
+            select: { id: true },
+        });
+        return Object.fromEntries(children.map((child, idx) => [
+            child.id,
+            CHILD_COLOR_PALETTE[idx % CHILD_COLOR_PALETTE.length],
+        ]));
+    }
+    async syncRegularEvents(familyId, calendar, calendarId, cleanup) {
         const events = await this.prisma.event.findMany({
             where: { familyId, startAt: { gte: new Date() } },
             include: { children: { include: { child: true } } },
         });
+        this.logger.log(`Regular events found: ${events.length}`);
         if (cleanup) {
-            await this.deleteGoogleEventsBatch(calendar, events.filter((e) => e.googleEventId).map((e) => e.googleEventId));
+            await this.deleteGoogleEventsBatch(calendar, calendarId, events.filter((e) => e.googleEventId).map((e) => e.googleEventId));
             await this.prisma.event.updateMany({
                 where: { familyId, googleEventId: { not: null } },
                 data: { googleEventId: null },
@@ -108,50 +150,30 @@ let GoogleCalendarSyncService = GoogleCalendarSyncService_1 = class GoogleCalend
             await Promise.all(events.slice(i, i + BATCH).map(async (event) => {
                 try {
                     const googleEvent = this.mapToGoogleEvent(event);
-                    if (event.googleEventId) {
-                        await calendar.events.patch({
-                            calendarId: 'primary',
-                            eventId: event.googleEventId,
-                            requestBody: googleEvent,
-                        });
-                    }
-                    else {
-                        const res = await calendar.events.insert({
-                            calendarId: 'primary',
-                            requestBody: googleEvent,
-                        });
-                        if (res.data.id) {
-                            await this.prisma.event.update({
-                                where: { id: event.id },
-                                data: { googleEventId: res.data.id },
-                            });
-                        }
+                    const newId = await this.upsertGoogleEvent(calendar, calendarId, event.googleEventId, googleEvent);
+                    if (newId && newId !== event.googleEventId) {
+                        await this.prisma.event.update({ where: { id: event.id }, data: { googleEventId: newId } });
                     }
                     synced++;
                 }
                 catch (err) {
-                    this.logger.warn(`Skipped event ${event.id} during export: ${err}`);
+                    this.logger.warn(`Skipped event ${event.id}: ${err}`);
                 }
             }));
         }
         return synced;
     }
-    async syncCustodyBlocks(familyId, calendar, cleanup) {
+    async syncCustodyBlocks(familyId, calendar, calendarId, childColorMap, cleanup) {
         const sixMonthsFromNow = new Date();
         sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
         const custodyEvents = await this.prisma.custodyEvent.findMany({
-            where: {
-                familyId,
-                date: { gte: new Date(), lte: sixMonthsFromNow },
-            },
+            where: { familyId, date: { gte: new Date(), lte: sixMonthsFromNow } },
             include: { child: true },
             orderBy: [{ childId: 'asc' }, { date: 'asc' }],
         });
+        this.logger.log(`Custody events found: ${custodyEvents.length}, date range: now → ${sixMonthsFromNow.toISOString()}`);
         if (cleanup) {
-            const existingGoogleIds = custodyEvents
-                .filter((e) => e.googleEventId)
-                .map((e) => e.googleEventId);
-            await this.deleteGoogleEventsBatch(calendar, existingGoogleIds);
+            await this.deleteGoogleEventsBatch(calendar, calendarId, custodyEvents.filter((e) => e.googleEventId).map((e) => e.googleEventId));
             await this.prisma.custodyEvent.updateMany({
                 where: { familyId, googleEventId: { not: null } },
                 data: { googleEventId: null },
@@ -159,35 +181,25 @@ let GoogleCalendarSyncService = GoogleCalendarSyncService_1 = class GoogleCalend
             custodyEvents.forEach((e) => (e.googleEventId = null));
         }
         const blocks = this.groupCustodyBlocks(custodyEvents);
+        this.logger.log(`Custody blocks grouped: ${blocks.length}`);
         let synced = 0;
         const BATCH = 5;
         for (let i = 0; i < blocks.length; i += BATCH) {
             await Promise.all(blocks.slice(i, i + BATCH).map(async (block) => {
                 try {
-                    const googleEvent = this.mapCustodyBlockToGoogleEvent(block);
-                    if (block.googleEventId) {
-                        await calendar.events.patch({
-                            calendarId: 'primary',
-                            eventId: block.googleEventId,
-                            requestBody: googleEvent,
+                    const colorId = childColorMap[block.childId] ?? '9';
+                    const googleEvent = this.mapCustodyBlockToGoogleEvent(block, colorId);
+                    const newId = await this.upsertGoogleEvent(calendar, calendarId, block.googleEventId, googleEvent);
+                    if (newId && newId !== block.googleEventId) {
+                        await this.prisma.custodyEvent.update({
+                            where: { id: block.anchorId },
+                            data: { googleEventId: newId },
                         });
-                    }
-                    else {
-                        const res = await calendar.events.insert({
-                            calendarId: 'primary',
-                            requestBody: googleEvent,
-                        });
-                        if (res.data.id) {
-                            await this.prisma.custodyEvent.update({
-                                where: { id: block.anchorId },
-                                data: { googleEventId: res.data.id },
-                            });
-                        }
                     }
                     synced++;
                 }
                 catch (err) {
-                    this.logger.warn(`Skipped custody block ${block.anchorId} during export: ${err}`);
+                    this.logger.warn(`Skipped custody block ${block.anchorId}: ${err}`);
                 }
             }));
         }
@@ -219,12 +231,26 @@ let GoogleCalendarSyncService = GoogleCalendarSyncService_1 = class GoogleCalend
         }
         return blocks;
     }
-    async deleteGoogleEventsBatch(calendar, googleEventIds) {
+    async upsertGoogleEvent(calendar, calendarId, existingId, requestBody) {
+        if (existingId) {
+            try {
+                await calendar.events.patch({ calendarId, eventId: existingId, requestBody });
+                return existingId;
+            }
+            catch (err) {
+                if (err?.code !== 404 && err?.status !== 404)
+                    throw err;
+            }
+        }
+        const res = await calendar.events.insert({ calendarId, requestBody });
+        return res.data.id ?? null;
+    }
+    async deleteGoogleEventsBatch(calendar, calendarId, googleEventIds) {
         const BATCH = 5;
         for (let i = 0; i < googleEventIds.length; i += BATCH) {
-            await Promise.all(googleEventIds.slice(i, i + BATCH).map((id) => calendar.events
-                .delete({ calendarId: 'primary', eventId: id })
-                .catch(() => { })));
+            await Promise.all(googleEventIds
+                .slice(i, i + BATCH)
+                .map((id) => calendar.events.delete({ calendarId, eventId: id }).catch(() => { })));
         }
     }
     async getRefreshedClient(user) {
@@ -267,14 +293,14 @@ let GoogleCalendarSyncService = GoogleCalendarSyncService_1 = class GoogleCalend
         const base = {
             summary: event.title,
             description,
-            colorId: EVENT_TYPE_COLOR[event.type] ?? '2',
+            colorId: EVENT_TYPE_COLOR[event.type] ?? '8',
         };
         if (event.allDay) {
-            const dateStr = event.startAt.toISOString().slice(0, 10);
-            const endDateStr = new Date(event.endAt.getTime() + 86_400_000)
-                .toISOString()
-                .slice(0, 10);
-            return { ...base, start: { date: dateStr }, end: { date: endDateStr } };
+            return {
+                ...base,
+                start: { date: event.startAt.toISOString().slice(0, 10) },
+                end: { date: new Date(event.endAt.getTime() + 86_400_000).toISOString().slice(0, 10) },
+            };
         }
         return {
             ...base,
@@ -282,14 +308,13 @@ let GoogleCalendarSyncService = GoogleCalendarSyncService_1 = class GoogleCalend
             end: { dateTime: event.endAt.toISOString() },
         };
     }
-    mapCustodyBlockToGoogleEvent(block) {
-        const endDate = new Date(block.endDate.getTime() + 86_400_000);
+    mapCustodyBlockToGoogleEvent(block, colorId) {
         return {
             summary: `Custody: ${block.childName}`,
             description: `Synchronized from KidSchedule`,
-            colorId: CUSTODY_COLOR_ID,
+            colorId,
             start: { date: block.startDate.toISOString().slice(0, 10) },
-            end: { date: endDate.toISOString().slice(0, 10) },
+            end: { date: new Date(block.endDate.getTime() + 86_400_000).toISOString().slice(0, 10) },
         };
     }
 };

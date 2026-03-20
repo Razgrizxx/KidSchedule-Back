@@ -14,23 +14,42 @@ export interface CalendarEventUpsertPayload {
   userId: string;
 }
 
-// ── Google Calendar color IDs (1–11) ─────────────────────────────────────────
+// ── Google Calendar color IDs for event types ─────────────────────────────────
 
 const EVENT_TYPE_COLOR: Record<string, string> = {
-  CUSTODY_TIME: '1',  // lavender (per spec: "Azul, colorId: '1'")
-  SCHOOL:       '9',  // blueberry
-  MEDICAL:      '11', // tomato   (per spec: "Rojo, colorId: '11'")
+  CUSTODY_TIME: '9',  // blueberry — overridden by per-child color on full export
+  SCHOOL:       '2',  // sage
+  MEDICAL:      '11', // tomato  (spec: "Rojo, colorId: '11'")
   ACTIVITY:     '5',  // banana
   VACATION:     '7',  // peacock
-  OTHER:        '2',  // sage
+  OTHER:        '8',  // graphite
 };
 
-const CUSTODY_COLOR_ID = '1'; // lavender (spec: "Azul, colorId: '1'")
+// ── Per-child color palette (visually distinct, cycling if > 11 children) ─────
+// Ordered for maximum contrast between adjacent slots.
 
+const CHILD_COLOR_PALETTE = [
+  '9',  // blueberry  (dark blue)
+  '11', // tomato     (red)
+  '5',  // banana     (yellow)
+  '7',  // peacock    (teal)
+  '3',  // grape      (purple)
+  '6',  // tangerine  (orange)
+  '10', // basil      (dark green)
+  '4',  // flamingo   (pink)
+  '2',  // sage       (light green)
+  '1',  // lavender
+  '8',  // graphite
+];
+
+// ── KidSchedule dedicated calendar ───────────────────────────────────────────
+
+const KIDSCHEDULE_CALENDAR_NAME = 'KidSchedule';
+
+type GCalendar = ReturnType<typeof google.calendar>;
 type EventWithChildren = PrismaEvent & {
   children: (EventChild & { child: Child })[];
 };
-
 type CustodyEventWithChild = CustodyEvent & { child: Child };
 
 interface CustodyBlock {
@@ -39,7 +58,6 @@ interface CustodyBlock {
   custodianId: string;
   startDate: Date;
   endDate: Date;
-  /** id of the first CustodyEvent in the block — googleEventId is stored here */
   anchorId: string;
   googleEventId: string | null;
 }
@@ -54,7 +72,7 @@ export class GoogleCalendarSyncService {
     private readonly googleAuth: GoogleAuthService,
   ) {}
 
-  // ── Listen for KidSchedule event changes ─────────────────────────────────
+  // ── Live sync on individual event save ───────────────────────────────────
 
   @OnEvent('calendar.event.upsert', { async: true })
   async handleEventUpsert(payload: CalendarEventUpsertPayload): Promise<void> {
@@ -72,25 +90,11 @@ export class GoogleCalendarSyncService {
     try {
       const oauth2Client = await this.getRefreshedClient(user);
       const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+      const calendarId = await this.getOrCreateKidScheduleCalendar(calendar, user);
       const googleEvent = this.mapToGoogleEvent(event as EventWithChildren);
-
-      if (event.googleEventId) {
-        await calendar.events.patch({
-          calendarId: 'primary',
-          eventId: event.googleEventId,
-          requestBody: googleEvent,
-        });
-      } else {
-        const response = await calendar.events.insert({
-          calendarId: 'primary',
-          requestBody: googleEvent,
-        });
-        if (response.data.id) {
-          await this.prisma.event.update({
-            where: { id: eventId },
-            data: { googleEventId: response.data.id },
-          });
-        }
+      const newId = await this.upsertGoogleEvent(calendar, calendarId, event.googleEventId, googleEvent);
+      if (newId && newId !== event.googleEventId) {
+        await this.prisma.event.update({ where: { id: eventId }, data: { googleEventId: newId } });
       }
     } catch (err) {
       this.logger.error(`Google Calendar sync failed for event ${eventId}`, err);
@@ -105,26 +109,89 @@ export class GoogleCalendarSyncService {
     cleanup = false,
   ): Promise<{ synced: number; custodySynced: number }> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user?.googleRefreshToken) {
-      return { synced: 0, custodySynced: 0 };
-    }
+    if (!user?.googleRefreshToken) return { synced: 0, custodySynced: 0 };
 
     const oauth2Client = await this.getRefreshedClient(user);
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+    const calendarId = await this.getOrCreateKidScheduleCalendar(calendar, user);
+    const childColorMap = await this.buildChildColorMap(familyId);
+
+    this.logger.log(`Export started — calendarId: ${calendarId}, cleanup: ${cleanup}, childColorMap: ${JSON.stringify(childColorMap)}`);
 
     const [synced, custodySynced] = await Promise.all([
-      this.syncRegularEvents(familyId, calendar, cleanup),
-      this.syncCustodyBlocks(familyId, calendar, cleanup),
+      this.syncRegularEvents(familyId, calendar, calendarId, cleanup),
+      this.syncCustodyBlocks(familyId, calendar, calendarId, childColorMap, cleanup),
     ]);
 
+    this.logger.log(`Export done — regular: ${synced}, custody blocks: ${custodySynced}`);
     return { synced, custodySynced };
+  }
+
+  // ── Get or create the dedicated "KidSchedule" Google Calendar ─────────────
+
+  private async getOrCreateKidScheduleCalendar(calendar: GCalendar, user: User): Promise<string> {
+    // Try stored calendar ID first
+    if (user.googleCalendarId) {
+      try {
+        await calendar.calendarList.get({ calendarId: user.googleCalendarId });
+        return user.googleCalendarId;
+      } catch {
+        // Calendar was deleted externally — fall through to recreate
+      }
+    }
+
+    // Create a new dedicated calendar
+    const created = await calendar.calendars.insert({
+      requestBody: {
+        summary: KIDSCHEDULE_CALENDAR_NAME,
+        description: 'Family custody schedule and events synced from KidSchedule',
+      },
+    });
+
+    const calendarId = created.data.id!;
+
+    // Set a recognisable color on the calendar entry in the user's list
+    await calendar.calendarList.patch({
+      calendarId,
+      requestBody: { backgroundColor: '#0B8043', foregroundColor: '#ffffff' },
+    }).catch(() => {}); // non-critical
+
+    // Persist so we reuse it on the next sync
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { googleCalendarId: calendarId },
+    });
+
+    // Mutate the in-memory object so callers see the new ID without a re-fetch
+    user.googleCalendarId = calendarId;
+
+    this.logger.log(`Created KidSchedule calendar: ${calendarId}`);
+    return calendarId;
+  }
+
+  // ── Build a map of childId → colorId (stable, by creation order) ──────────
+
+  private async buildChildColorMap(familyId: string): Promise<Record<string, string>> {
+    const children = await this.prisma.child.findMany({
+      where: { familyId },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true },
+    });
+
+    return Object.fromEntries(
+      children.map((child, idx) => [
+        child.id,
+        CHILD_COLOR_PALETTE[idx % CHILD_COLOR_PALETTE.length],
+      ]),
+    );
   }
 
   // ── Regular events sync ───────────────────────────────────────────────────
 
   private async syncRegularEvents(
     familyId: string,
-    calendar: ReturnType<typeof google.calendar>,
+    calendar: GCalendar,
+    calendarId: string,
     cleanup: boolean,
   ): Promise<number> {
     const events = await this.prisma.event.findMany({
@@ -132,16 +199,18 @@ export class GoogleCalendarSyncService {
       include: { children: { include: { child: true } } },
     });
 
+    this.logger.log(`Regular events found: ${events.length}`);
+
     if (cleanup) {
       await this.deleteGoogleEventsBatch(
         calendar,
+        calendarId,
         events.filter((e) => e.googleEventId).map((e) => e.googleEventId!),
       );
       await this.prisma.event.updateMany({
         where: { familyId, googleEventId: { not: null } },
         data: { googleEventId: null },
       });
-      // Reload after nulling IDs so all events get re-created
       events.forEach((e) => (e.googleEventId = null));
     }
 
@@ -152,27 +221,13 @@ export class GoogleCalendarSyncService {
         events.slice(i, i + BATCH).map(async (event) => {
           try {
             const googleEvent = this.mapToGoogleEvent(event as EventWithChildren);
-            if (event.googleEventId) {
-              await calendar.events.patch({
-                calendarId: 'primary',
-                eventId: event.googleEventId,
-                requestBody: googleEvent,
-              });
-            } else {
-              const res = await calendar.events.insert({
-                calendarId: 'primary',
-                requestBody: googleEvent,
-              });
-              if (res.data.id) {
-                await this.prisma.event.update({
-                  where: { id: event.id },
-                  data: { googleEventId: res.data.id },
-                });
-              }
+            const newId = await this.upsertGoogleEvent(calendar, calendarId, event.googleEventId, googleEvent);
+            if (newId && newId !== event.googleEventId) {
+              await this.prisma.event.update({ where: { id: event.id }, data: { googleEventId: newId } });
             }
             synced++;
           } catch (err) {
-            this.logger.warn(`Skipped event ${event.id} during export: ${err}`);
+            this.logger.warn(`Skipped event ${event.id}: ${err}`);
           }
         }),
       );
@@ -184,26 +239,28 @@ export class GoogleCalendarSyncService {
 
   private async syncCustodyBlocks(
     familyId: string,
-    calendar: ReturnType<typeof google.calendar>,
+    calendar: GCalendar,
+    calendarId: string,
+    childColorMap: Record<string, string>,
     cleanup: boolean,
   ): Promise<number> {
     const sixMonthsFromNow = new Date();
     sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
 
     const custodyEvents = await this.prisma.custodyEvent.findMany({
-      where: {
-        familyId,
-        date: { gte: new Date(), lte: sixMonthsFromNow },
-      },
+      where: { familyId, date: { gte: new Date(), lte: sixMonthsFromNow } },
       include: { child: true },
       orderBy: [{ childId: 'asc' }, { date: 'asc' }],
     });
 
+    this.logger.log(`Custody events found: ${custodyEvents.length}, date range: now → ${sixMonthsFromNow.toISOString()}`);
+
     if (cleanup) {
-      const existingGoogleIds = custodyEvents
-        .filter((e) => e.googleEventId)
-        .map((e) => e.googleEventId!);
-      await this.deleteGoogleEventsBatch(calendar, existingGoogleIds);
+      await this.deleteGoogleEventsBatch(
+        calendar,
+        calendarId,
+        custodyEvents.filter((e) => e.googleEventId).map((e) => e.googleEventId!),
+      );
       await this.prisma.custodyEvent.updateMany({
         where: { familyId, googleEventId: { not: null } },
         data: { googleEventId: null },
@@ -212,6 +269,7 @@ export class GoogleCalendarSyncService {
     }
 
     const blocks = this.groupCustodyBlocks(custodyEvents as CustodyEventWithChild[]);
+    this.logger.log(`Custody blocks grouped: ${blocks.length}`);
 
     let synced = 0;
     const BATCH = 5;
@@ -219,28 +277,18 @@ export class GoogleCalendarSyncService {
       await Promise.all(
         blocks.slice(i, i + BATCH).map(async (block) => {
           try {
-            const googleEvent = this.mapCustodyBlockToGoogleEvent(block);
-            if (block.googleEventId) {
-              await calendar.events.patch({
-                calendarId: 'primary',
-                eventId: block.googleEventId,
-                requestBody: googleEvent,
+            const colorId = childColorMap[block.childId] ?? '9';
+            const googleEvent = this.mapCustodyBlockToGoogleEvent(block, colorId);
+            const newId = await this.upsertGoogleEvent(calendar, calendarId, block.googleEventId, googleEvent);
+            if (newId && newId !== block.googleEventId) {
+              await this.prisma.custodyEvent.update({
+                where: { id: block.anchorId },
+                data: { googleEventId: newId },
               });
-            } else {
-              const res = await calendar.events.insert({
-                calendarId: 'primary',
-                requestBody: googleEvent,
-              });
-              if (res.data.id) {
-                await this.prisma.custodyEvent.update({
-                  where: { id: block.anchorId },
-                  data: { googleEventId: res.data.id },
-                });
-              }
             }
             synced++;
           } catch (err) {
-            this.logger.warn(`Skipped custody block ${block.anchorId} during export: ${err}`);
+            this.logger.warn(`Skipped custody block ${block.anchorId}: ${err}`);
           }
         }),
       );
@@ -260,7 +308,7 @@ export class GoogleCalendarSyncService {
         last &&
         last.childId === ev.childId &&
         last.custodianId === ev.custodianId &&
-        ev.date.getTime() - last.endDate.getTime() <= ONE_DAY_MS + 1000; // 1ms tolerance
+        ev.date.getTime() - last.endDate.getTime() <= ONE_DAY_MS + 1000;
 
       if (isConsecutive) {
         last.endDate = ev.date;
@@ -280,20 +328,42 @@ export class GoogleCalendarSyncService {
     return blocks;
   }
 
-  // ── Delete a list of Google event IDs, ignoring 404s ─────────────────────
+  // ── Insert or update a Google Calendar event, falling back to insert on 404 ─
+
+  private async upsertGoogleEvent(
+    calendar: GCalendar,
+    calendarId: string,
+    existingId: string | null,
+    requestBody: object,
+  ): Promise<string | null> {
+    if (existingId) {
+      try {
+        await calendar.events.patch({ calendarId, eventId: existingId, requestBody });
+        return existingId;
+      } catch (err: any) {
+        // 404 means the event was deleted or is in a different calendar — fall through to insert
+        if (err?.code !== 404 && err?.status !== 404) throw err;
+      }
+    }
+    const res = await calendar.events.insert({ calendarId, requestBody });
+    return res.data.id ?? null;
+  }
+
+  // ── Batch-delete Google events, silently ignoring 404s ───────────────────
 
   private async deleteGoogleEventsBatch(
-    calendar: ReturnType<typeof google.calendar>,
+    calendar: GCalendar,
+    calendarId: string,
     googleEventIds: string[],
   ): Promise<void> {
     const BATCH = 5;
     for (let i = 0; i < googleEventIds.length; i += BATCH) {
       await Promise.all(
-        googleEventIds.slice(i, i + BATCH).map((id) =>
-          calendar.events
-            .delete({ calendarId: 'primary', eventId: id })
-            .catch(() => {}), // ignore 404 / already deleted
-        ),
+        googleEventIds
+          .slice(i, i + BATCH)
+          .map((id) =>
+            calendar.events.delete({ calendarId, eventId: id }).catch(() => {}),
+          ),
       );
     }
   }
@@ -334,7 +404,7 @@ export class GoogleCalendarSyncService {
     return oauth2Client;
   }
 
-  // ── Map regular event → Google Calendar resource ──────────────────────────
+  // ── Map regular KidSchedule event → Google Calendar resource ─────────────
 
   private mapToGoogleEvent(event: EventWithChildren) {
     const childNames = event.children.map((ec) => ec.child.firstName).join(', ');
@@ -349,15 +419,15 @@ export class GoogleCalendarSyncService {
     const base = {
       summary: event.title,
       description,
-      colorId: EVENT_TYPE_COLOR[event.type] ?? '2',
+      colorId: EVENT_TYPE_COLOR[event.type] ?? '8',
     };
 
     if (event.allDay) {
-      const dateStr = event.startAt.toISOString().slice(0, 10);
-      const endDateStr = new Date(event.endAt.getTime() + 86_400_000)
-        .toISOString()
-        .slice(0, 10);
-      return { ...base, start: { date: dateStr }, end: { date: endDateStr } };
+      return {
+        ...base,
+        start: { date: event.startAt.toISOString().slice(0, 10) },
+        end: { date: new Date(event.endAt.getTime() + 86_400_000).toISOString().slice(0, 10) },
+      };
     }
 
     return {
@@ -367,18 +437,16 @@ export class GoogleCalendarSyncService {
     };
   }
 
-  // ── Map custody block → Google Calendar resource ──────────────────────────
+  // ── Map custody block → Google Calendar resource (per-child color) ────────
 
-  private mapCustodyBlockToGoogleEvent(block: CustodyBlock) {
-    // Google Calendar all-day events use exclusive end date (day after last day)
-    const endDate = new Date(block.endDate.getTime() + 86_400_000);
-
+  private mapCustodyBlockToGoogleEvent(block: CustodyBlock, colorId: string) {
     return {
       summary: `Custody: ${block.childName}`,
       description: `Synchronized from KidSchedule`,
-      colorId: CUSTODY_COLOR_ID,
+      colorId,
       start: { date: block.startDate.toISOString().slice(0, 10) },
-      end: { date: endDate.toISOString().slice(0, 10) },
+      // Google all-day end date is exclusive (day after last day)
+      end: { date: new Date(block.endDate.getTime() + 86_400_000).toISOString().slice(0, 10) },
     };
   }
 }

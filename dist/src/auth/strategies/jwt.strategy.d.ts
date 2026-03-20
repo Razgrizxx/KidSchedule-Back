@@ -25,6 +25,7 @@ export declare class JwtStrategy extends JwtStrategy_base {
         googleRefreshToken: string | null;
         googleAccessToken: string | null;
         googleTokenExpiry: Date | null;
+        googleCalendarId: string | null;
         createdAt: Date;
         updatedAt: Date;
     }>;

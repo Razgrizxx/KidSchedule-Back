@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var GoogleController_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GoogleController = void 0;
 const common_1 = require("@nestjs/common");
@@ -19,10 +20,11 @@ const jwt_auth_guard_1 = require("../common/guards/jwt-auth.guard");
 const current_user_decorator_1 = require("../common/decorators/current-user.decorator");
 const google_auth_service_1 = require("./google-auth.service");
 const google_calendar_sync_service_1 = require("./google-calendar-sync.service");
-let GoogleController = class GoogleController {
+let GoogleController = GoogleController_1 = class GoogleController {
     googleAuth;
     googleSync;
     config;
+    logger = new common_1.Logger(GoogleController_1.name);
     constructor(googleAuth, googleSync, config) {
         this.googleAuth = googleAuth;
         this.googleSync = googleSync;
@@ -55,8 +57,14 @@ let GoogleController = class GoogleController {
     syncAll(user, familyId) {
         return this.googleSync.syncAllEvents(familyId, user.id);
     }
-    exportAll(user, familyId, body) {
-        return this.googleSync.syncAllEvents(familyId, user.id, body.cleanup ?? false);
+    async exportAll(user, familyId, body) {
+        try {
+            return await this.googleSync.syncAllEvents(familyId, user.id, body.cleanup ?? false);
+        }
+        catch (err) {
+            this.logger.error('Google Calendar export failed', err);
+            throw new common_1.InternalServerErrorException(err instanceof Error ? err.message : 'Google Calendar export failed');
+        }
     }
 };
 exports.GoogleController = GoogleController;
@@ -111,9 +119,9 @@ __decorate([
     __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Function, String, Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], GoogleController.prototype, "exportAll", null);
-exports.GoogleController = GoogleController = __decorate([
+exports.GoogleController = GoogleController = GoogleController_1 = __decorate([
     (0, common_1.Controller)('auth/google'),
     __metadata("design:paramtypes", [google_auth_service_1.GoogleAuthService,
         google_calendar_sync_service_1.GoogleCalendarSyncService,

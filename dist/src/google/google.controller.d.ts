@@ -7,6 +7,7 @@ export declare class GoogleController {
     private readonly googleAuth;
     private readonly googleSync;
     private readonly config;
+    private readonly logger;
     constructor(googleAuth: GoogleAuthService, googleSync: GoogleCalendarSyncService, config: ConfigService);
     getAuthUrl(user: AuthUser): {
         url: string;

@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  InternalServerErrorException,
+  Logger,
   Post,
   Query,
   Res,
@@ -19,6 +21,8 @@ import { GoogleCalendarSyncService } from './google-calendar-sync.service';
 
 @Controller('auth/google')
 export class GoogleController {
+  private readonly logger = new Logger(GoogleController.name)
+
   constructor(
     private readonly googleAuth: GoogleAuthService,
     private readonly googleSync: GoogleCalendarSyncService,
@@ -86,11 +90,18 @@ export class GoogleController {
    */
   @UseGuards(JwtAuthGuard)
   @Post('export/:familyId')
-  exportAll(
+  async exportAll(
     @CurrentUser() user: AuthUser,
     @Param('familyId') familyId: string,
     @Body() body: { cleanup?: boolean },
   ) {
-    return this.googleSync.syncAllEvents(familyId, user.id, body.cleanup ?? false);
+    try {
+      return await this.googleSync.syncAllEvents(familyId, user.id, body.cleanup ?? false);
+    } catch (err) {
+      this.logger.error('Google Calendar export failed', err)
+      throw new InternalServerErrorException(
+        err instanceof Error ? err.message : 'Google Calendar export failed',
+      )
+    }
   }
 }

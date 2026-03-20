@@ -33,7 +33,7 @@ let GoogleAuthService = class GoogleAuthService {
         return this.createOAuth2Client().generateAuthUrl({
             access_type: 'offline',
             prompt: 'consent',
-            scope: ['https://www.googleapis.com/auth/calendar.events'],
+            scope: ['https://www.googleapis.com/auth/calendar'],
             state,
         });
     }

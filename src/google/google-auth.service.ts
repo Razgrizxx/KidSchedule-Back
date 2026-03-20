@@ -32,7 +32,7 @@ export class GoogleAuthService {
     return this.createOAuth2Client().generateAuthUrl({
       access_type: 'offline',
       prompt: 'consent',           // Critical: ensures refresh_token is always returned
-      scope: ['https://www.googleapis.com/auth/calendar.events'],
+      scope: ['https://www.googleapis.com/auth/calendar'],
       state,
     });
   }

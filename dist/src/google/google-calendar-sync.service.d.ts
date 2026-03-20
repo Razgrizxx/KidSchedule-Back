@@ -16,9 +16,12 @@ export declare class GoogleCalendarSyncService {
         synced: number;
         custodySynced: number;
     }>;
+    private getOrCreateKidScheduleCalendar;
+    private buildChildColorMap;
     private syncRegularEvents;
     private syncCustodyBlocks;
     private groupCustodyBlocks;
+    private upsertGoogleEvent;
     private deleteGoogleEventsBatch;
     private getRefreshedClient;
     private mapToGoogleEvent;

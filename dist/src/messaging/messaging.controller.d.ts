@@ -18,11 +18,11 @@ export declare class MessagingController {
         createdAt: Date;
         familyId: string;
         status: import("@prisma/client").$Enums.MessageStatus;
-        senderId: string;
         content: string;
+        attachmentUrl: string | null;
+        senderId: string;
         contentHash: string;
         previousHash: string;
-        attachmentUrl: string | null;
         isSystemMessage: boolean;
     }>;
     findAll(user: AuthUser, familyId: string, cursor?: string, take?: string): Promise<{
@@ -38,11 +38,11 @@ export declare class MessagingController {
             createdAt: Date;
             familyId: string;
             status: import("@prisma/client").$Enums.MessageStatus;
-            senderId: string;
             content: string;
+            attachmentUrl: string | null;
+            senderId: string;
             contentHash: string;
             previousHash: string;
-            attachmentUrl: string | null;
             isSystemMessage: boolean;
         })[];
         nextCursor: string | null;

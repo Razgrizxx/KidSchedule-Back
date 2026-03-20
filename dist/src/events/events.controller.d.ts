@@ -5,11 +5,6 @@ export declare class EventsController {
     private eventsService;
     constructor(eventsService: EventsService);
     create(user: AuthUser, familyId: string, dto: CreateEventDto): Promise<{
-        assignedTo: {
-            id: string;
-            firstName: string;
-            lastName: string;
-        } | null;
         children: ({
             child: {
                 id: string;
@@ -19,32 +14,32 @@ export declare class EventsController {
             };
         } & {
             id: string;
-            eventId: string;
             childId: string;
+            eventId: string;
         })[];
+        assignedTo: {
+            id: string;
+            firstName: string;
+            lastName: string;
+        } | null;
     } & {
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        repeat: import("@prisma/client").$Enums.RepeatPattern;
         familyId: string;
-        createdBy: string;
-        title: string;
-        type: import("@prisma/client").$Enums.EventType;
         visibility: import("@prisma/client").$Enums.EventVisibility;
+        createdBy: string;
+        googleEventId: string | null;
+        type: import("@prisma/client").$Enums.EventType;
+        title: string;
         startAt: Date;
         endAt: Date;
         allDay: boolean;
-        repeat: import("@prisma/client").$Enums.RepeatPattern;
         notes: string | null;
         assignedToId: string | null;
-        googleEventId: string | null;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     findAll(user: AuthUser, familyId: string, month?: string): Promise<({
-        assignedTo: {
-            id: string;
-            firstName: string;
-            lastName: string;
-        } | null;
         children: ({
             child: {
                 id: string;
@@ -54,32 +49,32 @@ export declare class EventsController {
             };
         } & {
             id: string;
-            eventId: string;
             childId: string;
+            eventId: string;
         })[];
+        assignedTo: {
+            id: string;
+            firstName: string;
+            lastName: string;
+        } | null;
     } & {
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        repeat: import("@prisma/client").$Enums.RepeatPattern;
         familyId: string;
-        createdBy: string;
-        title: string;
-        type: import("@prisma/client").$Enums.EventType;
         visibility: import("@prisma/client").$Enums.EventVisibility;
+        createdBy: string;
+        googleEventId: string | null;
+        type: import("@prisma/client").$Enums.EventType;
+        title: string;
         startAt: Date;
         endAt: Date;
         allDay: boolean;
-        repeat: import("@prisma/client").$Enums.RepeatPattern;
         notes: string | null;
         assignedToId: string | null;
-        googleEventId: string | null;
-        createdAt: Date;
-        updatedAt: Date;
     })[]>;
     update(user: AuthUser, familyId: string, eventId: string, dto: UpdateEventDto): Promise<{
-        assignedTo: {
-            id: string;
-            firstName: string;
-            lastName: string;
-        } | null;
         children: ({
             child: {
                 id: string;
@@ -89,25 +84,30 @@ export declare class EventsController {
             };
         } & {
             id: string;
-            eventId: string;
             childId: string;
+            eventId: string;
         })[];
+        assignedTo: {
+            id: string;
+            firstName: string;
+            lastName: string;
+        } | null;
     } & {
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        repeat: import("@prisma/client").$Enums.RepeatPattern;
         familyId: string;
-        createdBy: string;
-        title: string;
-        type: import("@prisma/client").$Enums.EventType;
         visibility: import("@prisma/client").$Enums.EventVisibility;
+        createdBy: string;
+        googleEventId: string | null;
+        type: import("@prisma/client").$Enums.EventType;
+        title: string;
         startAt: Date;
         endAt: Date;
         allDay: boolean;
-        repeat: import("@prisma/client").$Enums.RepeatPattern;
         notes: string | null;
         assignedToId: string | null;
-        googleEventId: string | null;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     getHolidays(user: AuthUser, familyId: string, yearStr?: string, country?: string): Promise<{
         isTransitionDay: boolean;
