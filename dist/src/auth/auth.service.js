@@ -166,14 +166,25 @@ let AuthService = class AuthService {
         return twilio.default(sid, token);
     }
     async sendPhoneCode(userId, phone) {
+        const digits = phone.replace(/\D/g, '');
+        phone = (phone.trim().startsWith('+') ? '+' : '') + digits;
         const devMode = this.config.get('DEV_MODE') === 'true';
         const serviceSid = this.config.get('TWILIO_VERIFY_SERVICE_SID');
         const client = this.getTwilioClient();
+        console.log(devMode, client, serviceSid);
         if (!devMode && client && serviceSid) {
-            await client.verify.v2.services(serviceSid).verifications.create({
-                to: phone,
-                channel: 'sms',
-            });
+            console.log('Using Twilio to send code');
+            try {
+                await client.verify.v2.services(serviceSid).verifications.create({
+                    to: phone,
+                    channel: 'sms',
+                });
+            }
+            catch (err) {
+                const msg = err instanceof Error ? err.message : String(err);
+                console.error('Twilio error:', msg);
+                throw new Error(`Twilio: ${msg}`);
+            }
             return { message: 'Code sent' };
         }
         const code = devMode
@@ -186,6 +197,8 @@ let AuthService = class AuthService {
         return { message: 'Code sent', ...(devMode && { code }) };
     }
     async verifyPhone(userId, phone, code) {
+        const digits = phone.replace(/\D/g, '');
+        phone = (phone.trim().startsWith('+') ? '+' : '') + digits;
         const devMode = this.config.get('DEV_MODE') === 'true';
         const serviceSid = this.config.get('TWILIO_VERIFY_SERVICE_SID');
         const client = this.getTwilioClient();

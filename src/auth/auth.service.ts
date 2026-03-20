@@ -148,15 +148,26 @@ export class AuthService {
   }
 
   async sendPhoneCode(userId: string, phone: string) {
+    // Normalize to E.164: strip all non-digit chars, re-add leading +
+    const digits = phone.replace(/\D/g, '');
+    phone = (phone.trim().startsWith('+') ? '+' : '') + digits;
+
     const devMode = this.config.get<string>('DEV_MODE') === 'true';
     const serviceSid = this.config.get<string>('TWILIO_VERIFY_SERVICE_SID');
     const client = this.getTwilioClient();
-
+    console.log(devMode, client, serviceSid);
     if (!devMode && client && serviceSid) {
-      await client.verify.v2.services(serviceSid).verifications.create({
-        to: phone,
-        channel: 'sms',
-      });
+      console.log('Using Twilio to send code');
+      try {
+        await client.verify.v2.services(serviceSid).verifications.create({
+          to: phone,
+          channel: 'sms',
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error('Twilio error:', msg);
+        throw new Error(`Twilio: ${msg}`);
+      }
       return { message: 'Code sent' };
     }
 
@@ -172,6 +183,9 @@ export class AuthService {
   }
 
   async verifyPhone(userId: string, phone: string, code: string) {
+    const digits = phone.replace(/\D/g, '');
+    phone = (phone.trim().startsWith('+') ? '+' : '') + digits;
+
     const devMode = this.config.get<string>('DEV_MODE') === 'true';
     const serviceSid = this.config.get<string>('TWILIO_VERIFY_SERVICE_SID');
     const client = this.getTwilioClient();
