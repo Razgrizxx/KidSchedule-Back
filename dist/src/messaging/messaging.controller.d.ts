@@ -1,9 +1,11 @@
 import { MessagingService } from './messaging.service';
+import { ChatGateway } from './chat.gateway';
 import { SendMessageDto } from './dto/message.dto';
 import { AuthUser } from '../common/types/auth-user';
 export declare class MessagingController {
     private messagingService;
-    constructor(messagingService: MessagingService);
+    private chatGateway;
+    constructor(messagingService: MessagingService, chatGateway: ChatGateway);
     send(user: AuthUser, familyId: string, dto: SendMessageDto): Promise<{
         sender: {
             id: string;

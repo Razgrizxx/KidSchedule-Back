@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MessagingController = void 0;
 const common_1 = require("@nestjs/common");
 const messaging_service_1 = require("./messaging.service");
+const chat_gateway_1 = require("./chat.gateway");
 const message_dto_1 = require("./dto/message.dto");
 const jwt_auth_guard_1 = require("../common/guards/jwt-auth.guard");
 const phone_verified_guard_1 = require("../common/guards/phone-verified.guard");
@@ -22,11 +23,15 @@ const current_user_decorator_1 = require("../common/decorators/current-user.deco
 const auth_user_1 = require("../common/types/auth-user");
 let MessagingController = class MessagingController {
     messagingService;
-    constructor(messagingService) {
+    chatGateway;
+    constructor(messagingService, chatGateway) {
         this.messagingService = messagingService;
+        this.chatGateway = chatGateway;
     }
-    send(user, familyId, dto) {
-        return this.messagingService.send(familyId, user.id, dto);
+    async send(user, familyId, dto) {
+        const message = await this.messagingService.send(familyId, user.id, dto);
+        this.chatGateway.emitToFamily(familyId, 'new_message', message);
+        return message;
     }
     findAll(user, familyId, cursor, take) {
         return this.messagingService.findAll(familyId, user.id, cursor, take ? parseInt(take) : 50);
@@ -46,7 +51,7 @@ __decorate([
     __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [auth_user_1.AuthUser, String, message_dto_1.SendMessageDto]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], MessagingController.prototype, "send", null);
 __decorate([
     (0, common_1.Get)(),
@@ -77,6 +82,7 @@ __decorate([
 exports.MessagingController = MessagingController = __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, phone_verified_guard_1.PhoneVerifiedGuard),
     (0, common_1.Controller)('families/:familyId/messages'),
-    __metadata("design:paramtypes", [messaging_service_1.MessagingService])
+    __metadata("design:paramtypes", [messaging_service_1.MessagingService,
+        chat_gateway_1.ChatGateway])
 ], MessagingController);
 //# sourceMappingURL=messaging.controller.js.map

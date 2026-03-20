@@ -2,13 +2,15 @@ import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
 import { ClaudeService } from '../claude/claude.service';
 import { MessagingService } from '../messaging/messaging.service';
+import { ChatGateway } from '../messaging/chat.gateway';
 import { CreateSessionDto, SendMessageDto, ProposeResolutionDto, RespondProposalDto } from './dto/mediation.dto';
 export declare class MediationService {
     private prisma;
     private familyService;
     private claude;
     private messaging;
-    constructor(prisma: PrismaService, familyService: FamilyService, claude: ClaudeService, messaging: MessagingService);
+    private chatGateway;
+    constructor(prisma: PrismaService, familyService: FamilyService, claude: ClaudeService, messaging: MessagingService, chatGateway: ChatGateway);
     createSession(familyId: string, userId: string, dto: CreateSessionDto): Promise<{
         _count: {
             messages: number;

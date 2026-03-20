@@ -8,6 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { MessagingService } from './messaging.service';
+import { ChatGateway } from './chat.gateway';
 import { SendMessageDto } from './dto/message.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PhoneVerifiedGuard } from '../common/guards/phone-verified.guard';
@@ -17,15 +18,21 @@ import { AuthUser } from '../common/types/auth-user';
 @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
 @Controller('families/:familyId/messages')
 export class MessagingController {
-  constructor(private messagingService: MessagingService) {}
+  constructor(
+    private messagingService: MessagingService,
+    private chatGateway: ChatGateway,
+  ) {}
 
   @Post()
-  send(
+  async send(
     @CurrentUser() user: AuthUser,
     @Param('familyId') familyId: string,
     @Body() dto: SendMessageDto,
   ) {
-    return this.messagingService.send(familyId, user.id, dto);
+    const message = await this.messagingService.send(familyId, user.id, dto);
+    // Broadcast to all family members via WebSocket (including sender for dedup)
+    this.chatGateway.emitToFamily(familyId, 'new_message', message);
+    return message;
   }
 
   @Get()

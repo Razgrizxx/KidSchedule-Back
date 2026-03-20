@@ -9,5 +9,6 @@ import { MessagingModule } from '../messaging/messaging.module';
   imports: [FamilyModule, ClaudeModule, MessagingModule],
   providers: [MediationService],
   controllers: [MediationController],
+  // ChatGateway is exported from MessagingModule and injected into MediationService
 })
 export class MediationModule {}

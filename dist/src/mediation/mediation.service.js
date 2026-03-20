@@ -15,16 +15,19 @@ const prisma_service_1 = require("../prisma/prisma.service");
 const family_service_1 = require("../family/family.service");
 const claude_service_1 = require("../claude/claude.service");
 const messaging_service_1 = require("../messaging/messaging.service");
+const chat_gateway_1 = require("../messaging/chat.gateway");
 let MediationService = class MediationService {
     prisma;
     familyService;
     claude;
     messaging;
-    constructor(prisma, familyService, claude, messaging) {
+    chatGateway;
+    constructor(prisma, familyService, claude, messaging, chatGateway) {
         this.prisma = prisma;
         this.familyService = familyService;
         this.claude = claude;
         this.messaging = messaging;
+        this.chatGateway = chatGateway;
     }
     async createSession(familyId, userId, dto) {
         await this.familyService.assertMember(familyId, userId);
@@ -114,10 +117,15 @@ let MediationService = class MediationService {
             });
         }
         const aiResponse = await this.claude.getMediationAdvice(history);
-        return this.prisma.mediationMessage.create({
+        const aiMessage = await this.prisma.mediationMessage.create({
             data: { sessionId, senderId: null, content: aiResponse, isAI: true },
             include: { sender: true },
         });
+        this.chatGateway.emitToFamily(familyId, 'new_mediation_message', {
+            sessionId,
+            message: aiMessage,
+        });
+        return aiMessage;
     }
     async proposeResolution(familyId, sessionId, userId, dto) {
         await this.familyService.assertMember(familyId, userId);
@@ -175,6 +183,10 @@ let MediationService = class MediationService {
                 : 'Co-parent';
             await this.messaging.sendSystemMessage(familyId, `System: Mediation session "${proposal.session.topic}" has been RESOLVED. ` +
                 `${responderName} accepted the proposed agreement: "${proposal.summary}"`);
+            this.chatGateway.emitToFamily(familyId, 'notification', {
+                type: 'MEDIATION_RESOLVED',
+                payload: { sessionId, topic: proposal.session.topic },
+            });
         }
         return updated;
     }
@@ -251,6 +263,7 @@ exports.MediationService = MediationService = __decorate([
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         family_service_1.FamilyService,
         claude_service_1.ClaudeService,
-        messaging_service_1.MessagingService])
+        messaging_service_1.MessagingService,
+        chat_gateway_1.ChatGateway])
 ], MediationService);
 //# sourceMappingURL=mediation.service.js.map

@@ -1,12 +1,14 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
 import { MessagingService } from '../messaging/messaging.service';
+import { ChatGateway } from '../messaging/chat.gateway';
 import { CreateChangeRequestDto, RespondChangeRequestDto } from './dto/change-request.dto';
 export declare class RequestsService {
     private prisma;
     private familyService;
     private messaging;
-    constructor(prisma: PrismaService, familyService: FamilyService, messaging: MessagingService);
+    private chatGateway;
+    constructor(prisma: PrismaService, familyService: FamilyService, messaging: MessagingService, chatGateway: ChatGateway);
     create(familyId: string, requesterId: string, dto: CreateChangeRequestDto): Promise<{
         requester: {
             id: string;

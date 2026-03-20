@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
 import { MessagingService } from '../messaging/messaging.service';
+import { ChatGateway } from '../messaging/chat.gateway';
 import {
   CreateChangeRequestDto,
   RespondChangeRequestDto,
@@ -18,6 +19,7 @@ export class RequestsService {
     private prisma: PrismaService,
     private familyService: FamilyService,
     private messaging: MessagingService,
+    private chatGateway: ChatGateway,
   ) {}
 
   async create(
@@ -117,6 +119,12 @@ export class RequestsService {
 
     // Send system message for all actions
     await this.sendStatusMessage(familyId, request, dto.action, responderId);
+
+    // Emit live notification to both parents
+    this.chatGateway.emitToFamily(familyId, 'notification', {
+      type: 'REQUEST_UPDATED',
+      payload: { requestId, status: dto.action },
+    });
 
     return updated;
   }

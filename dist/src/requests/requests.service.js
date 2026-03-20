@@ -14,14 +14,17 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const family_service_1 = require("../family/family.service");
 const messaging_service_1 = require("../messaging/messaging.service");
+const chat_gateway_1 = require("../messaging/chat.gateway");
 let RequestsService = class RequestsService {
     prisma;
     familyService;
     messaging;
-    constructor(prisma, familyService, messaging) {
+    chatGateway;
+    constructor(prisma, familyService, messaging, chatGateway) {
         this.prisma = prisma;
         this.familyService = familyService;
         this.messaging = messaging;
+        this.chatGateway = chatGateway;
     }
     async create(familyId, requesterId, dto) {
         await this.familyService.assertMember(familyId, requesterId);
@@ -98,6 +101,10 @@ let RequestsService = class RequestsService {
             await this.applyCalendarOverrides(request, responderId);
         }
         await this.sendStatusMessage(familyId, request, dto.action, responderId);
+        this.chatGateway.emitToFamily(familyId, 'notification', {
+            type: 'REQUEST_UPDATED',
+            payload: { requestId, status: dto.action },
+        });
         return updated;
     }
     async applyCalendarOverrides(request, responderId) {
@@ -161,6 +168,7 @@ exports.RequestsService = RequestsService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         family_service_1.FamilyService,
-        messaging_service_1.MessagingService])
+        messaging_service_1.MessagingService,
+        chat_gateway_1.ChatGateway])
 ], RequestsService);
 //# sourceMappingURL=requests.service.js.map

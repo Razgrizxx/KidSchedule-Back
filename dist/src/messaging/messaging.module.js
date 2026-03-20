@@ -8,18 +8,30 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MessagingModule = void 0;
 const common_1 = require("@nestjs/common");
+const jwt_1 = require("@nestjs/jwt");
+const config_1 = require("@nestjs/config");
 const messaging_service_1 = require("./messaging.service");
 const messaging_controller_1 = require("./messaging.controller");
+const chat_gateway_1 = require("./chat.gateway");
 const family_module_1 = require("../family/family.module");
 let MessagingModule = class MessagingModule {
 };
 exports.MessagingModule = MessagingModule;
 exports.MessagingModule = MessagingModule = __decorate([
     (0, common_1.Module)({
-        imports: [family_module_1.FamilyModule],
-        providers: [messaging_service_1.MessagingService],
+        imports: [
+            family_module_1.FamilyModule,
+            jwt_1.JwtModule.registerAsync({
+                imports: [config_1.ConfigModule],
+                useFactory: (config) => ({
+                    secret: config.get('JWT_SECRET'),
+                }),
+                inject: [config_1.ConfigService],
+            }),
+        ],
+        providers: [messaging_service_1.MessagingService, chat_gateway_1.ChatGateway],
         controllers: [messaging_controller_1.MessagingController],
-        exports: [messaging_service_1.MessagingService],
+        exports: [messaging_service_1.MessagingService, chat_gateway_1.ChatGateway],
     })
 ], MessagingModule);
 //# sourceMappingURL=messaging.module.js.map

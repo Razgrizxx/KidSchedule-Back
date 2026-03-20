@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
 import { ClaudeService } from '../claude/claude.service';
 import { MessagingService } from '../messaging/messaging.service';
+import { ChatGateway } from '../messaging/chat.gateway';
 import {
   CreateSessionDto,
   SendMessageDto,
@@ -22,6 +23,7 @@ export class MediationService {
     private familyService: FamilyService,
     private claude: ClaudeService,
     private messaging: MessagingService,
+    private chatGateway: ChatGateway,
   ) {}
 
   async createSession(familyId: string, userId: string, dto: CreateSessionDto) {
@@ -125,10 +127,18 @@ export class MediationService {
 
     const aiResponse = await this.claude.getMediationAdvice(history);
 
-    return this.prisma.mediationMessage.create({
+    const aiMessage = await this.prisma.mediationMessage.create({
       data: { sessionId, senderId: null, content: aiResponse, isAI: true },
       include: { sender: true },
     });
+
+    // Push AI message in real-time to both parents
+    this.chatGateway.emitToFamily(familyId, 'new_mediation_message', {
+      sessionId,
+      message: aiMessage,
+    });
+
+    return aiMessage;
   }
 
   async proposeResolution(
@@ -207,6 +217,12 @@ export class MediationService {
         `System: Mediation session "${proposal.session.topic}" has been RESOLVED. ` +
           `${responderName} accepted the proposed agreement: "${proposal.summary}"`,
       );
+
+      // Notify both parents in real-time
+      this.chatGateway.emitToFamily(familyId, 'notification', {
+        type: 'MEDIATION_RESOLVED',
+        payload: { sessionId, topic: proposal.session.topic },
+      });
     }
 
     return updated;
