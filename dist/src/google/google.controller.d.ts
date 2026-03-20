@@ -20,5 +20,12 @@ export declare class GoogleController {
     }>;
     syncAll(user: AuthUser, familyId: string): Promise<{
         synced: number;
+        custodySynced: number;
+    }>;
+    exportAll(user: AuthUser, familyId: string, body: {
+        cleanup?: boolean;
+    }): Promise<{
+        synced: number;
+        custodySynced: number;
     }>;
 }

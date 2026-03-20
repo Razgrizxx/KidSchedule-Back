@@ -12,9 +12,15 @@ export declare class GoogleCalendarSyncService {
     private readonly logger;
     constructor(prisma: PrismaService, config: ConfigService, googleAuth: GoogleAuthService);
     handleEventUpsert(payload: CalendarEventUpsertPayload): Promise<void>;
-    syncAllEvents(familyId: string, userId: string): Promise<{
+    syncAllEvents(familyId: string, userId: string, cleanup?: boolean): Promise<{
         synced: number;
+        custodySynced: number;
     }>;
+    private syncRegularEvents;
+    private syncCustodyBlocks;
+    private groupCustodyBlocks;
+    private deleteGoogleEventsBatch;
     private getRefreshedClient;
     private mapToGoogleEvent;
+    private mapCustodyBlockToGoogleEvent;
 }

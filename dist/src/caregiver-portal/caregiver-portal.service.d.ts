@@ -31,6 +31,7 @@ export declare class CaregiverPortalService {
             date: Date;
             custodianId: string;
             isOverride: boolean;
+            googleEventId: string | null;
         }[];
         contacts: any[];
     }>;

@@ -55,6 +55,9 @@ let GoogleController = class GoogleController {
     syncAll(user, familyId) {
         return this.googleSync.syncAllEvents(familyId, user.id);
     }
+    exportAll(user, familyId, body) {
+        return this.googleSync.syncAllEvents(familyId, user.id, body.cleanup ?? false);
+    }
 };
 exports.GoogleController = GoogleController;
 __decorate([
@@ -100,6 +103,16 @@ __decorate([
     __metadata("design:paramtypes", [Function, String]),
     __metadata("design:returntype", void 0)
 ], GoogleController.prototype, "syncAll", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)('export/:familyId'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('familyId')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Function, String, Object]),
+    __metadata("design:returntype", void 0)
+], GoogleController.prototype, "exportAll", null);
 exports.GoogleController = GoogleController = __decorate([
     (0, common_1.Controller)('auth/google'),
     __metadata("design:paramtypes", [google_auth_service_1.GoogleAuthService,

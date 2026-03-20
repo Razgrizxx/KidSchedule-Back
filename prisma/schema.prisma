@@ -327,14 +327,15 @@ model Schedule {
 }
 
 model CustodyEvent {
-  id          String   @id @default(uuid())
-  scheduleId  String
-  childId     String
-  familyId    String
-  date        DateTime @db.Date
-  custodianId String
-  isOverride  Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  id            String   @id @default(uuid())
+  scheduleId    String
+  childId       String
+  familyId      String
+  date          DateTime @db.Date
+  custodianId   String
+  isOverride    Boolean  @default(false)
+  googleEventId String?  // Google Calendar event ID (stored on the first day of each synced block)
+  createdAt     DateTime @default(now())
 
   schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
   child    Child    @relation(fields: [childId], references: [id], onDelete: Cascade)

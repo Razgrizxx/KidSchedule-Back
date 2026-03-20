@@ -19,13 +19,14 @@ const prisma_service_1 = require("../prisma/prisma.service");
 const google_auth_service_1 = require("./google-auth.service");
 const crypto_util_1 = require("./crypto.util");
 const EVENT_TYPE_COLOR = {
-    CUSTODY_TIME: '8',
+    CUSTODY_TIME: '1',
     SCHOOL: '9',
     MEDICAL: '11',
     ACTIVITY: '5',
     VACATION: '7',
-    OTHER: '1',
+    OTHER: '2',
 };
+const CUSTODY_COLOR_ID = '1';
 let GoogleCalendarSyncService = GoogleCalendarSyncService_1 = class GoogleCalendarSyncService {
     prisma;
     config;
@@ -43,9 +44,7 @@ let GoogleCalendarSyncService = GoogleCalendarSyncService_1 = class GoogleCalend
             return;
         const event = await this.prisma.event.findUnique({
             where: { id: eventId },
-            include: {
-                children: { include: { child: true } },
-            },
+            include: { children: { include: { child: true } } },
         });
         if (!event)
             return;
@@ -59,20 +58,17 @@ let GoogleCalendarSyncService = GoogleCalendarSyncService_1 = class GoogleCalend
                     eventId: event.googleEventId,
                     requestBody: googleEvent,
                 });
-                this.logger.log(`Updated Google event ${event.googleEventId} for event ${eventId}`);
             }
             else {
                 const response = await calendar.events.insert({
                     calendarId: 'primary',
                     requestBody: googleEvent,
                 });
-                const googleEventId = response.data.id;
-                if (googleEventId) {
+                if (response.data.id) {
                     await this.prisma.event.update({
                         where: { id: eventId },
-                        data: { googleEventId },
+                        data: { googleEventId: response.data.id },
                     });
-                    this.logger.log(`Created Google event ${googleEventId} for event ${eventId}`);
                 }
             }
         }
@@ -80,56 +76,163 @@ let GoogleCalendarSyncService = GoogleCalendarSyncService_1 = class GoogleCalend
             this.logger.error(`Google Calendar sync failed for event ${eventId}`, err);
         }
     }
-    async syncAllEvents(familyId, userId) {
+    async syncAllEvents(familyId, userId, cleanup = false) {
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user?.googleRefreshToken) {
-            return { synced: 0 };
+            return { synced: 0, custodySynced: 0 };
         }
+        const oauth2Client = await this.getRefreshedClient(user);
+        const calendar = googleapis_1.google.calendar({ version: 'v3', auth: oauth2Client });
+        const [synced, custodySynced] = await Promise.all([
+            this.syncRegularEvents(familyId, calendar, cleanup),
+            this.syncCustodyBlocks(familyId, calendar, cleanup),
+        ]);
+        return { synced, custodySynced };
+    }
+    async syncRegularEvents(familyId, calendar, cleanup) {
         const events = await this.prisma.event.findMany({
             where: { familyId, startAt: { gte: new Date() } },
             include: { children: { include: { child: true } } },
         });
-        const oauth2Client = await this.getRefreshedClient(user);
-        const calendar = googleapis_1.google.calendar({ version: 'v3', auth: oauth2Client });
+        if (cleanup) {
+            await this.deleteGoogleEventsBatch(calendar, events.filter((e) => e.googleEventId).map((e) => e.googleEventId));
+            await this.prisma.event.updateMany({
+                where: { familyId, googleEventId: { not: null } },
+                data: { googleEventId: null },
+            });
+            events.forEach((e) => (e.googleEventId = null));
+        }
         let synced = 0;
-        for (const event of events) {
-            try {
-                const googleEvent = this.mapToGoogleEvent(event);
-                if (event.googleEventId) {
-                    await calendar.events.patch({
-                        calendarId: 'primary',
-                        eventId: event.googleEventId,
-                        requestBody: googleEvent,
-                    });
-                }
-                else {
-                    const response = await calendar.events.insert({
-                        calendarId: 'primary',
-                        requestBody: googleEvent,
-                    });
-                    if (response.data.id) {
-                        await this.prisma.event.update({
-                            where: { id: event.id },
-                            data: { googleEventId: response.data.id },
+        const BATCH = 5;
+        for (let i = 0; i < events.length; i += BATCH) {
+            await Promise.all(events.slice(i, i + BATCH).map(async (event) => {
+                try {
+                    const googleEvent = this.mapToGoogleEvent(event);
+                    if (event.googleEventId) {
+                        await calendar.events.patch({
+                            calendarId: 'primary',
+                            eventId: event.googleEventId,
+                            requestBody: googleEvent,
                         });
                     }
+                    else {
+                        const res = await calendar.events.insert({
+                            calendarId: 'primary',
+                            requestBody: googleEvent,
+                        });
+                        if (res.data.id) {
+                            await this.prisma.event.update({
+                                where: { id: event.id },
+                                data: { googleEventId: res.data.id },
+                            });
+                        }
+                    }
+                    synced++;
                 }
-                synced++;
+                catch (err) {
+                    this.logger.warn(`Skipped event ${event.id} during export: ${err}`);
+                }
+            }));
+        }
+        return synced;
+    }
+    async syncCustodyBlocks(familyId, calendar, cleanup) {
+        const sixMonthsFromNow = new Date();
+        sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
+        const custodyEvents = await this.prisma.custodyEvent.findMany({
+            where: {
+                familyId,
+                date: { gte: new Date(), lte: sixMonthsFromNow },
+            },
+            include: { child: true },
+            orderBy: [{ childId: 'asc' }, { date: 'asc' }],
+        });
+        if (cleanup) {
+            const existingGoogleIds = custodyEvents
+                .filter((e) => e.googleEventId)
+                .map((e) => e.googleEventId);
+            await this.deleteGoogleEventsBatch(calendar, existingGoogleIds);
+            await this.prisma.custodyEvent.updateMany({
+                where: { familyId, googleEventId: { not: null } },
+                data: { googleEventId: null },
+            });
+            custodyEvents.forEach((e) => (e.googleEventId = null));
+        }
+        const blocks = this.groupCustodyBlocks(custodyEvents);
+        let synced = 0;
+        const BATCH = 5;
+        for (let i = 0; i < blocks.length; i += BATCH) {
+            await Promise.all(blocks.slice(i, i + BATCH).map(async (block) => {
+                try {
+                    const googleEvent = this.mapCustodyBlockToGoogleEvent(block);
+                    if (block.googleEventId) {
+                        await calendar.events.patch({
+                            calendarId: 'primary',
+                            eventId: block.googleEventId,
+                            requestBody: googleEvent,
+                        });
+                    }
+                    else {
+                        const res = await calendar.events.insert({
+                            calendarId: 'primary',
+                            requestBody: googleEvent,
+                        });
+                        if (res.data.id) {
+                            await this.prisma.custodyEvent.update({
+                                where: { id: block.anchorId },
+                                data: { googleEventId: res.data.id },
+                            });
+                        }
+                    }
+                    synced++;
+                }
+                catch (err) {
+                    this.logger.warn(`Skipped custody block ${block.anchorId} during export: ${err}`);
+                }
+            }));
+        }
+        return synced;
+    }
+    groupCustodyBlocks(events) {
+        const blocks = [];
+        const ONE_DAY_MS = 86_400_000;
+        for (const ev of events) {
+            const last = blocks[blocks.length - 1];
+            const isConsecutive = last &&
+                last.childId === ev.childId &&
+                last.custodianId === ev.custodianId &&
+                ev.date.getTime() - last.endDate.getTime() <= ONE_DAY_MS + 1000;
+            if (isConsecutive) {
+                last.endDate = ev.date;
             }
-            catch (err) {
-                this.logger.warn(`Skipped event ${event.id} during full sync: ${err}`);
+            else {
+                blocks.push({
+                    childId: ev.childId,
+                    childName: ev.child.firstName,
+                    custodianId: ev.custodianId,
+                    startDate: ev.date,
+                    endDate: ev.date,
+                    anchorId: ev.id,
+                    googleEventId: ev.googleEventId ?? null,
+                });
             }
         }
-        return { synced };
+        return blocks;
+    }
+    async deleteGoogleEventsBatch(calendar, googleEventIds) {
+        const BATCH = 5;
+        for (let i = 0; i < googleEventIds.length; i += BATCH) {
+            await Promise.all(googleEventIds.slice(i, i + BATCH).map((id) => calendar.events
+                .delete({ calendarId: 'primary', eventId: id })
+                .catch(() => { })));
+        }
     }
     async getRefreshedClient(user) {
         const encKey = this.config.getOrThrow('GOOGLE_TOKEN_ENCRYPTION_KEY');
         const oauth2Client = this.googleAuth.createOAuth2Client();
-        const accessToken = (0, crypto_util_1.decrypt)(user.googleAccessToken, encKey);
-        const refreshToken = (0, crypto_util_1.decrypt)(user.googleRefreshToken, encKey);
         oauth2Client.setCredentials({
-            access_token: accessToken,
-            refresh_token: refreshToken,
+            access_token: (0, crypto_util_1.decrypt)(user.googleAccessToken, encKey),
+            refresh_token: (0, crypto_util_1.decrypt)(user.googleRefreshToken, encKey),
             expiry_date: user.googleTokenExpiry?.getTime(),
         });
         const fiveMinutes = 5 * 60 * 1000;
@@ -161,25 +264,32 @@ let GoogleCalendarSyncService = GoogleCalendarSyncService_1 = class GoogleCalend
         ]
             .filter(Boolean)
             .join('\n');
-        if (event.allDay) {
-            const dateStr = event.startAt.toISOString().slice(0, 10);
-            const endDateStr = new Date(event.endAt.getTime() + 86400000)
-                .toISOString()
-                .slice(0, 10);
-            return {
-                summary: event.title,
-                description,
-                colorId: EVENT_TYPE_COLOR[event.type] ?? '1',
-                start: { date: dateStr },
-                end: { date: endDateStr },
-            };
-        }
-        return {
+        const base = {
             summary: event.title,
             description,
-            colorId: EVENT_TYPE_COLOR[event.type] ?? '1',
+            colorId: EVENT_TYPE_COLOR[event.type] ?? '2',
+        };
+        if (event.allDay) {
+            const dateStr = event.startAt.toISOString().slice(0, 10);
+            const endDateStr = new Date(event.endAt.getTime() + 86_400_000)
+                .toISOString()
+                .slice(0, 10);
+            return { ...base, start: { date: dateStr }, end: { date: endDateStr } };
+        }
+        return {
+            ...base,
             start: { dateTime: event.startAt.toISOString() },
             end: { dateTime: event.endAt.toISOString() },
+        };
+    }
+    mapCustodyBlockToGoogleEvent(block) {
+        const endDate = new Date(block.endDate.getTime() + 86_400_000);
+        return {
+            summary: `Custody: ${block.childName}`,
+            description: `Synchronized from KidSchedule`,
+            colorId: CUSTODY_COLOR_ID,
+            start: { date: block.startDate.toISOString().slice(0, 10) },
+            end: { date: endDate.toISOString().slice(0, 10) },
         };
     }
 };

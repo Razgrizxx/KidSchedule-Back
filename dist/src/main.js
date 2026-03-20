@@ -17,7 +17,7 @@ async function bootstrap() {
     }));
     app.useGlobalFilters(new all_exceptions_filter_1.AllExceptionsFilter());
     app.enableCors();
-    app.setGlobalPrefix('api/v1');
+    app.setGlobalPrefix('api/v1', { exclude: ['auth/google/callback'] });
     const port = process.env.PORT ?? 3000;
     await app.listen(port);
     console.log(`KidSchedule API running on http://localhost:${port}/api/v1`);

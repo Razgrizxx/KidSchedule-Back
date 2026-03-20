@@ -1,7 +1,9 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
+  Post,
   Query,
   Res,
   UseGuards,
@@ -76,5 +78,19 @@ export class GoogleController {
     @Param('familyId') familyId: string,
   ) {
     return this.googleSync.syncAllEvents(familyId, user.id);
+  }
+
+  /**
+   * Export all custody blocks + calendar events to Google Calendar.
+   * Optionally cleans up stale Google events before re-creating.
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('export/:familyId')
+  exportAll(
+    @CurrentUser() user: AuthUser,
+    @Param('familyId') familyId: string,
+    @Body() body: { cleanup?: boolean },
+  ) {
+    return this.googleSync.syncAllEvents(familyId, user.id, body.cleanup ?? false);
   }
 }
