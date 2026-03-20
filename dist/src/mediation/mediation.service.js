@@ -80,12 +80,17 @@ let MediationService = class MediationService {
             throw new common_1.NotFoundException('Session not found');
         if (session.status !== 'ACTIVE')
             throw new common_1.BadRequestException('Session is no longer active');
-        return this.prisma.mediationMessage.create({
+        const message = await this.prisma.mediationMessage.create({
             data: { sessionId, senderId: userId, content: dto.content, isAI: false },
             include: {
                 sender: { select: { id: true, firstName: true, lastName: true } },
             },
         });
+        this.chatGateway.emitToFamily(familyId, 'new_mediation_message', {
+            sessionId,
+            message,
+        });
+        return message;
     }
     async askAI(familyId, sessionId, userId) {
         await this.familyService.assertMember(familyId, userId);

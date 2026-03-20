@@ -31,18 +31,22 @@ let ChatGateway = class ChatGateway {
             const token = client.handshake.auth?.token ??
                 client.handshake.headers?.authorization?.replace('Bearer ', '');
             if (!token) {
+                console.log('[WS] No token — disconnecting', client.id);
                 client.disconnect();
                 return;
             }
             const payload = this.jwtService.verify(token);
             client.data.userId = payload.sub;
+            console.log('[WS] Connected:', client.id, '→ userId:', payload.sub);
         }
-        catch {
+        catch (e) {
+            console.log('[WS] Auth error — disconnecting', client.id, e);
             client.disconnect();
         }
     }
     handleDisconnect(client) {
         const { userId, familyId } = client.data ?? {};
+        console.log('[WS] Disconnected:', client.id, '→ userId:', userId);
         if (familyId && userId) {
             client.to(familyId).emit('user_stop_typing', { userId });
         }
@@ -50,6 +54,8 @@ let ChatGateway = class ChatGateway {
     handleJoinFamily(client, familyId) {
         client.join(familyId);
         client.data.familyId = familyId;
+        const rooms = [...client.rooms].join(', ');
+        console.log('[WS] join_family:', client.id, '→ room:', familyId, '| all rooms:', rooms);
         return { event: 'joined', familyId };
     }
     async handleSendMessage(client, dto) {
@@ -75,6 +81,8 @@ let ChatGateway = class ChatGateway {
         }
     }
     emitToFamily(familyId, event, data) {
+        const roomSize = this.server?.sockets?.adapter?.rooms?.get(familyId)?.size ?? 0;
+        console.log(`[WS] emitToFamily → room: ${familyId}, event: ${event}, sockets in room: ${roomSize}`);
         this.server?.to(familyId).emit(event, data);
     }
 };

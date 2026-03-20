@@ -84,12 +84,19 @@ export class MediationService {
     if (session.status !== 'ACTIVE')
       throw new BadRequestException('Session is no longer active');
 
-    return this.prisma.mediationMessage.create({
+    const message = await this.prisma.mediationMessage.create({
       data: { sessionId, senderId: userId, content: dto.content, isAI: false },
       include: {
         sender: { select: { id: true, firstName: true, lastName: true } },
       },
     });
+
+    this.chatGateway.emitToFamily(familyId, 'new_mediation_message', {
+      sessionId,
+      message,
+    });
+
+    return message;
   }
 
   async askAI(familyId: string, sessionId: string, userId: string) {
