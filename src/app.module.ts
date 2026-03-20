@@ -17,6 +17,7 @@ import { BlogModule } from './blog/blog.module';
 import { CaregiverPortalModule } from './caregiver-portal/caregiver-portal.module';
 import { EventsModule } from './events/events.module';
 import { GoogleModule } from './google/google.module';
+import { MediationModule } from './mediation/mediation.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { GoogleModule } from './google/google.module';
     CaregiverPortalModule,
     EventsModule,
     GoogleModule,
+    MediationModule,
   ],
 })
 export class AppModule {}

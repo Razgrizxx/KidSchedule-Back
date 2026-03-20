@@ -54,6 +54,18 @@ enum ChangeRequestType {
   PERMANENT
 }
 
+enum MediationStatus {
+  ACTIVE
+  RESOLVED
+  ESCALATED
+}
+
+enum ProposalStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
 enum ExpenseCategory {
   EDUCATION
   HEALTH
@@ -140,6 +152,9 @@ model User {
   respondedRequests  ChangeRequest[]     @relation("ResponderChangeRequests")
   createdEvents      Event[]             @relation("CreatedEvents")
   assignedEvents     Event[]             @relation("AssignedEvents")
+  mediationMessages  MediationMessage[]  @relation("MediationMessages")
+  proposedResolutions ResolutionProposal[] @relation("ProposedResolutions")
+  acceptedResolutions ResolutionProposal[] @relation("AcceptedResolutions")
 
   @@map("users")
 }
@@ -177,7 +192,8 @@ model Family {
   moments        Moment[]
   changeRequests ChangeRequest[]
   settings       FamilySettings?
-  events         Event[]
+  events             Event[]
+  mediationSessions  MediationSession[]
 
   @@map("families")
 }
@@ -522,4 +538,53 @@ model EventChild {
 
   @@unique([eventId, childId])
   @@map("event_children")
+}
+
+// ─────────────────────────────────────────
+//  MEDIATION
+// ─────────────────────────────────────────
+
+model MediationSession {
+  id        String          @id @default(uuid())
+  familyId  String
+  topic     String
+  status    MediationStatus @default(ACTIVE)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  family    Family               @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  messages  MediationMessage[]
+  proposals ResolutionProposal[]
+
+  @@map("mediation_sessions")
+}
+
+model MediationMessage {
+  id        String   @id @default(uuid())
+  sessionId String
+  senderId  String?
+  content   String
+  isAI      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  session MediationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sender  User?            @relation("MediationMessages", fields: [senderId], references: [id])
+
+  @@map("mediation_messages")
+}
+
+model ResolutionProposal {
+  id         String         @id @default(uuid())
+  sessionId  String
+  proposedBy String
+  summary    String
+  status     ProposalStatus @default(PENDING)
+  acceptedBy String?
+  createdAt  DateTime       @default(now())
+
+  session  MediationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  proposer User             @relation("ProposedResolutions", fields: [proposedBy], references: [id])
+  accepter User?            @relation("AcceptedResolutions", fields: [acceptedBy], references: [id])
+
+  @@map("resolution_proposals")
 }

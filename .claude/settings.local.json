@@ -18,7 +18,8 @@
       "Bash(npx shadcn@latest add textarea --yes)",
       "Bash(npm ls:*)",
       "Bash(npm list:*)",
-      "Bash(python3 -c \":*)"
+      "Bash(python3 -c \":*)",
+      "Bash(node -e \"const l = require\\(''lucide-react''\\); console.log\\(''Handshake:'', !!l.Handshake, ''HandshakeIcon:'', !!l.HandshakeIcon\\)\")"
     ]
   }
 }
