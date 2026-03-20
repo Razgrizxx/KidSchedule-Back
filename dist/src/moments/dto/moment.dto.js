@@ -13,11 +13,7 @@ exports.CreateMomentDto = void 0;
 const class_validator_1 = require("class-validator");
 class CreateMomentDto {
     childId;
-    title;
-    description;
-    mediaUrl;
-    thumbnailUrl;
-    takenAt;
+    caption;
 }
 exports.CreateMomentDto = CreateMomentDto;
 __decorate([
@@ -29,25 +25,5 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreateMomentDto.prototype, "title", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreateMomentDto.prototype, "description", void 0);
-__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    __metadata("design:type", String)
-], CreateMomentDto.prototype, "mediaUrl", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreateMomentDto.prototype, "thumbnailUrl", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsDateString)(),
-    __metadata("design:type", String)
-], CreateMomentDto.prototype, "takenAt", void 0);
+], CreateMomentDto.prototype, "caption", void 0);
 //# sourceMappingURL=moment.dto.js.map

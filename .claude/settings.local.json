@@ -16,7 +16,9 @@
       "Bash(npx eslint:*)",
       "Bash(grep -v \"^$\")",
       "Bash(npx shadcn@latest add textarea --yes)",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(npm list:*)",
+      "Bash(python3 -c \":*)"
     ]
   }
 }

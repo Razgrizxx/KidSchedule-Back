@@ -6,20 +6,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MomentsModule = void 0;
+exports.CloudinaryModule = void 0;
 const common_1 = require("@nestjs/common");
-const moments_service_1 = require("./moments.service");
-const moments_controller_1 = require("./moments.controller");
-const family_module_1 = require("../family/family.module");
-const cloudinary_module_1 = require("../cloudinary/cloudinary.module");
-let MomentsModule = class MomentsModule {
+const cloudinary_service_1 = require("./cloudinary.service");
+let CloudinaryModule = class CloudinaryModule {
 };
-exports.MomentsModule = MomentsModule;
-exports.MomentsModule = MomentsModule = __decorate([
+exports.CloudinaryModule = CloudinaryModule;
+exports.CloudinaryModule = CloudinaryModule = __decorate([
     (0, common_1.Module)({
-        imports: [family_module_1.FamilyModule, cloudinary_module_1.CloudinaryModule],
-        providers: [moments_service_1.MomentsService],
-        controllers: [moments_controller_1.MomentsController],
+        providers: [cloudinary_service_1.CloudinaryService],
+        exports: [cloudinary_service_1.CloudinaryService],
     })
-], MomentsModule);
-//# sourceMappingURL=moments.module.js.map
+], CloudinaryModule);
+//# sourceMappingURL=cloudinary.module.js.map

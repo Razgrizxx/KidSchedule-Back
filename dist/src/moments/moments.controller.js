@@ -14,6 +14,8 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MomentsController = void 0;
 const common_1 = require("@nestjs/common");
+const platform_express_1 = require("@nestjs/platform-express");
+const multer_1 = require("multer");
 const moments_service_1 = require("./moments.service");
 const moment_dto_1 = require("./dto/moment.dto");
 const jwt_auth_guard_1 = require("../common/guards/jwt-auth.guard");
@@ -24,11 +26,13 @@ let MomentsController = class MomentsController {
     constructor(momentsService) {
         this.momentsService = momentsService;
     }
-    create(user, familyId, dto) {
-        return this.momentsService.create(familyId, user.id, dto);
+    create(user, familyId, dto, file) {
+        if (!file)
+            throw new common_1.BadRequestException('Image file is required');
+        return this.momentsService.create(familyId, user.id, dto, file);
     }
-    findAll(user, familyId, childId) {
-        return this.momentsService.findAll(familyId, user.id, childId);
+    findAll(user, familyId) {
+        return this.momentsService.findAll(familyId, user.id);
     }
     remove(user, familyId, momentId) {
         return this.momentsService.remove(familyId, momentId, user.id);
@@ -37,20 +41,30 @@ let MomentsController = class MomentsController {
 exports.MomentsController = MomentsController;
 __decorate([
     (0, common_1.Post)(),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {
+        storage: (0, multer_1.memoryStorage)(),
+        limits: { fileSize: 10 * 1024 * 1024 },
+        fileFilter: (_req, file, cb) => {
+            if (!file.mimetype.startsWith('image/')) {
+                return cb(new common_1.BadRequestException('Only image files are allowed'), false);
+            }
+            cb(null, true);
+        },
+    })),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Param)('familyId')),
     __param(2, (0, common_1.Body)()),
+    __param(3, (0, common_1.UploadedFile)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, moment_dto_1.CreateMomentDto]),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, moment_dto_1.CreateMomentDto, Object]),
     __metadata("design:returntype", void 0)
 ], MomentsController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Param)('familyId')),
-    __param(2, (0, common_1.Query)('childId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, String]),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String]),
     __metadata("design:returntype", void 0)
 ], MomentsController.prototype, "findAll", null);
 __decorate([

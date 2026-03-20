@@ -7,8 +7,8 @@ export declare class BlogService {
     findAll(): Promise<{
         id: string;
         category: string;
-        title: string;
         slug: string;
+        title: string;
         excerpt: string;
         coverImage: string | null;
         author: string;
@@ -21,8 +21,8 @@ export declare class BlogService {
         updatedAt: Date;
         content: string;
         category: string;
-        title: string;
         slug: string;
+        title: string;
         excerpt: string;
         coverImage: string | null;
         author: string;
@@ -36,8 +36,8 @@ export declare class BlogService {
         updatedAt: Date;
         content: string;
         category: string;
-        title: string;
         slug: string;
+        title: string;
         excerpt: string;
         coverImage: string | null;
         author: string;
@@ -51,8 +51,8 @@ export declare class BlogService {
         updatedAt: Date;
         content: string;
         category: string;
-        title: string;
         slug: string;
+        title: string;
         excerpt: string;
         coverImage: string | null;
         author: string;
@@ -65,8 +65,8 @@ export declare class BlogService {
     }>;
     findRelated(slug: string, category: string): Promise<{
         category: string;
-        title: string;
         slug: string;
+        title: string;
         excerpt: string;
         coverImage: string | null;
         readTime: number;

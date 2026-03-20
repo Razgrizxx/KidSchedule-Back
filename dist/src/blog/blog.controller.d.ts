@@ -6,8 +6,8 @@ export declare class BlogController {
     findAll(): Promise<{
         id: string;
         category: string;
-        title: string;
         slug: string;
+        title: string;
         excerpt: string;
         coverImage: string | null;
         author: string;
@@ -20,8 +20,8 @@ export declare class BlogController {
         updatedAt: Date;
         content: string;
         category: string;
-        title: string;
         slug: string;
+        title: string;
         excerpt: string;
         coverImage: string | null;
         author: string;
@@ -31,8 +31,8 @@ export declare class BlogController {
     }>;
     findRelated(slug: string): Promise<{
         category: string;
-        title: string;
         slug: string;
+        title: string;
         excerpt: string;
         coverImage: string | null;
         readTime: number;
@@ -44,8 +44,8 @@ export declare class BlogController {
         updatedAt: Date;
         content: string;
         category: string;
-        title: string;
         slug: string;
+        title: string;
         excerpt: string;
         coverImage: string | null;
         author: string;
@@ -59,8 +59,8 @@ export declare class BlogController {
         updatedAt: Date;
         content: string;
         category: string;
-        title: string;
         slug: string;
+        title: string;
         excerpt: string;
         coverImage: string | null;
         author: string;

@@ -409,16 +409,15 @@ model Expense {
 // ─────────────────────────────────────────
 
 model Moment {
-  id           String    @id @default(uuid())
-  familyId     String
-  uploadedBy   String
-  childId      String?
-  title        String?
-  description  String?
-  mediaUrl     String
-  thumbnailUrl String?
-  takenAt      DateTime?
-  createdAt    DateTime  @default(now())
+  id                 String    @id @default(uuid())
+  familyId           String
+  uploadedBy         String
+  childId            String?
+  caption            String?
+  mediaUrl           String
+  cloudinaryPublicId String?
+  takenAt            DateTime?
+  createdAt          DateTime  @default(now())
 
   family   Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
   uploader User   @relation(fields: [uploadedBy], references: [id])

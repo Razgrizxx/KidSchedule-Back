@@ -1,13 +1,17 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
   Param,
   Post,
-  Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { MomentsService } from './moments.service';
 import { CreateMomentDto } from './dto/moment.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -20,21 +24,31 @@ export class MomentsController {
   constructor(private momentsService: MomentsService) {}
 
   @Post()
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 10 * 1024 * 1024 },
+      fileFilter: (_req, file, cb) => {
+        if (!file.mimetype.startsWith('image/')) {
+          return cb(new BadRequestException('Only image files are allowed'), false);
+        }
+        cb(null, true);
+      },
+    }),
+  )
   create(
     @CurrentUser() user: AuthUser,
     @Param('familyId') familyId: string,
     @Body() dto: CreateMomentDto,
+    @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.momentsService.create(familyId, user.id, dto);
+    if (!file) throw new BadRequestException('Image file is required');
+    return this.momentsService.create(familyId, user.id, dto, file);
   }
 
   @Get()
-  findAll(
-    @CurrentUser() user: AuthUser,
-    @Param('familyId') familyId: string,
-    @Query('childId') childId?: string,
-  ) {
-    return this.momentsService.findAll(familyId, user.id, childId);
+  findAll(@CurrentUser() user: AuthUser, @Param('familyId') familyId: string) {
+    return this.momentsService.findAll(familyId, user.id);
   }
 
   @Delete(':momentId')
