@@ -6,10 +6,14 @@ import {
   SetMetadata,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PrismaService } from '../prisma/prisma.service';
 import { PlanType } from '@prisma/client';
+import { SubscriptionService, FEATURE_PLAN } from './subscription.service';
 
+/** Require a minimum plan level: @RequirePlan('PLUS') */
 export const RequirePlan = (plan: PlanType) => SetMetadata('requiredPlan', plan);
+
+/** Require a named feature: @RequireFeature('ai_mediation') */
+export const RequireFeature = (feature: string) => SetMetadata('requiredFeature', feature);
 
 const PLAN_ORDER: Record<PlanType, number> = {
   FREE: 0,
@@ -22,7 +26,7 @@ const PLAN_ORDER: Record<PlanType, number> = {
 export class SubscriptionGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
-    private prisma: PrismaService,
+    private subService: SubscriptionService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -30,19 +34,33 @@ export class SubscriptionGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
+    const requiredFeature = this.reflector.getAllAndOverride<string>('requiredFeature', [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
-    if (!requiredPlan) return true;
+    if (!requiredPlan && !requiredFeature) return true;
 
     const request = context.switchToHttp().getRequest<{ user?: { id: string } }>();
     const userId = request.user?.id;
     if (!userId) throw new ForbiddenException('Authentication required');
 
-    const sub = await this.prisma.subscription.findUnique({ where: { userId } });
-    const currentPlan = sub?.plan ?? 'FREE';
+    const effectivePlan = await this.subService.getEffectivePlan(userId);
 
-    if (PLAN_ORDER[currentPlan] < PLAN_ORDER[requiredPlan]) {
+    // Feature-based check
+    if (requiredFeature) {
+      const neededPlan = FEATURE_PLAN[requiredFeature];
+      if (neededPlan && PLAN_ORDER[effectivePlan] < PLAN_ORDER[neededPlan]) {
+        throw new ForbiddenException(
+          `This feature requires the ${neededPlan} plan. Your current plan: ${effectivePlan}. Upgrade at /pricing.`,
+        );
+      }
+    }
+
+    // Direct plan-level check
+    if (requiredPlan && PLAN_ORDER[effectivePlan] < PLAN_ORDER[requiredPlan]) {
       throw new ForbiddenException(
-        `This feature requires the ${requiredPlan} plan or higher. Upgrade at /pricing.`,
+        `This feature requires the ${requiredPlan} plan. Your current plan: ${effectivePlan}. Upgrade at /pricing.`,
       );
     }
 

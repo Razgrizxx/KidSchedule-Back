@@ -14,17 +14,27 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const family_service_1 = require("../family/family.service");
 const cloudinary_service_1 = require("../cloudinary/cloudinary.service");
+const subscription_service_1 = require("../stripe/subscription.service");
 let MomentsService = class MomentsService {
     prisma;
     familyService;
     cloudinary;
-    constructor(prisma, familyService, cloudinary) {
+    subService;
+    constructor(prisma, familyService, cloudinary, subService) {
         this.prisma = prisma;
         this.familyService = familyService;
         this.cloudinary = cloudinary;
+        this.subService = subService;
     }
     async create(familyId, userId, dto, file) {
         await this.familyService.assertMember(familyId, userId);
+        const hasUnlimited = await this.subService.hasFeature(userId, 'moments_unlimited');
+        if (!hasUnlimited) {
+            const count = await this.prisma.moment.count({ where: { familyId } });
+            if (count >= subscription_service_1.FREE_MOMENTS_LIMIT) {
+                throw new common_1.ForbiddenException(`Free plan is limited to ${subscription_service_1.FREE_MOMENTS_LIMIT} photos. Upgrade to Plus to upload unlimited moments.`);
+            }
+        }
         const result = await this.cloudinary.upload(file, `kidschedule/moments/${familyId}`);
         return this.prisma.moment.create({
             data: {
@@ -73,6 +83,7 @@ exports.MomentsService = MomentsService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         family_service_1.FamilyService,
-        cloudinary_service_1.CloudinaryService])
+        cloudinary_service_1.CloudinaryService,
+        subscription_service_1.SubscriptionService])
 ], MomentsService);
 //# sourceMappingURL=moments.service.js.map

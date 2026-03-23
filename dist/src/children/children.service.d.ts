@@ -1,10 +1,12 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
 import { CreateChildDto, UpdateChildDto } from './dto/child.dto';
+import { SubscriptionService } from '../stripe/subscription.service';
 export declare class ChildrenService {
     private prisma;
     private familyService;
-    constructor(prisma: PrismaService, familyService: FamilyService);
+    private subService;
+    constructor(prisma: PrismaService, familyService: FamilyService, subService: SubscriptionService);
     create(familyId: string, userId: string, dto: CreateChildDto): Promise<{
         id: string;
         firstName: string;

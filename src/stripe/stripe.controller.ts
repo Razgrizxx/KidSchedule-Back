@@ -8,6 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { StripeService } from './stripe.service';
+import { SubscriptionService } from './subscription.service';
 import { CreateCheckoutDto } from './dto/stripe.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -15,7 +16,10 @@ import { AuthUser } from '../common/types/auth-user';
 
 @Controller('stripe')
 export class StripeController {
-  constructor(private stripeService: StripeService) {}
+  constructor(
+    private stripeService: StripeService,
+    private subService: SubscriptionService,
+  ) {}
 
   // Webhook — no JWT guard, raw body required
   @Post('webhook')
@@ -40,6 +44,6 @@ export class StripeController {
   @UseGuards(JwtAuthGuard)
   @Get('subscription')
   getSubscription(@CurrentUser() user: AuthUser) {
-    return this.stripeService.getSubscription(user.id);
+    return this.subService.getFullSubscription(user.id);
   }
 }

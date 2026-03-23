@@ -15,14 +15,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.StripeController = void 0;
 const common_1 = require("@nestjs/common");
 const stripe_service_1 = require("./stripe.service");
+const subscription_service_1 = require("./subscription.service");
 const stripe_dto_1 = require("./dto/stripe.dto");
 const jwt_auth_guard_1 = require("../common/guards/jwt-auth.guard");
 const current_user_decorator_1 = require("../common/decorators/current-user.decorator");
 const auth_user_1 = require("../common/types/auth-user");
 let StripeController = class StripeController {
     stripeService;
-    constructor(stripeService) {
+    subService;
+    constructor(stripeService, subService) {
         this.stripeService = stripeService;
+        this.subService = subService;
     }
     webhook(req, sig) {
         return this.stripeService.handleWebhook(req.rawBody, sig);
@@ -34,7 +37,7 @@ let StripeController = class StripeController {
         return this.stripeService.createPortalSession(user.id);
     }
     getSubscription(user) {
-        return this.stripeService.getSubscription(user.id);
+        return this.subService.getFullSubscription(user.id);
     }
 };
 exports.StripeController = StripeController;
@@ -73,6 +76,7 @@ __decorate([
 ], StripeController.prototype, "getSubscription", null);
 exports.StripeController = StripeController = __decorate([
     (0, common_1.Controller)('stripe'),
-    __metadata("design:paramtypes", [stripe_service_1.StripeService])
+    __metadata("design:paramtypes", [stripe_service_1.StripeService,
+        subscription_service_1.SubscriptionService])
 ], StripeController);
 //# sourceMappingURL=stripe.controller.js.map

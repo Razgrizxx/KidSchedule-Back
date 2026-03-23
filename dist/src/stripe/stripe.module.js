@@ -11,6 +11,8 @@ const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const stripe_service_1 = require("./stripe.service");
 const stripe_controller_1 = require("./stripe.controller");
+const subscription_service_1 = require("./subscription.service");
+const subscription_guard_1 = require("./subscription.guard");
 const prisma_module_1 = require("../prisma/prisma.module");
 let StripeModule = class StripeModule {
 };
@@ -18,9 +20,9 @@ exports.StripeModule = StripeModule;
 exports.StripeModule = StripeModule = __decorate([
     (0, common_1.Module)({
         imports: [prisma_module_1.PrismaModule, config_1.ConfigModule],
-        providers: [stripe_service_1.StripeService],
+        providers: [stripe_service_1.StripeService, subscription_service_1.SubscriptionService, subscription_guard_1.SubscriptionGuard],
         controllers: [stripe_controller_1.StripeController],
-        exports: [stripe_service_1.StripeService],
+        exports: [stripe_service_1.StripeService, subscription_service_1.SubscriptionService, subscription_guard_1.SubscriptionGuard],
     })
 ], StripeModule);
 //# sourceMappingURL=stripe.module.js.map
