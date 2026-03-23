@@ -190,7 +190,11 @@ export class AuthService {
     const serviceSid = this.config.get<string>('TWILIO_VERIFY_SERVICE_SID');
     const client = this.getTwilioClient();
 
-    if (!devMode && client && serviceSid) {
+    if (devMode) {
+      // Dev bypass: accept 123456 without any external call or DB lookup
+      if (code !== '123456')
+        throw new BadRequestException('Invalid or expired code');
+    } else if (client && serviceSid) {
       const check = await client.verify.v2
         .services(serviceSid)
         .verificationChecks.create({ to: phone, code });

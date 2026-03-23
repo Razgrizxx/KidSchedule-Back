@@ -25,8 +25,8 @@ export declare class BlogController {
         excerpt: string;
         coverImage: string | null;
         author: string;
-        published: boolean;
         readTime: number;
+        published: boolean;
         publishedAt: Date | null;
     }>;
     findRelated(slug: string): Promise<{
@@ -49,8 +49,8 @@ export declare class BlogController {
         excerpt: string;
         coverImage: string | null;
         author: string;
-        published: boolean;
         readTime: number;
+        published: boolean;
         publishedAt: Date | null;
     }>;
     update(slug: string, dto: UpdatePostDto): Promise<{
@@ -64,8 +64,8 @@ export declare class BlogController {
         excerpt: string;
         coverImage: string | null;
         author: string;
-        published: boolean;
         readTime: number;
+        published: boolean;
         publishedAt: Date | null;
     }>;
     remove(slug: string): Promise<{

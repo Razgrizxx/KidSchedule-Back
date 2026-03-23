@@ -21,7 +21,9 @@
       "Bash(python3 -c \":*)",
       "Bash(node -e \"const l = require\\(''lucide-react''\\); console.log\\(''Handshake:'', !!l.Handshake, ''HandshakeIcon:'', !!l.HandshakeIcon\\)\")",
       "Bash(node -e \"console.log\\(''server:'', require\\(''d:/downloads/Projects/kidSchedule/node_modules/socket.io/package.json''\\).version\\)\")",
-      "Bash(node -e \"console.log\\(''client:'', require\\(''d:/downloads/Projects/KidScheduleFront/node_modules/socket.io-client/package.json''\\).version\\)\")"
+      "Bash(node -e \"console.log\\(''client:'', require\\(''d:/downloads/Projects/KidScheduleFront/node_modules/socket.io-client/package.json''\\).version\\)\")",
+      "Bash(xargs grep:*)",
+      "Bash(grep -r \"subscription\\\\|plan\\\\|stripe\" d:/downloads/Projects/kidSchedule/src --include=*.ts -l)"
     ]
   }
 }

@@ -202,7 +202,11 @@ let AuthService = class AuthService {
         const devMode = this.config.get('DEV_MODE') === 'true';
         const serviceSid = this.config.get('TWILIO_VERIFY_SERVICE_SID');
         const client = this.getTwilioClient();
-        if (!devMode && client && serviceSid) {
+        if (devMode) {
+            if (code !== '123456')
+                throw new common_1.BadRequestException('Invalid or expired code');
+        }
+        else if (client && serviceSid) {
             const check = await client.verify.v2
                 .services(serviceSid)
                 .verificationChecks.create({ to: phone, code });

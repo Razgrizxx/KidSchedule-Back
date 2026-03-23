@@ -140,6 +140,18 @@ enum RsvpStatus {
   MAYBE
 }
 
+enum PlanType {
+  FREE
+  ESSENTIAL
+  PLUS
+  COMPLETE
+}
+
+enum BillingInterval {
+  MONTHLY
+  ANNUAL
+}
+
 // ─────────────────────────────────────────
 //  USER & AUTH
 // ─────────────────────────────────────────
@@ -185,8 +197,27 @@ model User {
   orgEventsCreated   OrgEvent[]          @relation("OrgEventCreator")
   orgRsvps           OrgRsvp[]
   orgAnnouncements   Announcement[]      @relation("OrgAnnouncements")
+  subscription       Subscription?
 
   @@map("users")
+}
+
+model Subscription {
+  id                   String          @id @default(uuid())
+  userId               String          @unique
+  plan                 PlanType        @default(FREE)
+  billingInterval      BillingInterval @default(MONTHLY)
+  stripeCustomerId     String?         @unique
+  stripeSubscriptionId String?         @unique
+  stripePriceId        String?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean         @default(false)
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
 }
 
 model PhoneVerification {

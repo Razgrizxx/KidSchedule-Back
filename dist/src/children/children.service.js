@@ -13,6 +13,12 @@ exports.ChildrenService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const family_service_1 = require("../family/family.service");
+const PLAN_CHILD_LIMITS = {
+    FREE: 1,
+    ESSENTIAL: 1,
+    PLUS: 4,
+    COMPLETE: Infinity,
+};
 let ChildrenService = class ChildrenService {
     prisma;
     familyService;
@@ -22,6 +28,13 @@ let ChildrenService = class ChildrenService {
     }
     async create(familyId, userId, dto) {
         await this.familyService.assertMember(familyId, userId);
+        const sub = await this.prisma.subscription.findUnique({ where: { userId } });
+        const plan = sub?.plan ?? 'FREE';
+        const limit = PLAN_CHILD_LIMITS[plan] ?? 1;
+        const currentCount = await this.prisma.child.count({ where: { familyId } });
+        if (currentCount >= limit) {
+            throw new common_1.ForbiddenException(`Your ${plan} plan allows up to ${limit} child profile${limit === 1 ? '' : 's'}. Upgrade your plan to add more.`);
+        }
         return this.prisma.child.create({
             data: { ...dto, familyId, dateOfBirth: new Date(dto.dateOfBirth) },
         });

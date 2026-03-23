@@ -19,6 +19,7 @@ import { EventsModule } from './events/events.module';
 import { GoogleModule } from './google/google.module';
 import { MediationModule } from './mediation/mediation.module';
 import { OrganizationsModule } from './organizations/organizations.module';
+import { StripeModule } from './stripe/stripe.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { OrganizationsModule } from './organizations/organizations.module';
     GoogleModule,
     MediationModule,
     OrganizationsModule,
+    StripeModule,
   ],
 })
 export class AppModule {}
