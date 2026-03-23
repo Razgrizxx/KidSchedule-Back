@@ -16,7 +16,7 @@ export declare class StripeService {
     }>;
     getSubscription(userId: string): Promise<{
         plan: import("@prisma/client").$Enums.PlanType;
-        billingInterval: import("@prisma/client").$Enums.BillingInterval;
+        billingType: import("@prisma/client").$Enums.BillingType;
         currentPeriodEnd: Date | null;
         cancelAtPeriodEnd: boolean;
     }>;

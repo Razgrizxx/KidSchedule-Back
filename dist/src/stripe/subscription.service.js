@@ -77,7 +77,7 @@ let SubscriptionService = class SubscriptionService {
             plan: effectivePlan,
             ownPlan,
             inheritedFromFamily,
-            billingInterval: sub?.billingInterval ?? 'MONTHLY',
+            billingType: sub?.billingType ?? 'INDIVIDUAL',
             currentPeriodEnd: sub?.currentPeriodEnd ?? null,
             cancelAtPeriodEnd: sub?.cancelAtPeriodEnd ?? false,
         };

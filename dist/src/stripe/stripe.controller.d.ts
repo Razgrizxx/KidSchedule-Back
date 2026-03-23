@@ -19,7 +19,7 @@ export declare class StripeController {
         plan: import("@prisma/client").$Enums.PlanType;
         ownPlan: import("@prisma/client").$Enums.PlanType;
         inheritedFromFamily: boolean;
-        billingInterval: import("@prisma/client").$Enums.BillingInterval;
+        billingType: import("@prisma/client").$Enums.BillingType;
         currentPeriodEnd: Date | null;
         cancelAtPeriodEnd: boolean;
     }>;

@@ -22,17 +22,17 @@ const PRICE_PLAN_MAP = {};
 function buildPriceMap(config) {
     const map = {};
     const entries = [
-        ['STRIPE_PRICE_ESSENTIAL_MONTHLY', 'ESSENTIAL', 'MONTHLY'],
-        ['STRIPE_PRICE_ESSENTIAL_ANNUAL', 'ESSENTIAL', 'ANNUAL'],
-        ['STRIPE_PRICE_PLUS_MONTHLY', 'PLUS', 'MONTHLY'],
-        ['STRIPE_PRICE_PLUS_ANNUAL', 'PLUS', 'ANNUAL'],
-        ['STRIPE_PRICE_COMPLETE_MONTHLY', 'COMPLETE', 'MONTHLY'],
-        ['STRIPE_PRICE_COMPLETE_ANNUAL', 'COMPLETE', 'ANNUAL'],
+        ['STRIPE_PRICE_ESSENTIAL_INDIVIDUAL', 'ESSENTIAL', 'INDIVIDUAL'],
+        ['STRIPE_PRICE_ESSENTIAL_FAMILY', 'ESSENTIAL', 'FAMILY'],
+        ['STRIPE_PRICE_PLUS_INDIVIDUAL', 'PLUS', 'INDIVIDUAL'],
+        ['STRIPE_PRICE_PLUS_FAMILY', 'PLUS', 'FAMILY'],
+        ['STRIPE_PRICE_COMPLETE_INDIVIDUAL', 'COMPLETE', 'INDIVIDUAL'],
+        ['STRIPE_PRICE_COMPLETE_FAMILY', 'COMPLETE', 'FAMILY'],
     ];
-    for (const [envKey, plan, interval] of entries) {
+    for (const [envKey, plan, billingType] of entries) {
         const priceId = config.get(envKey);
         if (priceId)
-            map[priceId] = { plan, interval };
+            map[priceId] = { plan, billingType };
     }
     return map;
 }
@@ -91,7 +91,7 @@ let StripeService = StripeService_1 = class StripeService {
         const sub = await this.prisma.subscription.findUnique({ where: { userId } });
         return {
             plan: sub?.plan ?? 'FREE',
-            billingInterval: sub?.billingInterval ?? 'MONTHLY',
+            billingType: sub?.billingType ?? 'INDIVIDUAL',
             currentPeriodEnd: sub?.currentPeriodEnd ?? null,
             cancelAtPeriodEnd: sub?.cancelAtPeriodEnd ?? false,
         };
@@ -130,29 +130,37 @@ let StripeService = StripeService_1 = class StripeService {
         const userId = session.metadata?.userId;
         if (!userId)
             return;
-        const stripeSub = await this.stripe.subscriptions.retrieve(session.subscription);
+        const subId = typeof session.subscription === 'string'
+            ? session.subscription
+            : session.subscription.id;
+        const customerId = typeof session.customer === 'string'
+            ? session.customer
+            : session.customer.id;
+        const stripeSub = await this.stripe.subscriptions.retrieve(subId);
         const priceId = stripeSub.items.data[0]?.price.id;
         const planInfo = priceId ? this.priceMap[priceId] : undefined;
-        const periodEnd = stripeSub.current_period_end;
+        const periodEndTs = stripeSub.current_period_end;
+        const periodEnd = periodEndTs ? new Date(periodEndTs * 1000) : null;
+        this.logger.log(`Checkout completed for user ${userId}, priceId=${priceId}, plan=${planInfo?.plan}`);
         await this.prisma.subscription.upsert({
             where: { userId },
             create: {
                 userId,
                 plan: planInfo?.plan ?? 'ESSENTIAL',
-                billingInterval: planInfo?.interval ?? 'MONTHLY',
-                stripeCustomerId: session.customer,
+                billingType: planInfo?.billingType ?? 'INDIVIDUAL',
+                stripeCustomerId: customerId,
                 stripeSubscriptionId: stripeSub.id,
                 stripePriceId: priceId,
-                currentPeriodEnd: new Date(periodEnd * 1000),
+                currentPeriodEnd: periodEnd,
                 cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
             },
             update: {
                 plan: planInfo?.plan ?? 'ESSENTIAL',
-                billingInterval: planInfo?.interval ?? 'MONTHLY',
-                stripeCustomerId: session.customer,
+                billingType: planInfo?.billingType ?? 'INDIVIDUAL',
+                stripeCustomerId: customerId,
                 stripeSubscriptionId: stripeSub.id,
                 stripePriceId: priceId,
-                currentPeriodEnd: new Date(periodEnd * 1000),
+                currentPeriodEnd: periodEnd,
                 cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
             },
         });
@@ -166,14 +174,15 @@ let StripeService = StripeService_1 = class StripeService {
             return;
         const priceId = stripeSub.items.data[0]?.price.id;
         const planInfo = priceId ? this.priceMap[priceId] : undefined;
-        const periodEnd = stripeSub.current_period_end;
+        const periodEndTs = stripeSub.current_period_end;
+        const periodEnd = periodEndTs ? new Date(periodEndTs * 1000) : null;
         await this.prisma.subscription.update({
             where: { id: sub.id },
             data: {
                 plan: planInfo?.plan ?? sub.plan,
-                billingInterval: planInfo?.interval ?? sub.billingInterval,
+                billingType: planInfo?.billingType ?? sub.billingType,
                 stripePriceId: priceId,
-                currentPeriodEnd: new Date(periodEnd * 1000),
+                currentPeriodEnd: periodEnd,
                 cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
             },
         });
