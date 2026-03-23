@@ -4,11 +4,11 @@ import { MediationController } from './mediation.controller';
 import { FamilyModule } from '../family/family.module';
 import { ClaudeModule } from '../claude/claude.module';
 import { MessagingModule } from '../messaging/messaging.module';
+import { StripeModule } from '../stripe/stripe.module';
 
 @Module({
-  imports: [FamilyModule, ClaudeModule, MessagingModule],
+  imports: [FamilyModule, ClaudeModule, MessagingModule, StripeModule],
   providers: [MediationService],
   controllers: [MediationController],
-  // ChatGateway is exported from MessagingModule and injected into MediationService
 })
 export class MediationModule {}

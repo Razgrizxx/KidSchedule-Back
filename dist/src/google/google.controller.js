@@ -20,6 +20,7 @@ const jwt_auth_guard_1 = require("../common/guards/jwt-auth.guard");
 const current_user_decorator_1 = require("../common/decorators/current-user.decorator");
 const google_auth_service_1 = require("./google-auth.service");
 const google_calendar_sync_service_1 = require("./google-calendar-sync.service");
+const subscription_guard_1 = require("../stripe/subscription.guard");
 let GoogleController = GoogleController_1 = class GoogleController {
     googleAuth;
     googleSync;
@@ -103,7 +104,8 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], GoogleController.prototype, "disconnect", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, subscription_guard_1.SubscriptionGuard),
+    (0, subscription_guard_1.RequireFeature)('google_calendar'),
     (0, common_1.Get)('sync/:familyId'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Param)('familyId')),
@@ -112,7 +114,8 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], GoogleController.prototype, "syncAll", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, subscription_guard_1.SubscriptionGuard),
+    (0, subscription_guard_1.RequireFeature)('google_calendar'),
     (0, common_1.Post)('export/:familyId'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Param)('familyId')),

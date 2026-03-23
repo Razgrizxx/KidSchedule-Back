@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { StripeModule } from '../stripe/stripe.module';
 import type { StringValue } from 'ms';
 import { PrismaModule } from '../prisma/prisma.module';
 import { GoogleAuthService } from './google-auth.service';
@@ -10,6 +11,7 @@ import { GoogleController } from './google.controller';
 @Module({
   imports: [
     PrismaModule,
+    StripeModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

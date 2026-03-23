@@ -17,6 +17,7 @@ import {
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthUser } from '../common/types/auth-user';
+import { SubscriptionGuard, RequireFeature } from '../stripe/subscription.guard';
 
 @UseGuards(JwtAuthGuard)
 @Controller('families/:familyId/mediation')
@@ -31,6 +32,8 @@ export class MediationController {
     return this.mediationService.getStats(familyId, user.id);
   }
 
+  @UseGuards(SubscriptionGuard)
+  @RequireFeature('ai_mediation')
   @Post()
   createSession(
     @CurrentUser() user: AuthUser,
@@ -67,6 +70,8 @@ export class MediationController {
     return this.mediationService.sendMessage(familyId, sessionId, user.id, dto);
   }
 
+  @UseGuards(SubscriptionGuard)
+  @RequireFeature('ai_mediation')
   @Post(':sessionId/ask-ai')
   askAI(
     @CurrentUser() user: AuthUser,

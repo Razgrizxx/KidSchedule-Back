@@ -10,6 +10,7 @@ exports.GoogleModule = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const config_1 = require("@nestjs/config");
+const stripe_module_1 = require("../stripe/stripe.module");
 const prisma_module_1 = require("../prisma/prisma.module");
 const google_auth_service_1 = require("./google-auth.service");
 const google_calendar_sync_service_1 = require("./google-calendar-sync.service");
@@ -21,6 +22,7 @@ exports.GoogleModule = GoogleModule = __decorate([
     (0, common_1.Module)({
         imports: [
             prisma_module_1.PrismaModule,
+            stripe_module_1.StripeModule,
             jwt_1.JwtModule.registerAsync({
                 imports: [config_1.ConfigModule],
                 inject: [config_1.ConfigService],
