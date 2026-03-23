@@ -1,8 +1,12 @@
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
+import { ConfigService } from '@nestjs/config';
 import { BulkCreateOrgEventsDto, CreateAnnouncementDto, CreateOrgDto, CreateOrgEventDto, CreateVenueDto, JoinOrgDto, RsvpDto, UpdateMemberRoleDto } from './dto/organization.dto';
 export declare class OrganizationsService {
     private prisma;
-    constructor(prisma: PrismaService);
+    private mail;
+    private config;
+    constructor(prisma: PrismaService, mail: MailService, config: ConfigService);
     private generateInviteCode;
     private getMembership;
     assertActiveMember(orgId: string, userId: string): Promise<{

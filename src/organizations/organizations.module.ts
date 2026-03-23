@@ -3,9 +3,10 @@ import { OrganizationsService } from './organizations.service';
 import { OrganizationsController } from './organizations.controller';
 import { PublicOrgController } from './public-org.controller';
 import { PrismaModule } from '../prisma/prisma.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, ConfigModule],
   providers: [OrganizationsService],
   controllers: [OrganizationsController, PublicOrgController],
   exports: [OrganizationsService],

@@ -11,6 +11,19 @@ export declare class MailService {
         token: string;
         appUrl: string;
     }): Promise<void>;
+    sendJoinRequest(opts: {
+        adminEmail: string;
+        adminName: string;
+        orgName: string;
+        requesterName: string;
+        appUrl: string;
+    }): Promise<void>;
+    sendMemberApproved(opts: {
+        toEmail: string;
+        memberName: string;
+        orgName: string;
+        appUrl: string;
+    }): Promise<void>;
     sendCaregiverInvitation(opts: {
         toEmail: string;
         caregiverName: string;

@@ -40,6 +40,32 @@ let MailService = MailService_1 = class MailService {
             this.logger.error('Failed to send co-parent invitation email', err);
         }
     }
+    async sendJoinRequest(opts) {
+        const dashboardUrl = `${opts.appUrl}/dashboard/organizations`;
+        try {
+            await this.mailer.sendMail({
+                to: opts.adminEmail,
+                subject: `${opts.requesterName} quiere unirse a ${opts.orgName} en KidSchedule`,
+                html: buildJoinRequestEmail({ ...opts, dashboardUrl }),
+            });
+        }
+        catch (err) {
+            this.logger.error('Failed to send join request email', err);
+        }
+    }
+    async sendMemberApproved(opts) {
+        const orgUrl = `${opts.appUrl}/dashboard/organizations`;
+        try {
+            await this.mailer.sendMail({
+                to: opts.toEmail,
+                subject: `Tu solicitud para unirte a ${opts.orgName} fue aprobada`,
+                html: buildMemberApprovedEmail({ ...opts, orgUrl }),
+            });
+        }
+        catch (err) {
+            this.logger.error('Failed to send member approved email', err);
+        }
+    }
     async sendCaregiverInvitation(opts) {
         const accessUrl = `${opts.appUrl}/caregiver-access?token=${opts.inviteToken}`;
         const childrenText = opts.childrenNames.length > 0 ? opts.childrenNames.join(', ') : 'un niño';
@@ -164,6 +190,87 @@ function buildCaregiverEmail(p) {
             <p style="margin:0;color:#94a3b8;font-size:12px;text-align:center;line-height:1.5;">
               Si no conoces a ${p.inviterName}, puedes ignorar este email con seguridad.
             </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px 40px;border-top:1px solid #f1f5f9;text-align:center;">
+            <p style="margin:0;color:#cbd5e1;font-size:11px;">© ${new Date().getFullYear()} KidSchedule</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+function buildJoinRequestEmail(p) {
+    return `<!DOCTYPE html>
+<html lang="es">
+<body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#f8fafc;">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr><td align="center" style="padding:40px 16px;">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);">
+        <tr>
+          <td style="background:linear-gradient(135deg,#f59e0b,#d97706);padding:36px 40px;text-align:center;">
+            <div style="display:inline-block;width:56px;height:56px;background:rgba(255,255,255,.2);border-radius:14px;line-height:56px;margin-bottom:12px;font-size:28px;">🏫</div>
+            <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">KidSchedule</h1>
+            <p style="margin:6px 0 0;color:rgba(255,255,255,.85);font-size:13px;">Solicitud de ingreso</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:36px 40px;">
+            <h2 style="margin:0 0 12px;color:#0f172a;font-size:20px;font-weight:700;">Hola, ${p.adminName}</h2>
+            <p style="margin:0 0 20px;color:#475569;font-size:15px;line-height:1.6;">
+              <strong style="color:#0f172a;">${p.requesterName}</strong> ha solicitado unirse a
+              <strong style="color:#0f172a;">${p.orgName}</strong> y está esperando tu aprobación.
+            </p>
+            <p style="margin:0 0 28px;color:#64748b;font-size:14px;line-height:1.6;">
+              Ingresa al panel de administración para aprobar o rechazar la solicitud.
+            </p>
+            <div style="text-align:center;margin:0 0 28px;">
+              <a href="${p.dashboardUrl}" style="display:inline-block;background:#d97706;color:#fff;font-size:15px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:10px;">
+                Ver solicitudes pendientes →
+              </a>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px 40px;border-top:1px solid #f1f5f9;text-align:center;">
+            <p style="margin:0;color:#cbd5e1;font-size:11px;">© ${new Date().getFullYear()} KidSchedule</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+function buildMemberApprovedEmail(p) {
+    return `<!DOCTYPE html>
+<html lang="es">
+<body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#f8fafc;">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr><td align="center" style="padding:40px 16px;">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);">
+        <tr>
+          <td style="background:linear-gradient(135deg,#22c55e,#16a34a);padding:36px 40px;text-align:center;">
+            <div style="display:inline-block;width:56px;height:56px;background:rgba(255,255,255,.2);border-radius:14px;line-height:56px;margin-bottom:12px;font-size:28px;">✅</div>
+            <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">KidSchedule</h1>
+            <p style="margin:6px 0 0;color:rgba(255,255,255,.85);font-size:13px;">Solicitud aprobada</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:36px 40px;">
+            <h2 style="margin:0 0 12px;color:#0f172a;font-size:20px;font-weight:700;">Hola, ${p.memberName}</h2>
+            <p style="margin:0 0 20px;color:#475569;font-size:15px;line-height:1.6;">
+              Tu solicitud para unirte a <strong style="color:#0f172a;">${p.orgName}</strong> fue
+              <strong style="color:#16a34a;">aprobada</strong>. Ya tienes acceso completo al grupo.
+            </p>
+            <div style="text-align:center;margin:0 0 28px;">
+              <a href="${p.orgUrl}" style="display:inline-block;background:#16a34a;color:#fff;font-size:15px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:10px;">
+                Ver mi grupo →
+              </a>
+            </div>
           </td>
         </tr>
         <tr>
