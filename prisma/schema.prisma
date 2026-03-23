@@ -117,6 +117,29 @@ enum AppearanceTheme {
   MINIMAL
 }
 
+enum OrgType {
+  TEAM
+  SCHOOL
+}
+
+enum OrgRole {
+  OWNER
+  ADMIN
+  VOLUNTEER
+  MEMBER
+}
+
+enum OrgMemberStatus {
+  PENDING
+  ACTIVE
+}
+
+enum RsvpStatus {
+  YES
+  NO
+  MAYBE
+}
+
 // ─────────────────────────────────────────
 //  USER & AUTH
 // ─────────────────────────────────────────
@@ -156,6 +179,12 @@ model User {
   mediationMessages  MediationMessage[]  @relation("MediationMessages")
   proposedResolutions ResolutionProposal[] @relation("ProposedResolutions")
   acceptedResolutions ResolutionProposal[] @relation("AcceptedResolutions")
+  adminOf            Organization[]      @relation("OrgAdmin")
+  orgMemberships     OrgMembership[]
+  orgMembershipsApproved OrgMembership[] @relation("OrgMemberApprover")
+  orgEventsCreated   OrgEvent[]          @relation("OrgEventCreator")
+  orgRsvps           OrgRsvp[]
+  orgAnnouncements   Announcement[]      @relation("OrgAnnouncements")
 
   @@map("users")
 }
@@ -540,6 +569,118 @@ model EventChild {
 
   @@unique([eventId, childId])
   @@map("event_children")
+}
+
+// ─────────────────────────────────────────
+//  ORGANIZATIONS (Teams & Schools)
+// ─────────────────────────────────────────
+
+model Organization {
+  id         String    @id @default(uuid())
+  name       String
+  type       OrgType
+  inviteCode String    @unique
+  adminId    String
+  isPublic   Boolean   @default(false)
+  description String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  admin         User            @relation("OrgAdmin", fields: [adminId], references: [id])
+  members       OrgMembership[]
+  events        OrgEvent[]
+  venues        Venue[]
+  announcements Announcement[]
+
+  @@map("organizations")
+}
+
+model OrgMembership {
+  id             String          @id @default(uuid())
+  userId         String
+  organizationId String
+  role           OrgRole         @default(MEMBER)
+  status         OrgMemberStatus @default(ACTIVE)
+  approvedById   String?
+  approvedAt     DateTime?
+  joinedAt       DateTime        @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  approvedBy   User?        @relation("OrgMemberApprover", fields: [approvedById], references: [id])
+
+  @@unique([userId, organizationId])
+  @@map("org_memberships")
+}
+
+model Venue {
+  id             String  @id @default(uuid())
+  organizationId String
+  name           String
+  address        String?
+  mapUrl         String?
+  notes          String?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  events       OrgEvent[]
+
+  @@map("venues")
+}
+
+model OrgEvent {
+  id             String    @id @default(uuid())
+  organizationId String
+  createdById    String
+  title          String
+  type           EventType @default(OTHER)
+  startAt        DateTime
+  endAt          DateTime
+  allDay         Boolean   @default(false)
+  notes          String?
+  venueId        String?
+  maxCapacity    Int?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy    User         @relation("OrgEventCreator", fields: [createdById], references: [id])
+  venue        Venue?       @relation(fields: [venueId], references: [id], onDelete: SetNull)
+  rsvps        OrgRsvp[]
+
+  @@map("org_events")
+}
+
+model OrgRsvp {
+  id         String     @id @default(uuid())
+  orgEventId String
+  userId     String
+  status     RsvpStatus
+  notes      String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  orgEvent OrgEvent @relation(fields: [orgEventId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([orgEventId, userId])
+  @@map("org_rsvps")
+}
+
+model Announcement {
+  id             String   @id @default(uuid())
+  organizationId String
+  authorId       String
+  title          String
+  content        String
+  pinned         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  author       User         @relation("OrgAnnouncements", fields: [authorId], references: [id])
+
+  @@map("announcements")
 }
 
 // ─────────────────────────────────────────

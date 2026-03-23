@@ -27,6 +27,7 @@ const caregiver_portal_module_1 = require("./caregiver-portal/caregiver-portal.m
 const events_module_1 = require("./events/events.module");
 const google_module_1 = require("./google/google.module");
 const mediation_module_1 = require("./mediation/mediation.module");
+const organizations_module_1 = require("./organizations/organizations.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -52,6 +53,7 @@ exports.AppModule = AppModule = __decorate([
             events_module_1.EventsModule,
             google_module_1.GoogleModule,
             mediation_module_1.MediationModule,
+            organizations_module_1.OrganizationsModule,
         ],
     })
 ], AppModule);
