@@ -24,7 +24,8 @@
       "Bash(node -e \"console.log\\(''client:'', require\\(''d:/downloads/Projects/KidScheduleFront/node_modules/socket.io-client/package.json''\\).version\\)\")",
       "Bash(xargs grep:*)",
       "Bash(grep -r \"subscription\\\\|plan\\\\|stripe\" d:/downloads/Projects/kidSchedule/src --include=*.ts -l)",
-      "Bash(grep -n \"variant: ''destructive''\\\\|variant=\"\"destructive\"\"\" d:/downloads/Projects/KidScheduleFront/src/components/dashboard/Sidebar.tsx d:/downloads/Projects/KidScheduleFront/src/pages/dashboard/CalendarPage.tsx d:/downloads/Projects/KidScheduleFront/src/pages/dashboard/MediationPage.tsx d:/downloads/Projects/KidScheduleFront/src/pages/dashboard/FamilyPage.tsx)"
+      "Bash(grep -n \"variant: ''destructive''\\\\|variant=\"\"destructive\"\"\" d:/downloads/Projects/KidScheduleFront/src/components/dashboard/Sidebar.tsx d:/downloads/Projects/KidScheduleFront/src/pages/dashboard/CalendarPage.tsx d:/downloads/Projects/KidScheduleFront/src/pages/dashboard/MediationPage.tsx d:/downloads/Projects/KidScheduleFront/src/pages/dashboard/FamilyPage.tsx)",
+      "Bash(pnpm build:*)"
     ]
   }
 }
