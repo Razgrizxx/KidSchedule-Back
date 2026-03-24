@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { MailerService } from '@nestjs-modules/mailer';
+import { MailService } from '../mail/mail.service';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import * as twilio from 'twilio';
@@ -22,7 +22,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwt: JwtService,
     private config: ConfigService,
-    private mailer: MailerService,
+    private mail: MailService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -50,6 +50,8 @@ export class AuthService {
         },
       },
     });
+
+    void this.mail.sendWelcomeEmail(user.email, user.firstName);
 
     return this.signToken(user);
   }
@@ -95,23 +97,7 @@ export class AuthService {
     );
     const resetUrl = `${frontendUrl}/reset-password?token=${token}`;
 
-    await this.mailer.sendMail({
-      to: user.email,
-      subject: 'Reset your KidSchedule password',
-      html: `
-        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
-          <h2 style="color:#66CCCC;">Reset your password</h2>
-          <p>Hi ${user.firstName},</p>
-          <p>You requested a password reset. Click below to set a new password — this link expires in <strong>1 hour</strong>.</p>
-          <p style="text-align:center;margin:32px 0;">
-            <a href="${resetUrl}" style="background:#66CCCC;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;">
-              Reset Password
-            </a>
-          </p>
-          <p style="color:#94a3b8;font-size:13px;">If you didn't request this, you can safely ignore this email.</p>
-        </div>
-      `,
-    });
+    await this.mail.sendPasswordReset(user.email, user.firstName, resetUrl);
 
     return response;
   }

@@ -159,7 +159,6 @@ export class CaregiversService {
 
     if (!inviter || !family) return;
 
-    const appUrl = this.config.get<string>('APP_URL', 'http://localhost:5173');
     await this.mail.sendCaregiverInvitation({
       toEmail: caregiver.email,
       caregiverName: caregiver.name,
@@ -167,7 +166,6 @@ export class CaregiversService {
       familyName: family.name,
       childrenNames: family.children.map((c) => c.firstName),
       inviteToken,
-      appUrl,
       permissions: {
         canViewCalendar: caregiver.canViewCalendar,
         canViewHealthInfo: caregiver.canViewHealthInfo,

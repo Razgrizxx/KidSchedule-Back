@@ -1,11 +1,77 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { MailerService } from '@nestjs-modules/mailer';
+import { ConfigService } from '@nestjs/config';
+import { Resend } from 'resend';
 
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
+  private readonly resend: Resend;
+  private readonly from: string;
+  private readonly appUrl: string;
 
-  constructor(private mailer: MailerService) {}
+  constructor(private config: ConfigService) {
+    this.resend = new Resend(config.getOrThrow<string>('RESEND_API_KEY'));
+    this.from = config.get<string>('RESEND_FROM', 'KidSchedule <noreply@kidschedule.app>');
+    this.appUrl = config.get<string>('FRONTEND_URL', 'http://localhost:5173');
+  }
+
+  // ── Generic send ──────────────────────────────────────────────────────────
+
+  async sendEmail(to: string, subject: string, html: string): Promise<void> {
+    try {
+      await this.resend.emails.send({ from: this.from, to, subject, html });
+    } catch (err) {
+      this.logger.error(`Failed to send email to ${to} — subject: "${subject}"`, err);
+    }
+  }
+
+  // ── Auth emails ───────────────────────────────────────────────────────────
+
+  async sendWelcomeEmail(userEmail: string, firstName: string): Promise<void> {
+    await this.sendEmail(
+      userEmail,
+      '¡Bienvenido a KidSchedule!',
+      buildWelcomeEmail({ firstName, appUrl: this.appUrl }),
+    );
+  }
+
+  async sendPasswordReset(userEmail: string, firstName: string, resetUrl: string): Promise<void> {
+    await this.sendEmail(
+      userEmail,
+      'Restablece tu contraseña de KidSchedule',
+      buildPasswordResetEmail({ firstName, resetUrl }),
+    );
+  }
+
+  // ── Feature emails ────────────────────────────────────────────────────────
+
+  async sendChangeRequestNotification(opts: {
+    toEmail: string;
+    requesterName: string;
+    type: string;
+    requestedDate: string;
+  }): Promise<void> {
+    await this.sendEmail(
+      opts.toEmail,
+      `${opts.requesterName} te envió una solicitud de custodia`,
+      buildChangeRequestEmail({ ...opts, appUrl: this.appUrl }),
+    );
+  }
+
+  async sendMediationAlert(opts: {
+    toEmail: string;
+    recipientName: string;
+    initiatorName: string;
+    topic: string;
+  }): Promise<void> {
+    await this.sendEmail(
+      opts.toEmail,
+      `${opts.initiatorName} inició una sesión de mediación`,
+      buildMediationAlertEmail({ ...opts, appUrl: this.appUrl }),
+    );
+  }
+
+  // ── Invitation emails ─────────────────────────────────────────────────────
 
   async sendCoParentInvitation(opts: {
     toEmail: string;
@@ -13,64 +79,14 @@ export class MailService {
     familyName: string;
     childrenNames: string[];
     token: string;
-    appUrl: string;
   }): Promise<void> {
-    const joinUrl = `${opts.appUrl}/join?token=${opts.token}`;
-    const childrenText =
-      opts.childrenNames.length > 0
-        ? opts.childrenNames.join(', ')
-        : 'tu/s hijo/s';
-    try {
-      await this.mailer.sendMail({
-        to: opts.toEmail,
-        subject: `${opts.inviterName} te invitó a co-gestionar la custodia en KidSchedule`,
-        html: buildCoParentEmail({
-          inviterName: opts.inviterName,
-          familyName: opts.familyName,
-          childrenText,
-          joinUrl,
-        }),
-      });
-    } catch (err) {
-      this.logger.error('Failed to send co-parent invitation email', err);
-    }
-  }
-
-  async sendJoinRequest(opts: {
-    adminEmail: string;
-    adminName: string;
-    orgName: string;
-    requesterName: string;
-    appUrl: string;
-  }): Promise<void> {
-    const dashboardUrl = `${opts.appUrl}/dashboard/organizations`;
-    try {
-      await this.mailer.sendMail({
-        to: opts.adminEmail,
-        subject: `${opts.requesterName} quiere unirse a ${opts.orgName} en KidSchedule`,
-        html: buildJoinRequestEmail({ ...opts, dashboardUrl }),
-      });
-    } catch (err) {
-      this.logger.error('Failed to send join request email', err);
-    }
-  }
-
-  async sendMemberApproved(opts: {
-    toEmail: string;
-    memberName: string;
-    orgName: string;
-    appUrl: string;
-  }): Promise<void> {
-    const orgUrl = `${opts.appUrl}/dashboard/organizations`;
-    try {
-      await this.mailer.sendMail({
-        to: opts.toEmail,
-        subject: `Tu solicitud para unirte a ${opts.orgName} fue aprobada`,
-        html: buildMemberApprovedEmail({ ...opts, orgUrl }),
-      });
-    } catch (err) {
-      this.logger.error('Failed to send member approved email', err);
-    }
+    const joinUrl = `${this.appUrl}/join?token=${opts.token}`;
+    const childrenText = opts.childrenNames.length > 0 ? opts.childrenNames.join(', ') : 'tu/s hijo/s';
+    await this.sendEmail(
+      opts.toEmail,
+      `${opts.inviterName} te invitó a co-gestionar la custodia en KidSchedule`,
+      buildCoParentEmail({ inviterName: opts.inviterName, familyName: opts.familyName, childrenText, joinUrl }),
+    );
   }
 
   async sendCaregiverInvitation(opts: {
@@ -80,7 +96,6 @@ export class MailService {
     familyName: string;
     childrenNames: string[];
     inviteToken: string;
-    appUrl: string;
     permissions: {
       canViewCalendar: boolean;
       canViewHealthInfo: boolean;
@@ -88,9 +103,8 @@ export class MailService {
       canViewAllergies: boolean;
     };
   }): Promise<void> {
-    const accessUrl = `${opts.appUrl}/caregiver-access?token=${opts.inviteToken}`;
-    const childrenText =
-      opts.childrenNames.length > 0 ? opts.childrenNames.join(', ') : 'un niño';
+    const accessUrl = `${this.appUrl}/caregiver-access?token=${opts.inviteToken}`;
+    const childrenText = opts.childrenNames.length > 0 ? opts.childrenNames.join(', ') : 'un niño';
     const permList = [
       opts.permissions.canViewCalendar && 'Calendario de custodia',
       opts.permissions.canViewHealthInfo && 'Información del niño',
@@ -98,26 +112,217 @@ export class MailService {
       opts.permissions.canViewAllergies && 'Alergias y notas médicas',
     ].filter(Boolean) as string[];
 
-    try {
-      await this.mailer.sendMail({
-        to: opts.toEmail,
-        subject: `${opts.inviterName} te otorgó acceso como cuidador en KidSchedule`,
-        html: buildCaregiverEmail({
-          caregiverName: opts.caregiverName,
-          inviterName: opts.inviterName,
-          familyName: opts.familyName,
-          childrenText,
-          permList,
-          accessUrl,
-        }),
-      });
-    } catch (err) {
-      this.logger.error('Failed to send caregiver invitation email', err);
-    }
+    await this.sendEmail(
+      opts.toEmail,
+      `${opts.inviterName} te otorgó acceso como cuidador en KidSchedule`,
+      buildCaregiverEmail({
+        caregiverName: opts.caregiverName,
+        inviterName: opts.inviterName,
+        familyName: opts.familyName,
+        childrenText,
+        permList,
+        accessUrl,
+      }),
+    );
+  }
+
+  async sendJoinRequest(opts: {
+    adminEmail: string;
+    adminName: string;
+    orgName: string;
+    requesterName: string;
+  }): Promise<void> {
+    const dashboardUrl = `${this.appUrl}/dashboard/organizations`;
+    await this.sendEmail(
+      opts.adminEmail,
+      `${opts.requesterName} quiere unirse a ${opts.orgName} en KidSchedule`,
+      buildJoinRequestEmail({ ...opts, dashboardUrl }),
+    );
+  }
+
+  async sendMemberApproved(opts: {
+    toEmail: string;
+    memberName: string;
+    orgName: string;
+  }): Promise<void> {
+    const orgUrl = `${this.appUrl}/dashboard/organizations`;
+    await this.sendEmail(
+      opts.toEmail,
+      `Tu solicitud para unirte a ${opts.orgName} fue aprobada`,
+      buildMemberApprovedEmail({ ...opts, orgUrl }),
+    );
   }
 }
 
+// ── Shared layout ─────────────────────────────────────────────────────────────
+
+function layout(opts: {
+  headerGradient: string;
+  headerIcon: string;
+  headerTitle: string;
+  headerSubtitle: string;
+  body: string;
+}): string {
+  const year = new Date().getFullYear();
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:#f1f5f9;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;">
+    <tr><td align="center" style="padding:40px 16px;">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.10);">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:${opts.headerGradient};padding:40px;text-align:center;">
+            <div style="display:inline-block;width:64px;height:64px;line-height:64px;text-align:center;background:rgba(255,255,255,.18);border-radius:16px;margin-bottom:16px;font-size:32px;">${opts.headerIcon}</div>
+            <h1 style="margin:0 0 4px;color:#ffffff;font-size:24px;font-weight:800;letter-spacing:-.3px;">KidSchedule</h1>
+            <p style="margin:0;color:rgba(255,255,255,.8);font-size:13px;">${opts.headerSubtitle}</p>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:40px;">
+            ${opts.body}
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding:24px 40px;border-top:1px solid #f1f5f9;text-align:center;background:#f8fafc;">
+            <p style="margin:0 0 6px;color:#94a3b8;font-size:12px;">© ${year} KidSchedule · La agenda familiar que realmente funciona</p>
+            <p style="margin:0;color:#cbd5e1;font-size:11px;">Si no esperabas este email, puedes ignorarlo con seguridad.</p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+function btn(label: string, href: string, color: string): string {
+  return `<div style="text-align:center;margin:32px 0 8px;">
+    <a href="${href}" style="display:inline-block;background:${color};color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:16px 40px;border-radius:12px;letter-spacing:-.2px;">
+      ${label}
+    </a>
+  </div>`;
+}
+
 // ── Email templates ───────────────────────────────────────────────────────────
+
+function buildWelcomeEmail(p: { firstName: string; appUrl: string }): string {
+  return layout({
+    headerGradient: 'linear-gradient(135deg,#2dd4bf 0%,#0891b2 100%)',
+    headerIcon: '📅',
+    headerTitle: 'KidSchedule',
+    headerSubtitle: '¡Ya eres parte de la familia!',
+    body: `
+      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">¡Hola, ${p.firstName}!</h2>
+      <p style="margin:0 0 16px;color:#475569;font-size:15px;line-height:1.7;">
+        Tu cuenta en <strong style="color:#0f172a;">KidSchedule</strong> está lista. Ahora podés
+        coordinar la custodia de tus hijos, gestionar gastos compartidos, comunicarte de forma segura
+        con tu co-padre/madre y mucho más.
+      </p>
+      <div style="background:#f0fdfa;border:1px solid #99f6e4;border-radius:12px;padding:20px 24px;margin:0 0 24px;">
+        <p style="margin:0 0 10px;color:#0d9488;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;">¿Por dónde empezar?</p>
+        <ul style="margin:0;padding:0 0 0 16px;color:#475569;font-size:14px;line-height:2;">
+          <li>Configurá el calendario de custodia</li>
+          <li>Invitá a tu co-padre/madre</li>
+          <li>Registrá los gastos compartidos</li>
+        </ul>
+      </div>
+      ${btn('Ir a KidSchedule →', p.appUrl, '#0d9488')}
+    `,
+  });
+}
+
+function buildPasswordResetEmail(p: { firstName: string; resetUrl: string }): string {
+  return layout({
+    headerGradient: 'linear-gradient(135deg,#6366f1 0%,#4f46e5 100%)',
+    headerIcon: '🔐',
+    headerTitle: 'KidSchedule',
+    headerSubtitle: 'Restablecer contraseña',
+    body: `
+      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">Hola, ${p.firstName}</h2>
+      <p style="margin:0 0 16px;color:#475569;font-size:15px;line-height:1.7;">
+        Recibimos una solicitud para restablecer la contraseña de tu cuenta en KidSchedule.
+        Hacé clic en el botón de abajo — el enlace expira en <strong>1 hora</strong>.
+      </p>
+      ${btn('Restablecer contraseña →', p.resetUrl, '#4f46e5')}
+      <p style="margin:16px 0 0;color:#94a3b8;font-size:13px;text-align:center;">
+        Si no solicitaste este cambio, ignorá este email. Tu contraseña no se modificará.
+      </p>
+    `,
+  });
+}
+
+function buildChangeRequestEmail(p: {
+  requesterName: string;
+  type: string;
+  requestedDate: string;
+  appUrl: string;
+}): string {
+  const typeLabels: Record<string, string> = {
+    SWAP: 'un intercambio de día',
+    EXTRA_DAY: 'un día extra',
+    EXTRA_DAYS: 'días extra',
+  };
+  const typeLabel = typeLabels[p.type] ?? 'una solicitud de custodia';
+  const dashUrl = `${p.appUrl}/dashboard/requests`;
+
+  return layout({
+    headerGradient: 'linear-gradient(135deg,#f59e0b 0%,#d97706 100%)',
+    headerIcon: '📋',
+    headerTitle: 'KidSchedule',
+    headerSubtitle: 'Nueva solicitud de custodia',
+    body: `
+      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">Tenés una nueva solicitud</h2>
+      <p style="margin:0 0 20px;color:#475569;font-size:15px;line-height:1.7;">
+        <strong style="color:#0f172a;">${p.requesterName}</strong> te envió ${typeLabel}
+        para el <strong style="color:#0f172a;">${p.requestedDate}</strong>.
+      </p>
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:16px 20px;margin:0 0 24px;">
+        <p style="margin:0;color:#92400e;font-size:14px;line-height:1.6;">
+          Revisá la solicitud en la app y respondé para que ambos queden en sintonía.
+        </p>
+      </div>
+      ${btn('Ver solicitud →', dashUrl, '#d97706')}
+    `,
+  });
+}
+
+function buildMediationAlertEmail(p: {
+  recipientName: string;
+  initiatorName: string;
+  topic: string;
+  appUrl: string;
+}): string {
+  const mediationUrl = `${p.appUrl}/dashboard/mediation`;
+
+  return layout({
+    headerGradient: 'linear-gradient(135deg,#8b5cf6 0%,#7c3aed 100%)',
+    headerIcon: '🤝',
+    headerTitle: 'KidSchedule',
+    headerSubtitle: 'Sesión de mediación',
+    body: `
+      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">Hola, ${p.recipientName}</h2>
+      <p style="margin:0 0 20px;color:#475569;font-size:15px;line-height:1.7;">
+        <strong style="color:#0f172a;">${p.initiatorName}</strong> inició una sesión de mediación
+        con el tema: <strong style="color:#0f172a;">${p.topic}</strong>.
+      </p>
+      <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:12px;padding:16px 20px;margin:0 0 24px;">
+        <p style="margin:0;color:#5b21b6;font-size:14px;line-height:1.6;">
+          La mediación asistida por IA de KidSchedule ayuda a resolver diferencias de forma
+          constructiva y centrada en el bienestar de tus hijos.
+        </p>
+      </div>
+      ${btn('Ver sesión de mediación →', mediationUrl, '#7c3aed')}
+    `,
+  });
+}
 
 function buildCoParentEmail(p: {
   inviterName: string;
@@ -125,52 +330,26 @@ function buildCoParentEmail(p: {
   childrenText: string;
   joinUrl: string;
 }): string {
-  return `<!DOCTYPE html>
-<html lang="es">
-<body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#f8fafc;">
-  <table width="100%" cellpadding="0" cellspacing="0">
-    <tr><td align="center" style="padding:40px 16px;">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);">
-        <tr>
-          <td style="background:linear-gradient(135deg,#2dd4bf,#14b8a6);padding:36px 40px;text-align:center;">
-            <div style="display:inline-block;width:56px;height:56px;background:rgba(255,255,255,.2);border-radius:14px;line-height:56px;margin-bottom:12px;font-size:28px;">📅</div>
-            <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">KidSchedule</h1>
-            <p style="margin:6px 0 0;color:rgba(255,255,255,.85);font-size:13px;">La agenda familiar que realmente funciona</p>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:36px 40px;">
-            <h2 style="margin:0 0 12px;color:#0f172a;font-size:20px;font-weight:700;">Tienes una invitación</h2>
-            <p style="margin:0 0 20px;color:#475569;font-size:15px;line-height:1.6;">
-              <strong style="color:#0f172a;">${p.inviterName}</strong> te ha invitado a co-gestionar
-              la custodia de <strong style="color:#0f172a;">${p.childrenText}</strong> en la familia
-              <strong style="color:#0f172a;">${p.familyName}</strong>.
-            </p>
-            <p style="margin:0 0 28px;color:#64748b;font-size:14px;line-height:1.6;">
-              Con KidSchedule podrás coordinar el calendario de custodia, gestionar gastos compartidos,
-              comunicarte de forma segura y mucho más — todo en un mismo lugar.
-            </p>
-            <div style="text-align:center;margin:0 0 28px;">
-              <a href="${p.joinUrl}" style="display:inline-block;background:#14b8a6;color:#fff;font-size:15px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:10px;">
-                Unirse a KidSchedule →
-              </a>
-            </div>
-            <p style="margin:0;color:#94a3b8;font-size:12px;text-align:center;line-height:1.5;">
-              Si no esperabas esta invitación, puedes ignorar este email.<br>
-              El enlace expira en 7 días.
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:20px 40px;border-top:1px solid #f1f5f9;text-align:center;">
-            <p style="margin:0;color:#cbd5e1;font-size:11px;">© ${new Date().getFullYear()} KidSchedule</p>
-          </td>
-        </tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
+  return layout({
+    headerGradient: 'linear-gradient(135deg,#2dd4bf 0%,#14b8a6 100%)',
+    headerIcon: '📅',
+    headerTitle: 'KidSchedule',
+    headerSubtitle: 'Invitación de co-padre/madre',
+    body: `
+      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">Tienes una invitación</h2>
+      <p style="margin:0 0 20px;color:#475569;font-size:15px;line-height:1.7;">
+        <strong style="color:#0f172a;">${p.inviterName}</strong> te invitó a co-gestionar la custodia
+        de <strong style="color:#0f172a;">${p.childrenText}</strong> en la familia
+        <strong style="color:#0f172a;">${p.familyName}</strong>.
+      </p>
+      <p style="margin:0 0 24px;color:#64748b;font-size:14px;line-height:1.7;">
+        Con KidSchedule podés coordinar el calendario de custodia, gestionar gastos compartidos,
+        comunicarte de forma segura y mucho más — todo en un mismo lugar.
+      </p>
+      ${btn('Unirse a KidSchedule →', p.joinUrl, '#14b8a6')}
+      <p style="margin:16px 0 0;color:#94a3b8;font-size:12px;text-align:center;">El enlace expira en 7 días.</p>
+    `,
+  });
 }
 
 function buildCaregiverEmail(p: {
@@ -183,63 +362,32 @@ function buildCaregiverEmail(p: {
 }): string {
   const permItems =
     p.permList.length > 0
-      ? p.permList
-          .map(
-            (perm) =>
-              `<li style="margin:4px 0;color:#475569;font-size:14px;">✓ ${perm}</li>`,
-          )
-          .join('')
+      ? p.permList.map((perm) => `<li style="margin:4px 0;color:#475569;font-size:14px;">✓ ${perm}</li>`).join('')
       : '<li style="margin:4px 0;color:#475569;font-size:14px;">Acceso básico al calendario</li>';
 
-  return `<!DOCTYPE html>
-<html lang="es">
-<body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#f8fafc;">
-  <table width="100%" cellpadding="0" cellspacing="0">
-    <tr><td align="center" style="padding:40px 16px;">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);">
-        <tr>
-          <td style="background:linear-gradient(135deg,#a855f7,#9333ea);padding:36px 40px;text-align:center;">
-            <div style="display:inline-block;width:56px;height:56px;background:rgba(255,255,255,.2);border-radius:14px;line-height:56px;margin-bottom:12px;font-size:28px;">🛡️</div>
-            <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">KidSchedule</h1>
-            <p style="margin:6px 0 0;color:rgba(255,255,255,.85);font-size:13px;">Acceso como Cuidador</p>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:36px 40px;">
-            <h2 style="margin:0 0 12px;color:#0f172a;font-size:20px;font-weight:700;">Hola, ${p.caregiverName}</h2>
-            <p style="margin:0 0 20px;color:#475569;font-size:15px;line-height:1.6;">
-              <strong style="color:#0f172a;">${p.inviterName}</strong> te ha otorgado acceso como
-              cuidador para <strong style="color:#0f172a;">${p.childrenText}</strong> en la familia
-              <strong style="color:#0f172a;">${p.familyName}</strong>.
-            </p>
-            <div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:10px;padding:16px 20px;margin:0 0 24px;">
-              <p style="margin:0 0 8px;color:#6b21a8;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Tu acceso incluye</p>
-              <ul style="margin:0;padding:0 0 0 4px;list-style:none;">${permItems}</ul>
-            </div>
-            <p style="margin:0 0 28px;color:#64748b;font-size:14px;line-height:1.6;">
-              Tu acceso es <strong>de solo lectura</strong>. No podrás realizar cambios en el calendario
-              ni acceder a información no incluida en tu lista de permisos.
-            </p>
-            <div style="text-align:center;margin:0 0 28px;">
-              <a href="${p.accessUrl}" style="display:inline-block;background:#9333ea;color:#fff;font-size:15px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:10px;">
-                Ver mi acceso →
-              </a>
-            </div>
-            <p style="margin:0;color:#94a3b8;font-size:12px;text-align:center;line-height:1.5;">
-              Si no conoces a ${p.inviterName}, puedes ignorar este email con seguridad.
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:20px 40px;border-top:1px solid #f1f5f9;text-align:center;">
-            <p style="margin:0;color:#cbd5e1;font-size:11px;">© ${new Date().getFullYear()} KidSchedule</p>
-          </td>
-        </tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
+  return layout({
+    headerGradient: 'linear-gradient(135deg,#a855f7 0%,#9333ea 100%)',
+    headerIcon: '🛡️',
+    headerTitle: 'KidSchedule',
+    headerSubtitle: 'Acceso como Cuidador',
+    body: `
+      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">Hola, ${p.caregiverName}</h2>
+      <p style="margin:0 0 20px;color:#475569;font-size:15px;line-height:1.7;">
+        <strong style="color:#0f172a;">${p.inviterName}</strong> te otorgó acceso como cuidador
+        para <strong style="color:#0f172a;">${p.childrenText}</strong> en la familia
+        <strong style="color:#0f172a;">${p.familyName}</strong>.
+      </p>
+      <div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:12px;padding:20px 24px;margin:0 0 24px;">
+        <p style="margin:0 0 10px;color:#6b21a8;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;">Tu acceso incluye</p>
+        <ul style="margin:0;padding:0 0 0 4px;list-style:none;">${permItems}</ul>
+      </div>
+      <p style="margin:0 0 24px;color:#64748b;font-size:14px;line-height:1.7;">
+        Tu acceso es <strong>de solo lectura</strong>. No podrás realizar cambios en el calendario
+        ni acceder a información fuera de tus permisos.
+      </p>
+      ${btn('Ver mi acceso →', p.accessUrl, '#9333ea')}
+    `,
+  });
 }
 
 function buildJoinRequestEmail(p: {
@@ -248,46 +396,23 @@ function buildJoinRequestEmail(p: {
   requesterName: string;
   dashboardUrl: string;
 }): string {
-  return `<!DOCTYPE html>
-<html lang="es">
-<body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#f8fafc;">
-  <table width="100%" cellpadding="0" cellspacing="0">
-    <tr><td align="center" style="padding:40px 16px;">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);">
-        <tr>
-          <td style="background:linear-gradient(135deg,#f59e0b,#d97706);padding:36px 40px;text-align:center;">
-            <div style="display:inline-block;width:56px;height:56px;background:rgba(255,255,255,.2);border-radius:14px;line-height:56px;margin-bottom:12px;font-size:28px;">🏫</div>
-            <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">KidSchedule</h1>
-            <p style="margin:6px 0 0;color:rgba(255,255,255,.85);font-size:13px;">Solicitud de ingreso</p>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:36px 40px;">
-            <h2 style="margin:0 0 12px;color:#0f172a;font-size:20px;font-weight:700;">Hola, ${p.adminName}</h2>
-            <p style="margin:0 0 20px;color:#475569;font-size:15px;line-height:1.6;">
-              <strong style="color:#0f172a;">${p.requesterName}</strong> ha solicitado unirse a
-              <strong style="color:#0f172a;">${p.orgName}</strong> y está esperando tu aprobación.
-            </p>
-            <p style="margin:0 0 28px;color:#64748b;font-size:14px;line-height:1.6;">
-              Ingresa al panel de administración para aprobar o rechazar la solicitud.
-            </p>
-            <div style="text-align:center;margin:0 0 28px;">
-              <a href="${p.dashboardUrl}" style="display:inline-block;background:#d97706;color:#fff;font-size:15px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:10px;">
-                Ver solicitudes pendientes →
-              </a>
-            </div>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:20px 40px;border-top:1px solid #f1f5f9;text-align:center;">
-            <p style="margin:0;color:#cbd5e1;font-size:11px;">© ${new Date().getFullYear()} KidSchedule</p>
-          </td>
-        </tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
+  return layout({
+    headerGradient: 'linear-gradient(135deg,#f59e0b 0%,#d97706 100%)',
+    headerIcon: '🏫',
+    headerTitle: 'KidSchedule',
+    headerSubtitle: 'Solicitud de ingreso',
+    body: `
+      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">Hola, ${p.adminName}</h2>
+      <p style="margin:0 0 20px;color:#475569;font-size:15px;line-height:1.7;">
+        <strong style="color:#0f172a;">${p.requesterName}</strong> ha solicitado unirse a
+        <strong style="color:#0f172a;">${p.orgName}</strong> y está esperando tu aprobación.
+      </p>
+      <p style="margin:0 0 24px;color:#64748b;font-size:14px;line-height:1.7;">
+        Ingresá al panel de administración para aprobar o rechazar la solicitud.
+      </p>
+      ${btn('Ver solicitudes pendientes →', p.dashboardUrl, '#d97706')}
+    `,
+  });
 }
 
 function buildMemberApprovedEmail(p: {
@@ -295,41 +420,18 @@ function buildMemberApprovedEmail(p: {
   orgName: string;
   orgUrl: string;
 }): string {
-  return `<!DOCTYPE html>
-<html lang="es">
-<body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#f8fafc;">
-  <table width="100%" cellpadding="0" cellspacing="0">
-    <tr><td align="center" style="padding:40px 16px;">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);">
-        <tr>
-          <td style="background:linear-gradient(135deg,#22c55e,#16a34a);padding:36px 40px;text-align:center;">
-            <div style="display:inline-block;width:56px;height:56px;background:rgba(255,255,255,.2);border-radius:14px;line-height:56px;margin-bottom:12px;font-size:28px;">✅</div>
-            <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">KidSchedule</h1>
-            <p style="margin:6px 0 0;color:rgba(255,255,255,.85);font-size:13px;">Solicitud aprobada</p>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:36px 40px;">
-            <h2 style="margin:0 0 12px;color:#0f172a;font-size:20px;font-weight:700;">Hola, ${p.memberName}</h2>
-            <p style="margin:0 0 20px;color:#475569;font-size:15px;line-height:1.6;">
-              Tu solicitud para unirte a <strong style="color:#0f172a;">${p.orgName}</strong> fue
-              <strong style="color:#16a34a;">aprobada</strong>. Ya tienes acceso completo al grupo.
-            </p>
-            <div style="text-align:center;margin:0 0 28px;">
-              <a href="${p.orgUrl}" style="display:inline-block;background:#16a34a;color:#fff;font-size:15px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:10px;">
-                Ver mi grupo →
-              </a>
-            </div>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:20px 40px;border-top:1px solid #f1f5f9;text-align:center;">
-            <p style="margin:0;color:#cbd5e1;font-size:11px;">© ${new Date().getFullYear()} KidSchedule</p>
-          </td>
-        </tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
+  return layout({
+    headerGradient: 'linear-gradient(135deg,#22c55e 0%,#16a34a 100%)',
+    headerIcon: '✅',
+    headerTitle: 'KidSchedule',
+    headerSubtitle: 'Solicitud aprobada',
+    body: `
+      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">Hola, ${p.memberName}</h2>
+      <p style="margin:0 0 24px;color:#475569;font-size:15px;line-height:1.7;">
+        Tu solicitud para unirte a <strong style="color:#0f172a;">${p.orgName}</strong> fue
+        <strong style="color:#16a34a;">aprobada</strong>. Ya tenés acceso completo al grupo.
+      </p>
+      ${btn('Ver mi grupo →', p.orgUrl, '#16a34a')}
+    `,
+  });
 }

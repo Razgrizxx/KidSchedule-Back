@@ -16,25 +16,53 @@ const family_service_1 = require("../family/family.service");
 const claude_service_1 = require("../claude/claude.service");
 const messaging_service_1 = require("../messaging/messaging.service");
 const chat_gateway_1 = require("../messaging/chat.gateway");
+const mail_service_1 = require("../mail/mail.service");
 let MediationService = class MediationService {
     prisma;
     familyService;
     claude;
     messaging;
     chatGateway;
-    constructor(prisma, familyService, claude, messaging, chatGateway) {
+    mail;
+    constructor(prisma, familyService, claude, messaging, chatGateway, mail) {
         this.prisma = prisma;
         this.familyService = familyService;
         this.claude = claude;
         this.messaging = messaging;
         this.chatGateway = chatGateway;
+        this.mail = mail;
     }
     async createSession(familyId, userId, dto) {
         await this.familyService.assertMember(familyId, userId);
-        return this.prisma.mediationSession.create({
-            data: { familyId, topic: dto.topic },
-            include: { _count: { select: { messages: true, proposals: true } } },
+        const [session, initiator] = await Promise.all([
+            this.prisma.mediationSession.create({
+                data: { familyId, topic: dto.topic },
+                include: { _count: { select: { messages: true, proposals: true } } },
+            }),
+            this.prisma.user.findUnique({
+                where: { id: userId },
+                select: { firstName: true, lastName: true },
+            }),
+        ]);
+        const initiatorName = initiator
+            ? `${initiator.firstName} ${initiator.lastName}`
+            : 'Tu co-padre/madre';
+        void this.prisma.familyMember
+            .findMany({
+            where: { familyId, userId: { not: userId } },
+            include: { user: { select: { email: true, firstName: true } } },
+        })
+            .then((memberships) => {
+            for (const m of memberships) {
+                void this.mail.sendMediationAlert({
+                    toEmail: m.user.email,
+                    recipientName: m.user.firstName,
+                    initiatorName,
+                    topic: dto.topic,
+                });
+            }
         });
+        return session;
     }
     async getSessions(familyId, userId) {
         await this.familyService.assertMember(familyId, userId);
@@ -280,6 +308,7 @@ exports.MediationService = MediationService = __decorate([
         family_service_1.FamilyService,
         claude_service_1.ClaudeService,
         messaging_service_1.MessagingService,
-        chat_gateway_1.ChatGateway])
+        chat_gateway_1.ChatGateway,
+        mail_service_1.MailService])
 ], MediationService);
 //# sourceMappingURL=mediation.service.js.map

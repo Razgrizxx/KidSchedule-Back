@@ -3,6 +3,7 @@ import { FamilyService } from '../family/family.service';
 import { ClaudeService } from '../claude/claude.service';
 import { MessagingService } from '../messaging/messaging.service';
 import { ChatGateway } from '../messaging/chat.gateway';
+import { MailService } from '../mail/mail.service';
 import { CreateSessionDto, SendMessageDto, ProposeResolutionDto, RespondProposalDto } from './dto/mediation.dto';
 export declare class MediationService {
     private prisma;
@@ -10,7 +11,8 @@ export declare class MediationService {
     private claude;
     private messaging;
     private chatGateway;
-    constructor(prisma: PrismaService, familyService: FamilyService, claude: ClaudeService, messaging: MessagingService, chatGateway: ChatGateway);
+    private mail;
+    constructor(prisma: PrismaService, familyService: FamilyService, claude: ClaudeService, messaging: MessagingService, chatGateway: ChatGateway, mail: MailService);
     createSession(familyId: string, userId: string, dto: CreateSessionDto): Promise<{
         _count: {
             messages: number;
@@ -32,8 +34,8 @@ export declare class MediationService {
             id: string;
             createdAt: Date;
             status: import("@prisma/client").$Enums.ProposalStatus;
-            summary: string;
             sessionId: string;
+            summary: string;
             proposedBy: string;
             acceptedBy: string | null;
         }[];
@@ -55,8 +57,8 @@ export declare class MediationService {
         } & {
             id: string;
             createdAt: Date;
-            content: string;
             senderId: string | null;
+            content: string;
             isAI: boolean;
             sessionId: string;
         })[];
@@ -75,8 +77,8 @@ export declare class MediationService {
             id: string;
             createdAt: Date;
             status: import("@prisma/client").$Enums.ProposalStatus;
-            summary: string;
             sessionId: string;
+            summary: string;
             proposedBy: string;
             acceptedBy: string | null;
         })[];
@@ -97,8 +99,8 @@ export declare class MediationService {
     } & {
         id: string;
         createdAt: Date;
-        content: string;
         senderId: string | null;
+        content: string;
         isAI: boolean;
         sessionId: string;
     }>;
@@ -125,8 +127,8 @@ export declare class MediationService {
     } & {
         id: string;
         createdAt: Date;
-        content: string;
         senderId: string | null;
+        content: string;
         isAI: boolean;
         sessionId: string;
     }>;
@@ -140,8 +142,8 @@ export declare class MediationService {
         id: string;
         createdAt: Date;
         status: import("@prisma/client").$Enums.ProposalStatus;
-        summary: string;
         sessionId: string;
+        summary: string;
         proposedBy: string;
         acceptedBy: string | null;
     }>;
@@ -149,8 +151,8 @@ export declare class MediationService {
         id: string;
         createdAt: Date;
         status: import("@prisma/client").$Enums.ProposalStatus;
-        summary: string;
         sessionId: string;
+        summary: string;
         proposedBy: string;
         acceptedBy: string | null;
     }>;
@@ -173,8 +175,8 @@ export declare class MediationService {
             } & {
                 id: string;
                 createdAt: Date;
-                content: string;
                 senderId: string | null;
+                content: string;
                 isAI: boolean;
                 sessionId: string;
             })[];
@@ -193,8 +195,8 @@ export declare class MediationService {
                 id: string;
                 createdAt: Date;
                 status: import("@prisma/client").$Enums.ProposalStatus;
-                summary: string;
                 sessionId: string;
+                summary: string;
                 proposedBy: string;
                 acceptedBy: string | null;
             })[];

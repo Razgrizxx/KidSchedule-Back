@@ -12,6 +12,7 @@ export declare class ScheduleController {
             name: string;
             familyId: string;
             childId: string;
+            isActive: boolean;
             pattern: import("@prisma/client").$Enums.CustodyPattern;
             startDate: Date;
             durationDays: number;
@@ -19,7 +20,6 @@ export declare class ScheduleController {
             exchangeTime: string | null;
             parent1Id: string | null;
             parent2Id: string | null;
-            isActive: boolean;
         };
         eventsGenerated: number;
     }>;
@@ -42,6 +42,7 @@ export declare class ScheduleController {
         name: string;
         familyId: string;
         childId: string;
+        isActive: boolean;
         pattern: import("@prisma/client").$Enums.CustodyPattern;
         startDate: Date;
         durationDays: number;
@@ -49,7 +50,6 @@ export declare class ScheduleController {
         exchangeTime: string | null;
         parent1Id: string | null;
         parent2Id: string | null;
-        isActive: boolean;
     })[]>;
     getCalendar(user: AuthUser, familyId: string, year: number, month: number): Promise<({
         child: {

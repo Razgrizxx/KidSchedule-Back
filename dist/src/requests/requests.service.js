@@ -15,16 +15,19 @@ const prisma_service_1 = require("../prisma/prisma.service");
 const family_service_1 = require("../family/family.service");
 const messaging_service_1 = require("../messaging/messaging.service");
 const chat_gateway_1 = require("../messaging/chat.gateway");
+const mail_service_1 = require("../mail/mail.service");
 let RequestsService = class RequestsService {
     prisma;
     familyService;
     messaging;
     chatGateway;
-    constructor(prisma, familyService, messaging, chatGateway) {
+    mail;
+    constructor(prisma, familyService, messaging, chatGateway, mail) {
         this.prisma = prisma;
         this.familyService = familyService;
         this.messaging = messaging;
         this.chatGateway = chatGateway;
+        this.mail = mail;
     }
     async create(familyId, requesterId, dto) {
         await this.familyService.assertMember(familyId, requesterId);
@@ -57,6 +60,13 @@ let RequestsService = class RequestsService {
                 })()
                 : `System: ${requesterName} has requested an extra day on ${reqFmt}.`;
         await this.messaging.sendSystemMessage(familyId, msg);
+        void this.notifyCoParentByEmail(familyId, created.requester.id, {
+            requesterName,
+            type: dto.type,
+            requestedDate: new Date(dto.requestedDate).toLocaleDateString('es-AR', {
+                day: 'numeric', month: 'long', year: 'numeric',
+            }),
+        });
         return created;
     }
     async findAll(familyId, userId) {
@@ -106,6 +116,20 @@ let RequestsService = class RequestsService {
             payload: { requestId, status: dto.action },
         });
         return updated;
+    }
+    async notifyCoParentByEmail(familyId, requesterId, opts) {
+        const memberships = await this.prisma.familyMember.findMany({
+            where: { familyId, userId: { not: requesterId } },
+            include: { user: { select: { email: true } } },
+        });
+        for (const m of memberships) {
+            void this.mail.sendChangeRequestNotification({
+                toEmail: m.user.email,
+                requesterName: opts.requesterName,
+                type: opts.type,
+                requestedDate: opts.requestedDate,
+            });
+        }
     }
     async applyCalendarOverrides(request, responderId) {
         const schedules = await this.prisma.schedule.findMany({
@@ -169,6 +193,7 @@ exports.RequestsService = RequestsService = __decorate([
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         family_service_1.FamilyService,
         messaging_service_1.MessagingService,
-        chat_gateway_1.ChatGateway])
+        chat_gateway_1.ChatGateway,
+        mail_service_1.MailService])
 ], RequestsService);
 //# sourceMappingURL=requests.service.js.map

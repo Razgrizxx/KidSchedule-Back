@@ -9,6 +9,7 @@ import { FamilyService } from '../family/family.service';
 import { ClaudeService } from '../claude/claude.service';
 import { MessagingService } from '../messaging/messaging.service';
 import { ChatGateway } from '../messaging/chat.gateway';
+import { MailService } from '../mail/mail.service';
 import {
   CreateSessionDto,
   SendMessageDto,
@@ -24,14 +25,45 @@ export class MediationService {
     private claude: ClaudeService,
     private messaging: MessagingService,
     private chatGateway: ChatGateway,
+    private mail: MailService,
   ) {}
 
   async createSession(familyId: string, userId: string, dto: CreateSessionDto) {
     await this.familyService.assertMember(familyId, userId);
-    return this.prisma.mediationSession.create({
-      data: { familyId, topic: dto.topic },
-      include: { _count: { select: { messages: true, proposals: true } } },
-    });
+
+    const [session, initiator] = await Promise.all([
+      this.prisma.mediationSession.create({
+        data: { familyId, topic: dto.topic },
+        include: { _count: { select: { messages: true, proposals: true } } },
+      }),
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { firstName: true, lastName: true },
+      }),
+    ]);
+
+    // Notify co-parents by email (fire-and-forget)
+    const initiatorName = initiator
+      ? `${initiator.firstName} ${initiator.lastName}`
+      : 'Tu co-padre/madre';
+
+    void this.prisma.familyMember
+      .findMany({
+        where: { familyId, userId: { not: userId } },
+        include: { user: { select: { email: true, firstName: true } } },
+      })
+      .then((memberships) => {
+        for (const m of memberships) {
+          void this.mail.sendMediationAlert({
+            toEmail: m.user.email,
+            recipientName: m.user.firstName,
+            initiatorName,
+            topic: dto.topic,
+          });
+        }
+      });
+
+    return session;
   }
 
   async getSessions(familyId: string, userId: string) {

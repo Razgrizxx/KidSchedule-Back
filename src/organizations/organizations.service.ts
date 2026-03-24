@@ -113,7 +113,6 @@ export class OrganizationsService {
           adminName: admin.firstName,
           orgName: org.name,
           requesterName: requester ? `${requester.firstName} ${requester.lastName}` : 'Un usuario',
-          appUrl: this.config.get<string>('APP_URL', 'https://kidschedule.app'),
         });
       }
     }
@@ -199,7 +198,6 @@ export class OrganizationsService {
         toEmail: member.email,
         memberName: member.firstName,
         orgName: org.name,
-        appUrl: this.config.get<string>('APP_URL', 'https://kidschedule.app'),
       });
     }
 

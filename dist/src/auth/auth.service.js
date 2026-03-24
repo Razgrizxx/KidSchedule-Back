@@ -46,7 +46,7 @@ exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const config_1 = require("@nestjs/config");
-const mailer_1 = require("@nestjs-modules/mailer");
+const mail_service_1 = require("../mail/mail.service");
 const bcrypt = __importStar(require("bcrypt"));
 const crypto = __importStar(require("crypto"));
 const twilio = __importStar(require("twilio"));
@@ -55,12 +55,12 @@ let AuthService = class AuthService {
     prisma;
     jwt;
     config;
-    mailer;
-    constructor(prisma, jwt, config, mailer) {
+    mail;
+    constructor(prisma, jwt, config, mail) {
         this.prisma = prisma;
         this.jwt = jwt;
         this.config = config;
-        this.mailer = mailer;
+        this.mail = mail;
     }
     async register(dto) {
         const existing = await this.prisma.user.findUnique({
@@ -86,6 +86,7 @@ let AuthService = class AuthService {
                 },
             },
         });
+        void this.mail.sendWelcomeEmail(user.email, user.firstName);
         return this.signToken(user);
     }
     async login(dto) {
@@ -119,23 +120,7 @@ let AuthService = class AuthService {
         });
         const frontendUrl = this.config.get('FRONTEND_URL', 'http://localhost:5173');
         const resetUrl = `${frontendUrl}/reset-password?token=${token}`;
-        await this.mailer.sendMail({
-            to: user.email,
-            subject: 'Reset your KidSchedule password',
-            html: `
-        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
-          <h2 style="color:#66CCCC;">Reset your password</h2>
-          <p>Hi ${user.firstName},</p>
-          <p>You requested a password reset. Click below to set a new password — this link expires in <strong>1 hour</strong>.</p>
-          <p style="text-align:center;margin:32px 0;">
-            <a href="${resetUrl}" style="background:#66CCCC;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;">
-              Reset Password
-            </a>
-          </p>
-          <p style="color:#94a3b8;font-size:13px;">If you didn't request this, you can safely ignore this email.</p>
-        </div>
-      `,
-        });
+        await this.mail.sendPasswordReset(user.email, user.firstName, resetUrl);
         return response;
     }
     async resetPassword(dto) {
@@ -257,6 +242,6 @@ exports.AuthService = AuthService = __decorate([
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         jwt_1.JwtService,
         config_1.ConfigService,
-        mailer_1.MailerService])
+        mail_service_1.MailService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map
