@@ -12,12 +12,13 @@ const moments_service_1 = require("./moments.service");
 const moments_controller_1 = require("./moments.controller");
 const family_module_1 = require("../family/family.module");
 const cloudinary_module_1 = require("../cloudinary/cloudinary.module");
+const stripe_module_1 = require("../stripe/stripe.module");
 let MomentsModule = class MomentsModule {
 };
 exports.MomentsModule = MomentsModule;
 exports.MomentsModule = MomentsModule = __decorate([
     (0, common_1.Module)({
-        imports: [family_module_1.FamilyModule, cloudinary_module_1.CloudinaryModule],
+        imports: [family_module_1.FamilyModule, cloudinary_module_1.CloudinaryModule, stripe_module_1.StripeModule],
         providers: [moments_service_1.MomentsService],
         controllers: [moments_controller_1.MomentsController],
     })

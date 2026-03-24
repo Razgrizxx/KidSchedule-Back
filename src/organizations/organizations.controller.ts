@@ -25,8 +25,10 @@ import {
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthUser } from '../common/types/auth-user';
+import { SubscriptionGuard, RequireFeature } from '../stripe/subscription.guard';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, SubscriptionGuard)
+@RequireFeature('organizations')
 @Controller('organizations')
 export class OrganizationsController {
   constructor(private orgsService: OrganizationsService) {}

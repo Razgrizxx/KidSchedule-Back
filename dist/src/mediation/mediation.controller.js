@@ -19,6 +19,7 @@ const mediation_dto_1 = require("./dto/mediation.dto");
 const jwt_auth_guard_1 = require("../common/guards/jwt-auth.guard");
 const current_user_decorator_1 = require("../common/decorators/current-user.decorator");
 const auth_user_1 = require("../common/types/auth-user");
+const subscription_guard_1 = require("../stripe/subscription.guard");
 let MediationController = class MediationController {
     mediationService;
     constructor(mediationService) {
@@ -65,6 +66,8 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], MediationController.prototype, "getStats", null);
 __decorate([
+    (0, common_1.UseGuards)(subscription_guard_1.SubscriptionGuard),
+    (0, subscription_guard_1.RequireFeature)('ai_mediation'),
     (0, common_1.Post)(),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Param)('familyId')),
@@ -101,6 +104,8 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], MediationController.prototype, "sendMessage", null);
 __decorate([
+    (0, common_1.UseGuards)(subscription_guard_1.SubscriptionGuard),
+    (0, subscription_guard_1.RequireFeature)('ai_mediation'),
     (0, common_1.Post)(':sessionId/ask-ai'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Param)('familyId')),

@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
 import { MessagingService } from '../messaging/messaging.service';
 import { ChatGateway } from '../messaging/chat.gateway';
+import { MailService } from '../mail/mail.service';
 import {
   CreateChangeRequestDto,
   RespondChangeRequestDto,
@@ -20,6 +21,7 @@ export class RequestsService {
     private familyService: FamilyService,
     private messaging: MessagingService,
     private chatGateway: ChatGateway,
+    private mail: MailService,
   ) {}
 
   async create(
@@ -59,6 +61,15 @@ export class RequestsService {
           })()
         : `System: ${requesterName} has requested an extra day on ${reqFmt}.`;
     await this.messaging.sendSystemMessage(familyId, msg);
+
+    // Notify the co-parent by email (fire-and-forget)
+    void this.notifyCoParentByEmail(familyId, created.requester.id, {
+      requesterName,
+      type: dto.type,
+      requestedDate: new Date(dto.requestedDate).toLocaleDateString('es-AR', {
+        day: 'numeric', month: 'long', year: 'numeric',
+      }),
+    });
 
     return created;
   }
@@ -127,6 +138,25 @@ export class RequestsService {
     });
 
     return updated;
+  }
+
+  private async notifyCoParentByEmail(
+    familyId: string,
+    requesterId: string,
+    opts: { requesterName: string; type: string; requestedDate: string },
+  ): Promise<void> {
+    const memberships = await this.prisma.familyMember.findMany({
+      where: { familyId, userId: { not: requesterId } },
+      include: { user: { select: { email: true } } },
+    });
+    for (const m of memberships) {
+      void this.mail.sendChangeRequestNotification({
+        toEmail: m.user.email,
+        requesterName: opts.requesterName,
+        type: opts.type,
+        requestedDate: opts.requestedDate,
+      });
+    }
   }
 
   /** Create CustodyEvent overrides when a request is approved */

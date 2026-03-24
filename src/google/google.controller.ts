@@ -18,6 +18,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthUser } from '../common/types/auth-user';
 import { GoogleAuthService } from './google-auth.service';
 import { GoogleCalendarSyncService } from './google-calendar-sync.service';
+import { SubscriptionGuard, RequireFeature } from '../stripe/subscription.guard';
 
 @Controller('auth/google')
 export class GoogleController {
@@ -75,7 +76,8 @@ export class GoogleController {
   }
 
   /** Trigger a full sync of all upcoming family events to Google Calendar. */
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, SubscriptionGuard)
+  @RequireFeature('google_calendar')
   @Get('sync/:familyId')
   syncAll(
     @CurrentUser() user: AuthUser,
@@ -88,7 +90,8 @@ export class GoogleController {
    * Export all custody blocks + calendar events to Google Calendar.
    * Optionally cleans up stale Google events before re-creating.
    */
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, SubscriptionGuard)
+  @RequireFeature('google_calendar')
   @Post('export/:familyId')
   async exportAll(
     @CurrentUser() user: AuthUser,

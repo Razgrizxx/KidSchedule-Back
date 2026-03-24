@@ -2,13 +2,15 @@ import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
 import { MessagingService } from '../messaging/messaging.service';
 import { ChatGateway } from '../messaging/chat.gateway';
+import { MailService } from '../mail/mail.service';
 import { CreateChangeRequestDto, RespondChangeRequestDto } from './dto/change-request.dto';
 export declare class RequestsService {
     private prisma;
     private familyService;
     private messaging;
     private chatGateway;
-    constructor(prisma: PrismaService, familyService: FamilyService, messaging: MessagingService, chatGateway: ChatGateway);
+    private mail;
+    constructor(prisma: PrismaService, familyService: FamilyService, messaging: MessagingService, chatGateway: ChatGateway, mail: MailService);
     create(familyId: string, requesterId: string, dto: CreateChangeRequestDto): Promise<{
         requester: {
             id: string;
@@ -80,6 +82,7 @@ export declare class RequestsService {
         requesterId: string;
         responderId: string | null;
     }>;
+    private notifyCoParentByEmail;
     private applyCalendarOverrides;
     private sendStatusMessage;
 }

@@ -19,6 +19,7 @@ const organization_dto_1 = require("./dto/organization.dto");
 const jwt_auth_guard_1 = require("../common/guards/jwt-auth.guard");
 const current_user_decorator_1 = require("../common/decorators/current-user.decorator");
 const auth_user_1 = require("../common/types/auth-user");
+const subscription_guard_1 = require("../stripe/subscription.guard");
 let OrganizationsController = class OrganizationsController {
     orgsService;
     constructor(orgsService) {
@@ -324,7 +325,8 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], OrganizationsController.prototype, "exportIcs", null);
 exports.OrganizationsController = OrganizationsController = __decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, subscription_guard_1.SubscriptionGuard),
+    (0, subscription_guard_1.RequireFeature)('organizations'),
     (0, common_1.Controller)('organizations'),
     __metadata("design:paramtypes", [organizations_service_1.OrganizationsService])
 ], OrganizationsController);

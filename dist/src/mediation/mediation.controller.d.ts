@@ -32,8 +32,8 @@ export declare class MediationController {
             id: string;
             createdAt: Date;
             status: import("@prisma/client").$Enums.ProposalStatus;
-            summary: string;
             sessionId: string;
+            summary: string;
             proposedBy: string;
             acceptedBy: string | null;
         }[];
@@ -75,8 +75,8 @@ export declare class MediationController {
             id: string;
             createdAt: Date;
             status: import("@prisma/client").$Enums.ProposalStatus;
-            summary: string;
             sessionId: string;
+            summary: string;
             proposedBy: string;
             acceptedBy: string | null;
         })[];
@@ -140,8 +140,8 @@ export declare class MediationController {
         id: string;
         createdAt: Date;
         status: import("@prisma/client").$Enums.ProposalStatus;
-        summary: string;
         sessionId: string;
+        summary: string;
         proposedBy: string;
         acceptedBy: string | null;
     }>;
@@ -149,8 +149,8 @@ export declare class MediationController {
         id: string;
         createdAt: Date;
         status: import("@prisma/client").$Enums.ProposalStatus;
-        summary: string;
         sessionId: string;
+        summary: string;
         proposedBy: string;
         acceptedBy: string | null;
     }>;
@@ -193,8 +193,8 @@ export declare class MediationController {
                 id: string;
                 createdAt: Date;
                 status: import("@prisma/client").$Enums.ProposalStatus;
-                summary: string;
                 sessionId: string;
+                summary: string;
                 proposedBy: string;
                 acceptedBy: string | null;
             })[];

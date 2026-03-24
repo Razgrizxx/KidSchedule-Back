@@ -93,14 +93,12 @@ export class FamilyService {
     ]);
 
     if (family && inviter) {
-      const appUrl = this.config.get<string>('APP_URL', 'http://localhost:5173');
       void this.mail.sendCoParentInvitation({
         toEmail: dto.email,
         inviterName: `${inviter.firstName} ${inviter.lastName}`,
         familyName: family.name,
         childrenNames: family.children.map((c) => c.firstName),
         token: invitation.token,
-        appUrl,
       });
     }
 

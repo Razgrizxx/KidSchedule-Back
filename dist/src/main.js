@@ -7,7 +7,7 @@ const path_1 = require("path");
 const app_module_1 = require("./app.module");
 const all_exceptions_filter_1 = require("./common/filters/all-exceptions.filter");
 async function bootstrap() {
-    const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    const app = await core_1.NestFactory.create(app_module_1.AppModule, { rawBody: true });
     app.useStaticAssets((0, path_1.join)(process.cwd(), 'uploads'), { prefix: '/uploads' });
     app.useWebSocketAdapter(new platform_socket_io_1.IoAdapter(app));
     app.useGlobalPipes(new common_1.ValidationPipe({

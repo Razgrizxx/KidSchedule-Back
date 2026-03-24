@@ -92,14 +92,12 @@ let FamilyService = class FamilyService {
             this.prisma.user.findUnique({ where: { id: inviterId } }),
         ]);
         if (family && inviter) {
-            const appUrl = this.config.get('APP_URL', 'http://localhost:5173');
             void this.mail.sendCoParentInvitation({
                 toEmail: dto.email,
                 inviterName: `${inviter.firstName} ${inviter.lastName}`,
                 familyName: family.name,
                 childrenNames: family.children.map((c) => c.firstName),
                 token: invitation.token,
-                appUrl,
             });
         }
         return { message: 'Invitation sent', token: invitation.token };

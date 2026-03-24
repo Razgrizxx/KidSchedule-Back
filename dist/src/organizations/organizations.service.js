@@ -12,11 +12,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.OrganizationsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const mail_service_1 = require("../mail/mail.service");
+const config_1 = require("@nestjs/config");
 const MANAGER_ROLES = ['OWNER', 'ADMIN'];
 let OrganizationsService = class OrganizationsService {
     prisma;
-    constructor(prisma) {
+    mail;
+    config;
+    constructor(prisma, mail, config) {
         this.prisma = prisma;
+        this.mail = mail;
+        this.config = config;
     }
     generateInviteCode() {
         const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -74,9 +80,26 @@ let OrganizationsService = class OrganizationsService {
         if (existing)
             throw new common_1.BadRequestException('You are already a member of this organization');
         const status = org.type === 'SCHOOL' ? 'PENDING' : 'ACTIVE';
-        await this.prisma.orgMembership.create({
-            data: { userId, organizationId: org.id, role: 'MEMBER', status },
-        });
+        const [requester] = await Promise.all([
+            this.prisma.user.findUnique({ where: { id: userId }, select: { firstName: true, lastName: true } }),
+            this.prisma.orgMembership.create({
+                data: { userId, organizationId: org.id, role: 'MEMBER', status },
+            }),
+        ]);
+        if (status === 'PENDING') {
+            const admin = await this.prisma.user.findUnique({
+                where: { id: org.adminId },
+                select: { firstName: true, email: true },
+            });
+            if (admin?.email) {
+                void this.mail.sendJoinRequest({
+                    adminEmail: admin.email,
+                    adminName: admin.firstName,
+                    orgName: org.name,
+                    requesterName: requester ? `${requester.firstName} ${requester.lastName}` : 'Un usuario',
+                });
+            }
+        }
         return {
             ...(await this.prisma.organization.findUnique({ where: { id: org.id } })),
             pendingApproval: status === 'PENDING',
@@ -139,10 +162,25 @@ let OrganizationsService = class OrganizationsService {
             throw new common_1.NotFoundException('Member not found');
         if (membership.status === 'ACTIVE')
             throw new common_1.BadRequestException('Already active');
-        return this.prisma.orgMembership.update({
-            where: { userId_organizationId: { userId: targetUserId, organizationId: orgId } },
-            data: { status: 'ACTIVE', approvedById: adminId, approvedAt: new Date() },
-        });
+        const [updated, org, member] = await Promise.all([
+            this.prisma.orgMembership.update({
+                where: { userId_organizationId: { userId: targetUserId, organizationId: orgId } },
+                data: { status: 'ACTIVE', approvedById: adminId, approvedAt: new Date() },
+            }),
+            this.prisma.organization.findUnique({ where: { id: orgId }, select: { name: true } }),
+            this.prisma.user.findUnique({
+                where: { id: targetUserId },
+                select: { firstName: true, email: true },
+            }),
+        ]);
+        if (member?.email && org) {
+            void this.mail.sendMemberApproved({
+                toEmail: member.email,
+                memberName: member.firstName,
+                orgName: org.name,
+            });
+        }
+        return updated;
     }
     async rejectMember(orgId, targetUserId, adminId) {
         await this.assertManager(orgId, adminId);
@@ -377,6 +415,8 @@ let OrganizationsService = class OrganizationsService {
 exports.OrganizationsService = OrganizationsService;
 exports.OrganizationsService = OrganizationsService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        mail_service_1.MailService,
+        config_1.ConfigService])
 ], OrganizationsService);
 //# sourceMappingURL=organizations.service.js.map

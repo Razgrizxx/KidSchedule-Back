@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { google } from 'googleapis';
+import { google, Auth } from 'googleapis';
 import { PrismaService } from '../prisma/prisma.service';
 import { encrypt } from './crypto.util';
 
@@ -15,7 +15,7 @@ export class GoogleAuthService {
 
   // ── OAuth2 client factory ────────────────────────────────────────────────
 
-  createOAuth2Client() {
+  createOAuth2Client(): Auth.OAuth2Client {
     return new google.auth.OAuth2(
       this.config.getOrThrow<string>('GOOGLE_CLIENT_ID'),
       this.config.getOrThrow<string>('GOOGLE_CLIENT_SECRET'),

@@ -11,12 +11,13 @@ const common_1 = require("@nestjs/common");
 const children_service_1 = require("./children.service");
 const children_controller_1 = require("./children.controller");
 const family_module_1 = require("../family/family.module");
+const stripe_module_1 = require("../stripe/stripe.module");
 let ChildrenModule = class ChildrenModule {
 };
 exports.ChildrenModule = ChildrenModule;
 exports.ChildrenModule = ChildrenModule = __decorate([
     (0, common_1.Module)({
-        imports: [family_module_1.FamilyModule],
+        imports: [family_module_1.FamilyModule, stripe_module_1.StripeModule],
         providers: [children_service_1.ChildrenService],
         controllers: [children_controller_1.ChildrenController],
     })

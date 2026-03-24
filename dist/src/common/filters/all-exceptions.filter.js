@@ -9,6 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AllExceptionsFilter = void 0;
 const common_1 = require("@nestjs/common");
 let AllExceptionsFilter = class AllExceptionsFilter {
+    logger = new common_1.Logger('ExceptionFilter');
     catch(exception, host) {
         const ctx = host.switchToHttp();
         const response = ctx.getResponse();
@@ -16,6 +17,9 @@ let AllExceptionsFilter = class AllExceptionsFilter {
         const status = exception instanceof common_1.HttpException
             ? exception.getStatus()
             : common_1.HttpStatus.INTERNAL_SERVER_ERROR;
+        if (status === common_1.HttpStatus.INTERNAL_SERVER_ERROR) {
+            this.logger.error(`${request.method} ${request.url}`, exception instanceof Error ? exception.stack : String(exception));
+        }
         const message = exception instanceof common_1.HttpException
             ? exception.getResponse()
             : 'Internal server error';

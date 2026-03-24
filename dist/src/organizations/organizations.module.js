@@ -12,12 +12,14 @@ const organizations_service_1 = require("./organizations.service");
 const organizations_controller_1 = require("./organizations.controller");
 const public_org_controller_1 = require("./public-org.controller");
 const prisma_module_1 = require("../prisma/prisma.module");
+const config_1 = require("@nestjs/config");
+const stripe_module_1 = require("../stripe/stripe.module");
 let OrganizationsModule = class OrganizationsModule {
 };
 exports.OrganizationsModule = OrganizationsModule;
 exports.OrganizationsModule = OrganizationsModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule],
+        imports: [prisma_module_1.PrismaModule, config_1.ConfigModule, stripe_module_1.StripeModule],
         providers: [organizations_service_1.OrganizationsService],
         controllers: [organizations_controller_1.OrganizationsController, public_org_controller_1.PublicOrgController],
         exports: [organizations_service_1.OrganizationsService],

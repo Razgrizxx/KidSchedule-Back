@@ -5,6 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
+import { ConfigService } from '@nestjs/config';
 import {
   BulkCreateOrgEventsDto,
   CreateAnnouncementDto,
@@ -22,7 +24,11 @@ const MANAGER_ROLES: OrgRole[] = ['OWNER', 'ADMIN'];
 
 @Injectable()
 export class OrganizationsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mail: MailService,
+    private config: ConfigService,
+  ) {}
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -89,9 +95,27 @@ export class OrganizationsService {
     // Schools: PENDING until admin approves. Teams: immediately ACTIVE.
     const status: OrgMemberStatus = org.type === 'SCHOOL' ? 'PENDING' : 'ACTIVE';
 
-    await this.prisma.orgMembership.create({
-      data: { userId, organizationId: org.id, role: 'MEMBER', status },
-    });
+    const [requester] = await Promise.all([
+      this.prisma.user.findUnique({ where: { id: userId }, select: { firstName: true, lastName: true } }),
+      this.prisma.orgMembership.create({
+        data: { userId, organizationId: org.id, role: 'MEMBER', status },
+      }),
+    ]);
+
+    if (status === 'PENDING') {
+      const admin = await this.prisma.user.findUnique({
+        where: { id: org.adminId },
+        select: { firstName: true, email: true },
+      });
+      if (admin?.email) {
+        void this.mail.sendJoinRequest({
+          adminEmail: admin.email,
+          adminName: admin.firstName,
+          orgName: org.name,
+          requesterName: requester ? `${requester.firstName} ${requester.lastName}` : 'Un usuario',
+        });
+      }
+    }
 
     return {
       ...(await this.prisma.organization.findUnique({ where: { id: org.id } })),
@@ -157,10 +181,27 @@ export class OrganizationsService {
     if (!membership) throw new NotFoundException('Member not found');
     if (membership.status === 'ACTIVE') throw new BadRequestException('Already active');
 
-    return this.prisma.orgMembership.update({
-      where: { userId_organizationId: { userId: targetUserId, organizationId: orgId } },
-      data: { status: 'ACTIVE', approvedById: adminId, approvedAt: new Date() },
-    });
+    const [updated, org, member] = await Promise.all([
+      this.prisma.orgMembership.update({
+        where: { userId_organizationId: { userId: targetUserId, organizationId: orgId } },
+        data: { status: 'ACTIVE', approvedById: adminId, approvedAt: new Date() },
+      }),
+      this.prisma.organization.findUnique({ where: { id: orgId }, select: { name: true } }),
+      this.prisma.user.findUnique({
+        where: { id: targetUserId },
+        select: { firstName: true, email: true },
+      }),
+    ]);
+
+    if (member?.email && org) {
+      void this.mail.sendMemberApproved({
+        toEmail: member.email,
+        memberName: member.firstName,
+        orgName: org.name,
+      });
+    }
+
+    return updated;
   }
 
   async rejectMember(orgId: string, targetUserId: string, adminId: string) {

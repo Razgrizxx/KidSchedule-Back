@@ -7,6 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { CreateMomentDto } from './dto/moment.dto';
+import { SubscriptionService, FREE_MOMENTS_LIMIT } from '../stripe/subscription.service';
 
 @Injectable()
 export class MomentsService {
@@ -14,6 +15,7 @@ export class MomentsService {
     private prisma: PrismaService,
     private familyService: FamilyService,
     private cloudinary: CloudinaryService,
+    private subService: SubscriptionService,
   ) {}
 
   async create(
@@ -23,6 +25,17 @@ export class MomentsService {
     file: Express.Multer.File,
   ) {
     await this.familyService.assertMember(familyId, userId);
+
+    // Enforce free-plan moments limit
+    const hasUnlimited = await this.subService.hasFeature(userId, 'moments_unlimited');
+    if (!hasUnlimited) {
+      const count = await this.prisma.moment.count({ where: { familyId } });
+      if (count >= FREE_MOMENTS_LIMIT) {
+        throw new ForbiddenException(
+          `Free plan is limited to ${FREE_MOMENTS_LIMIT} photos. Upgrade to Plus to upload unlimited moments.`,
+        );
+      }
+    }
 
     const result = await this.cloudinary.upload(
       file,
