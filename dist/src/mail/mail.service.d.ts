@@ -5,8 +5,15 @@ export declare class MailService {
     private readonly resend;
     private readonly from;
     private readonly appUrl;
+    private readonly useEmailJs;
+    private readonly ejsServiceId;
+    private readonly ejsTemplateId;
+    private readonly ejsPublicKey;
+    private readonly ejsPrivateKey;
     constructor(config: ConfigService);
     sendEmail(to: string, subject: string, html: string): Promise<void>;
+    private sendViaEmailJs;
+    private sendViaResend;
     sendWelcomeEmail(userEmail: string, firstName: string): Promise<void>;
     sendPasswordReset(userEmail: string, firstName: string, resetUrl: string): Promise<void>;
     sendChangeRequestNotification(opts: {

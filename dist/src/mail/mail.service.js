@@ -8,30 +8,93 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 var MailService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MailService = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const resend_1 = require("resend");
+const nodejs_1 = __importDefault(require("@emailjs/nodejs"));
 let MailService = MailService_1 = class MailService {
     config;
     logger = new common_1.Logger(MailService_1.name);
     resend;
     from;
     appUrl;
+    useEmailJs;
+    ejsServiceId;
+    ejsTemplateId;
+    ejsPublicKey;
+    ejsPrivateKey;
     constructor(config) {
         this.config = config;
         this.resend = new resend_1.Resend(config.getOrThrow('RESEND_API_KEY'));
         this.from = config.get('RESEND_FROM', 'KidSchedule <noreply@kidschedule.app>');
         this.appUrl = config.get('FRONTEND_URL', 'http://localhost:5173');
+        this.useEmailJs = config.get('USE_EMAILJS', 'false') === 'true';
+        this.ejsServiceId = config.get('EMAILJS_SERVICE_ID', '');
+        this.ejsTemplateId = config.get('EMAILJS_MASTER_TEMPLATE_ID', '');
+        this.ejsPublicKey = config.get('EMAILJS_PUBLIC_KEY', '');
+        this.ejsPrivateKey = config.get('EMAILJS_PRIVATE_KEY', '');
+        if (this.useEmailJs) {
+            this.logger.log('Email provider: EmailJS (Resend as fallback)');
+        }
+        else {
+            this.logger.log('Email provider: Resend');
+        }
     }
     async sendEmail(to, subject, html) {
+        if (this.useEmailJs) {
+            await this.sendViaEmailJs(to, subject, html);
+        }
+        else {
+            await this.sendViaResend(to, subject, html);
+        }
+    }
+    async sendViaEmailJs(to, subject, html) {
         try {
-            await this.resend.emails.send({ from: this.from, to, subject, html });
+            this.logger.log(`[EmailJS] Sending "${subject}" → ${to}`);
+            const result = await nodejs_1.default.send(this.ejsServiceId, this.ejsTemplateId, {
+                to_email: to,
+                subject,
+                email_body: html,
+            }, {
+                publicKey: this.ejsPublicKey,
+                privateKey: this.ejsPrivateKey,
+            });
+            this.logger.log(`[EmailJS] Sent — status ${result.status} "${result.text}" → ${to}`);
         }
         catch (err) {
-            this.logger.error(`Failed to send email to ${to} — subject: "${subject}"`, err);
+            let errMsg;
+            if (err instanceof Error) {
+                errMsg = err.message;
+            }
+            else if (err && typeof err === 'object') {
+                errMsg = JSON.stringify(err);
+            }
+            else {
+                errMsg = String(err);
+            }
+            this.logger.error(`[EmailJS] Failed to send "${subject}" → ${to}: ${errMsg}`);
+            this.logger.warn(`[EmailJS] Falling back to Resend for → ${to}`);
+            await this.sendViaResend(to, subject, html);
+        }
+    }
+    async sendViaResend(to, subject, html) {
+        try {
+            this.logger.log(`[Resend] Sending "${subject}" → ${to}`);
+            const { data, error } = await this.resend.emails.send({ from: this.from, to, subject, html });
+            if (error) {
+                this.logger.error(`[Resend] API error for "${subject}" → ${to}: ${JSON.stringify(error)}`);
+                return;
+            }
+            this.logger.log(`[Resend] Sent — id ${data?.id} → ${to}`);
+        }
+        catch (err) {
+            this.logger.error(`[Resend] Exception sending "${subject}" → ${to}`, err instanceof Error ? err.stack : String(err));
         }
     }
     async sendWelcomeEmail(userEmail, firstName) {
