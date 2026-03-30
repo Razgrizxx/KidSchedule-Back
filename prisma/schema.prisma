@@ -622,8 +622,25 @@ model Organization {
   events        OrgEvent[]
   venues        Venue[]
   announcements Announcement[]
+  customRoles   OrgCustomRole[]
 
   @@map("organizations")
+}
+
+model OrgCustomRole {
+  id                     String   @id @default(uuid())
+  organizationId         String
+  name                   String
+  canCreateEvents        Boolean  @default(false)
+  canCreateAnnouncements Boolean  @default(false)
+  canCreateVenues        Boolean  @default(false)
+  createdAt              DateTime @default(now())
+
+  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  members      OrgMembership[]
+
+  @@unique([organizationId, name])
+  @@map("org_custom_roles")
 }
 
 model OrgMembership {
@@ -634,11 +651,13 @@ model OrgMembership {
   status         OrgMemberStatus @default(ACTIVE)
   approvedById   String?
   approvedAt     DateTime?
+  customRoleId   String?
   joinedAt       DateTime        @default(now())
 
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  approvedBy   User?        @relation("OrgMemberApprover", fields: [approvedById], references: [id])
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  approvedBy   User?          @relation("OrgMemberApprover", fields: [approvedById], references: [id])
+  customRole   OrgCustomRole? @relation(fields: [customRoleId], references: [id], onDelete: SetNull)
 
   @@unique([userId, organizationId])
   @@map("org_memberships")

@@ -11,27 +11,27 @@ export declare class PublicOrgController {
         events: ({
             venue: {
                 id: string;
-                organizationId: string;
-                name: string;
                 createdAt: Date;
+                name: string;
+                notes: string | null;
                 address: string | null;
                 mapUrl: string | null;
-                notes: string | null;
+                organizationId: string;
             } | null;
         } & {
             id: string;
-            organizationId: string;
-            type: import("@prisma/client").$Enums.EventType;
             createdAt: Date;
             updatedAt: Date;
-            notes: string | null;
+            type: import("@prisma/client").$Enums.EventType;
             title: string;
             startAt: Date;
             endAt: Date;
             allDay: boolean;
-            maxCapacity: number | null;
-            createdById: string;
+            notes: string | null;
             venueId: string | null;
+            maxCapacity: number | null;
+            organizationId: string;
+            createdById: string;
         })[];
     }>;
 }

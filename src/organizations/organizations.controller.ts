@@ -13,13 +13,16 @@ import {
 import type { Response } from 'express';
 import { OrganizationsService } from './organizations.service';
 import {
+  AssignCustomRoleDto,
   BulkCreateOrgEventsDto,
   CreateAnnouncementDto,
+  CreateCustomRoleDto,
   CreateOrgDto,
   CreateOrgEventDto,
   CreateVenueDto,
   JoinOrgDto,
   RsvpDto,
+  UpdateCustomRoleDto,
   UpdateMemberRoleDto,
   UpdateOrgDto,
 } from './dto/organization.dto';
@@ -122,6 +125,51 @@ export class OrganizationsController {
     @Param('userId') targetUserId: string,
   ) {
     return this.orgsService.removeMember(id, targetUserId, user.id);
+  }
+
+  @Patch(':id/members/:userId/custom-role')
+  assignCustomRole(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Param('userId') targetUserId: string,
+    @Body() dto: AssignCustomRoleDto,
+  ) {
+    return this.orgsService.assignCustomRole(id, targetUserId, user.id, dto);
+  }
+
+  // ── Custom roles ───────────────────────────────────────────────────────────
+
+  @Get(':id/roles')
+  listRoles(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.orgsService.listCustomRoles(id, user.id);
+  }
+
+  @Post(':id/roles')
+  createRole(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Body() dto: CreateCustomRoleDto,
+  ) {
+    return this.orgsService.createCustomRole(id, user.id, dto);
+  }
+
+  @Patch(':id/roles/:roleId')
+  updateRole(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Param('roleId') roleId: string,
+    @Body() dto: UpdateCustomRoleDto,
+  ) {
+    return this.orgsService.updateCustomRole(id, roleId, user.id, dto);
+  }
+
+  @Delete(':id/roles/:roleId')
+  deleteRole(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Param('roleId') roleId: string,
+  ) {
+    return this.orgsService.deleteCustomRole(id, roleId, user.id);
   }
 
   // ── Events ─────────────────────────────────────────────────────────────────

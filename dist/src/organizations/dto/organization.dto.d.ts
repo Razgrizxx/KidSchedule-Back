@@ -32,6 +32,21 @@ export declare class UpdateOrgDto {
 export declare class UpdateMemberRoleDto {
     role: OrgRole;
 }
+export declare class CreateCustomRoleDto {
+    name: string;
+    canCreateEvents?: boolean;
+    canCreateAnnouncements?: boolean;
+    canCreateVenues?: boolean;
+}
+export declare class UpdateCustomRoleDto {
+    name?: string;
+    canCreateEvents?: boolean;
+    canCreateAnnouncements?: boolean;
+    canCreateVenues?: boolean;
+}
+export declare class AssignCustomRoleDto {
+    customRoleId?: string | null;
+}
 export declare class RsvpDto {
     status: RsvpStatus;
     notes?: string;

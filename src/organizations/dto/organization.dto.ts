@@ -109,6 +109,51 @@ export class UpdateMemberRoleDto {
   role: OrgRole;
 }
 
+export class CreateCustomRoleDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(40)
+  name: string;
+
+  @IsBoolean()
+  @IsOptional()
+  canCreateEvents?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  canCreateAnnouncements?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  canCreateVenues?: boolean;
+}
+
+export class UpdateCustomRoleDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(40)
+  @IsOptional()
+  name?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  canCreateEvents?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  canCreateAnnouncements?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  canCreateVenues?: boolean;
+}
+
+export class AssignCustomRoleDto {
+  @IsString()
+  @IsOptional()
+  customRoleId?: string | null;
+}
+
 export class RsvpDto {
   @IsEnum(RsvpStatus)
   status: RsvpStatus;
