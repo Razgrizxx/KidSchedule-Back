@@ -98,6 +98,12 @@ export class BulkCreateOrgEventsDto {
   maxCapacity?: number;
 }
 
+export class UpdateOrgDto {
+  @IsBoolean()
+  @IsOptional()
+  isPublic?: boolean;
+}
+
 export class UpdateMemberRoleDto {
   @IsEnum(OrgRole)
   role: OrgRole;

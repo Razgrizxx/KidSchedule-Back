@@ -26,6 +26,9 @@ export declare class BulkCreateOrgEventsDto {
     venueId?: string;
     maxCapacity?: number;
 }
+export declare class UpdateOrgDto {
+    isPublic?: boolean;
+}
 export declare class UpdateMemberRoleDto {
     role: OrgRole;
 }

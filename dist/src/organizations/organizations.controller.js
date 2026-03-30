@@ -40,6 +40,9 @@ let OrganizationsController = class OrganizationsController {
     findOne(user, id) {
         return this.orgsService.findOne(id, user.id);
     }
+    update(user, id, dto) {
+        return this.orgsService.updateOrg(id, user.id, dto);
+    }
     remove(user, id) {
         return this.orgsService.remove(id, user.id);
     }
@@ -146,6 +149,15 @@ __decorate([
     __metadata("design:paramtypes", [auth_user_1.AuthUser, String]),
     __metadata("design:returntype", void 0)
 ], OrganizationsController.prototype, "findOne", null);
+__decorate([
+    (0, common_1.Patch)(':id'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, organization_dto_1.UpdateOrgDto]),
+    __metadata("design:returntype", void 0)
+], OrganizationsController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),

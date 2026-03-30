@@ -21,6 +21,7 @@ import {
   JoinOrgDto,
   RsvpDto,
   UpdateMemberRoleDto,
+  UpdateOrgDto,
 } from './dto/organization.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -58,6 +59,11 @@ export class OrganizationsController {
   @Get(':id')
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.orgsService.findOne(id, user.id);
+  }
+
+  @Patch(':id')
+  update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateOrgDto) {
+    return this.orgsService.updateOrg(id, user.id, dto);
   }
 
   @Delete(':id')

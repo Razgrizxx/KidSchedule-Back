@@ -16,6 +16,7 @@ import {
   JoinOrgDto,
   RsvpDto,
   UpdateMemberRoleDto,
+  UpdateOrgDto,
 } from './dto/organization.dto';
 import { OrgMemberStatus, OrgRole } from '@prisma/client';
 
@@ -81,6 +82,11 @@ export class OrganizationsService {
         },
       },
     });
+  }
+
+  async updateOrg(orgId: string, userId: string, dto: UpdateOrgDto) {
+    await this.assertManager(orgId, userId);
+    return this.prisma.organization.update({ where: { id: orgId }, data: dto });
   }
 
   async joinByCode(userId: string, dto: JoinOrgDto) {

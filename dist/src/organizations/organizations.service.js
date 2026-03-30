@@ -70,6 +70,10 @@ let OrganizationsService = class OrganizationsService {
             },
         });
     }
+    async updateOrg(orgId, userId, dto) {
+        await this.assertManager(orgId, userId);
+        return this.prisma.organization.update({ where: { id: orgId }, data: dto });
+    }
     async joinByCode(userId, dto) {
         const org = await this.prisma.organization.findUnique({
             where: { inviteCode: dto.inviteCode.toUpperCase() },
