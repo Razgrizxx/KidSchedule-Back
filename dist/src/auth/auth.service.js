@@ -49,7 +49,7 @@ const config_1 = require("@nestjs/config");
 const mail_service_1 = require("../mail/mail.service");
 const bcrypt = __importStar(require("bcrypt"));
 const crypto = __importStar(require("crypto"));
-const twilio = __importStar(require("twilio"));
+const server_sdk_1 = require("@vonage/server-sdk");
 const prisma_service_1 = require("../prisma/prisma.service");
 let AuthService = class AuthService {
     prisma;
@@ -143,35 +143,26 @@ let AuthService = class AuthService {
         });
         return { message: 'Password updated successfully. You can now log in.' };
     }
-    getTwilioClient() {
-        const sid = this.config.get('TWILIO_ACCOUNT_SID');
-        const token = this.config.get('TWILIO_AUTH_TOKEN');
-        if (!sid || !token)
+    getVonageClient() {
+        const apiKey = this.config.get('VONAGE_API_KEY');
+        const apiSecret = this.config.get('VONAGE_API_SECRET');
+        if (!apiKey || !apiSecret)
             return null;
-        return twilio.default(sid, token);
+        return new server_sdk_1.Vonage({ apiKey, apiSecret });
+    }
+    normalizePhone(phone) {
+        const hasPlus = phone.trim().startsWith('+');
+        const digits = phone.replace(/\D/g, '');
+        if (hasPlus)
+            return `+${digits}`;
+        if (digits.length === 10)
+            return `+549${digits}`;
+        return `+${digits}`;
     }
     async sendPhoneCode(userId, phone) {
-        const digits = phone.replace(/\D/g, '');
-        phone = (phone.trim().startsWith('+') ? '+' : '') + digits;
+        phone = this.normalizePhone(phone);
+        await this.prisma.phoneVerification.deleteMany({ where: { userId } });
         const devMode = this.config.get('DEV_MODE') === 'true';
-        const serviceSid = this.config.get('TWILIO_VERIFY_SERVICE_SID');
-        const client = this.getTwilioClient();
-        console.log(devMode, client, serviceSid);
-        if (!devMode && client && serviceSid) {
-            console.log('Using Twilio to send code');
-            try {
-                await client.verify.v2.services(serviceSid).verifications.create({
-                    to: phone,
-                    channel: 'sms',
-                });
-            }
-            catch (err) {
-                const msg = err instanceof Error ? err.message : String(err);
-                console.error('Twilio error:', msg);
-                throw new Error(`Twilio: ${msg}`);
-            }
-            return { message: 'Code sent' };
-        }
         const code = devMode
             ? '123456'
             : Math.floor(100000 + Math.random() * 900000).toString();
@@ -179,26 +170,31 @@ let AuthService = class AuthService {
         await this.prisma.phoneVerification.create({
             data: { userId, phone, code, expiresAt },
         });
+        if (!devMode) {
+            const vonage = this.getVonageClient();
+            if (!vonage)
+                throw new Error('SMS provider not configured');
+            try {
+                await vonage.sms.send({
+                    to: phone,
+                    from: 'KidSchedule',
+                    text: `Your KidSchedule verification code is: ${code}. Valid for 10 minutes.`,
+                });
+            }
+            catch (err) {
+                const msg = err instanceof Error ? err.message : String(err);
+                throw new Error(`SMS error: ${msg}`);
+            }
+        }
         return { message: 'Code sent', ...(devMode && { code }) };
     }
     async verifyPhone(userId, phone, code) {
-        const digits = phone.replace(/\D/g, '');
-        phone = (phone.trim().startsWith('+') ? '+' : '') + digits;
+        phone = this.normalizePhone(phone);
         const devMode = this.config.get('DEV_MODE') === 'true';
-        const serviceSid = this.config.get('TWILIO_VERIFY_SERVICE_SID');
-        const client = this.getTwilioClient();
-        if (devMode) {
-            if (code !== '123456')
-                throw new common_1.BadRequestException('Invalid or expired code');
+        if (devMode && code !== '123456') {
+            throw new common_1.BadRequestException('Invalid or expired code');
         }
-        else if (client && serviceSid) {
-            const check = await client.verify.v2
-                .services(serviceSid)
-                .verificationChecks.create({ to: phone, code });
-            if (check.status !== 'approved')
-                throw new common_1.BadRequestException('Invalid or expired code');
-        }
-        else {
+        else if (!devMode) {
             const record = await this.prisma.phoneVerification.findFirst({
                 where: {
                     userId,
@@ -216,6 +212,10 @@ let AuthService = class AuthService {
                 data: { verified: true },
             });
         }
+        await this.prisma.user.updateMany({
+            where: { phone, NOT: { id: userId } },
+            data: { phone: null, isVerified: false },
+        });
         await this.prisma.user.update({
             where: { id: userId },
             data: { phone, isVerified: true },
@@ -231,6 +231,7 @@ let AuthService = class AuthService {
                 firstName: user.firstName,
                 lastName: user.lastName,
                 email: user.email,
+                phone: user.phone ?? null,
                 isVerified: user.isVerified,
             },
         };

@@ -15,6 +15,7 @@ export declare class AuthController {
             firstName: string;
             lastName: string;
             email: string;
+            phone: string | null;
             isVerified: boolean;
         };
     }>;
@@ -25,6 +26,7 @@ export declare class AuthController {
             firstName: string;
             lastName: string;
             email: string;
+            phone: string | null;
             isVerified: boolean;
         };
     }>;

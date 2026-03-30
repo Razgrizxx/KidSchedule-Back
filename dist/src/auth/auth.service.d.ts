@@ -19,6 +19,7 @@ export declare class AuthService {
             firstName: string;
             lastName: string;
             email: string;
+            phone: string | null;
             isVerified: boolean;
         };
     }>;
@@ -29,6 +30,7 @@ export declare class AuthService {
             firstName: string;
             lastName: string;
             email: string;
+            phone: string | null;
             isVerified: boolean;
         };
     }>;
@@ -38,7 +40,8 @@ export declare class AuthService {
     resetPassword(dto: ResetPasswordDto): Promise<{
         message: string;
     }>;
-    private getTwilioClient;
+    private getVonageClient;
+    private normalizePhone;
     sendPhoneCode(userId: string, phone: string): Promise<{
         code?: string | undefined;
         message: string;
