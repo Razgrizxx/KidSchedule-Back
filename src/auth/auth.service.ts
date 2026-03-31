@@ -227,6 +227,7 @@ export class AuthService {
     email: string;
     phone?: string | null;
     isVerified: boolean;
+    avatarUrl?: string | null;
   }) {
     const payload = { sub: user.id, email: user.email };
     return {
@@ -238,6 +239,7 @@ export class AuthService {
         email: user.email,
         phone: user.phone ?? null,
         isVerified: user.isVerified,
+        avatarUrl: user.avatarUrl ?? null,
       },
     };
   }

@@ -7,23 +7,23 @@ export declare class SettingsController {
     constructor(settingsService: SettingsService);
     getFamilySettings(familyId: string, user: AuthUser): Promise<{
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
         familyId: string;
         timezone: string;
         transitionDay: string;
         transitionTime: string;
         weekStartsOn: string;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     updateFamilySettings(familyId: string, user: AuthUser, dto: UpdateFamilySettingsDto): Promise<{
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
         familyId: string;
         timezone: string;
         transitionDay: string;
         transitionTime: string;
         weekStartsOn: string;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     getUserSettings(user: AuthUser): Promise<{
         id: string;

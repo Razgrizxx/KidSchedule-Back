@@ -1,4 +1,17 @@
-import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { SettingsService } from './settings.service';
 import { UpdateFamilySettingsDto } from './dto/update-family-settings.dto';
 import { UpdateUserSettingsDto } from './dto/update-user-settings.dto';
@@ -39,5 +52,26 @@ export class SettingsController {
     @Body() dto: UpdateUserSettingsDto,
   ) {
     return this.settingsService.updateUserSettings(user.id, dto);
+  }
+
+  @Post('users/me/avatar')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (_req, file, cb) => {
+        if (!file.mimetype.startsWith('image/')) {
+          return cb(new BadRequestException('Only image files are allowed'), false);
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  uploadAvatar(
+    @CurrentUser() user: AuthUser,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) throw new BadRequestException('Image file is required');
+    return this.settingsService.uploadAvatar(user.id, file);
   }
 }

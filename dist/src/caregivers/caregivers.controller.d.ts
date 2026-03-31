@@ -6,35 +6,35 @@ export declare class CaregiversController {
     constructor(caregiversService: CaregiversService);
     create(user: AuthUser, familyId: string, dto: CreateCaregiverDto): Promise<{
         id: string;
-        familyId: string | null;
-        name: string;
-        phone: string | null;
         email: string | null;
+        phone: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        familyId: string | null;
         relationship: string | null;
         visibility: import("@prisma/client").$Enums.CaregiverVisibility;
-        inviteToken: string | null;
         linkExpiry: import("@prisma/client").$Enums.CaregiverLinkExpiry;
-        linkExpiresAt: Date | null;
         canViewCalendar: boolean;
         canViewHealthInfo: boolean;
         canViewEmergencyContacts: boolean;
         canViewAllergies: boolean;
-        createdAt: Date;
-        updatedAt: Date;
+        inviteToken: string | null;
+        linkExpiresAt: Date | null;
         createdBy: string;
     }>;
     findAll(user: AuthUser, familyId: string): Promise<({
         children: ({
             child: {
                 id: string;
-                familyId: string;
-                createdAt: Date;
-                updatedAt: Date;
                 firstName: string;
                 lastName: string;
+                avatarUrl: string | null;
+                createdAt: Date;
+                updatedAt: Date;
+                familyId: string;
                 dateOfBirth: Date;
                 color: string;
-                avatarUrl: string | null;
             };
         } & {
             id: string;
@@ -44,59 +44,59 @@ export declare class CaregiversController {
         })[];
     } & {
         id: string;
-        familyId: string | null;
-        name: string;
-        phone: string | null;
         email: string | null;
+        phone: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        familyId: string | null;
         relationship: string | null;
         visibility: import("@prisma/client").$Enums.CaregiverVisibility;
-        inviteToken: string | null;
         linkExpiry: import("@prisma/client").$Enums.CaregiverLinkExpiry;
-        linkExpiresAt: Date | null;
         canViewCalendar: boolean;
         canViewHealthInfo: boolean;
         canViewEmergencyContacts: boolean;
         canViewAllergies: boolean;
-        createdAt: Date;
-        updatedAt: Date;
+        inviteToken: string | null;
+        linkExpiresAt: Date | null;
         createdBy: string;
     })[]>;
     findOne(user: AuthUser, familyId: string, caregiverId: string): Promise<{
         id: string;
-        familyId: string | null;
-        name: string;
-        phone: string | null;
         email: string | null;
+        phone: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        familyId: string | null;
         relationship: string | null;
         visibility: import("@prisma/client").$Enums.CaregiverVisibility;
-        inviteToken: string | null;
         linkExpiry: import("@prisma/client").$Enums.CaregiverLinkExpiry;
-        linkExpiresAt: Date | null;
         canViewCalendar: boolean;
         canViewHealthInfo: boolean;
         canViewEmergencyContacts: boolean;
         canViewAllergies: boolean;
-        createdAt: Date;
-        updatedAt: Date;
+        inviteToken: string | null;
+        linkExpiresAt: Date | null;
         createdBy: string;
     }>;
     update(user: AuthUser, familyId: string, caregiverId: string, dto: UpdateCaregiverDto): Promise<{
         id: string;
-        familyId: string | null;
-        name: string;
-        phone: string | null;
         email: string | null;
+        phone: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        familyId: string | null;
         relationship: string | null;
         visibility: import("@prisma/client").$Enums.CaregiverVisibility;
-        inviteToken: string | null;
         linkExpiry: import("@prisma/client").$Enums.CaregiverLinkExpiry;
-        linkExpiresAt: Date | null;
         canViewCalendar: boolean;
         canViewHealthInfo: boolean;
         canViewEmergencyContacts: boolean;
         canViewAllergies: boolean;
-        createdAt: Date;
-        updatedAt: Date;
+        inviteToken: string | null;
+        linkExpiresAt: Date | null;
         createdBy: string;
     }>;
     remove(user: AuthUser, familyId: string, caregiverId: string): Promise<{
@@ -122,14 +122,14 @@ export declare class CaregiverInviteController {
         canViewEmergencyContacts: boolean;
         children: {
             id: string;
-            familyId: string;
-            createdAt: Date;
-            updatedAt: Date;
             firstName: string;
             lastName: string;
+            avatarUrl: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+            familyId: string;
             dateOfBirth: Date;
             color: string;
-            avatarUrl: string | null;
         }[];
     }>;
 }
