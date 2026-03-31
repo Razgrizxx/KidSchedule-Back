@@ -119,6 +119,19 @@ export class CaregiversService {
     });
   }
 
+  async unassignFromChild(
+    familyId: string,
+    caregiverId: string,
+    childId: string,
+    userId: string,
+  ) {
+    await this.findOne(familyId, caregiverId, userId);
+    await this.prisma.childCaregiver.deleteMany({
+      where: { childId, caregiverId },
+    });
+    return { message: 'Caregiver unassigned from child' };
+  }
+
   async resolveByToken(token: string) {
     const caregiver = await this.prisma.caregiver.findUnique({
       where: { inviteToken: token },

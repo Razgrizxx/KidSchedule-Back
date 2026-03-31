@@ -42,6 +42,9 @@ let CaregiversController = class CaregiversController {
     assignToChild(user, familyId, caregiverId, childId) {
         return this.caregiversService.assignToChild(familyId, caregiverId, childId, user.id);
     }
+    unassignFromChild(user, familyId, caregiverId, childId) {
+        return this.caregiversService.unassignFromChild(familyId, caregiverId, childId, user.id);
+    }
 };
 exports.CaregiversController = CaregiversController;
 __decorate([
@@ -99,6 +102,16 @@ __decorate([
     __metadata("design:paramtypes", [auth_user_1.AuthUser, String, String, String]),
     __metadata("design:returntype", void 0)
 ], CaregiversController.prototype, "assignToChild", null);
+__decorate([
+    (0, common_1.Delete)(':caregiverId/assign/:childId'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('familyId')),
+    __param(2, (0, common_1.Param)('caregiverId')),
+    __param(3, (0, common_1.Param)('childId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, String, String]),
+    __metadata("design:returntype", void 0)
+], CaregiversController.prototype, "unassignFromChild", null);
 exports.CaregiversController = CaregiversController = __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)('families/:familyId/caregivers'),

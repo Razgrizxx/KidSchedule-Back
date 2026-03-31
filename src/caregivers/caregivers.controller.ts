@@ -75,6 +75,21 @@ export class CaregiversController {
       user.id,
     );
   }
+
+  @Delete(':caregiverId/assign/:childId')
+  unassignFromChild(
+    @CurrentUser() user: AuthUser,
+    @Param('familyId') familyId: string,
+    @Param('caregiverId') caregiverId: string,
+    @Param('childId') childId: string,
+  ) {
+    return this.caregiversService.unassignFromChild(
+      familyId,
+      caregiverId,
+      childId,
+      user.id,
+    );
+  }
 }
 
 @Controller('caregivers/invite')
