@@ -36,7 +36,7 @@ let GoogleController = GoogleController_1 = class GoogleController {
     }
     async callback(code, state, error, res) {
         const appUrl = this.config.get('APP_URL', 'http://localhost:5173');
-        const redirectBase = `${appUrl}/dashboard/settings`;
+        const redirectBase = `${appUrl}/#/dashboard/settings`;
         if (error || !code) {
             return res.redirect(`${redirectBase}?google=error`);
         }
