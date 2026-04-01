@@ -24,9 +24,7 @@ async function bootstrap() {
 
   app.useGlobalFilters(new AllExceptionsFilter());
   app.enableCors();
-  // Exclude the Google OAuth callback so it sits at /auth/google/callback
-  // (matching the redirect URI registered in Google Cloud Console)
-  app.setGlobalPrefix('api/v1', { exclude: ['auth/google/callback'] });
+  app.setGlobalPrefix('api/v1');
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port);

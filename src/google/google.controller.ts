@@ -46,7 +46,7 @@ export class GoogleController {
     @Res() res: Response,
   ) {
     const appUrl = this.config.get<string>('APP_URL', 'http://localhost:5173');
-    const redirectBase = `${appUrl}/dashboard/settings`;
+    const redirectBase = `${appUrl}/#/dashboard/settings`;
 
     if (error || !code) {
       return res.redirect(`${redirectBase}?google=error`);
