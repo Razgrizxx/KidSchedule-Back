@@ -8,14 +8,18 @@ import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { ConfigService } from '@nestjs/config';
 import {
+  AssignCustomRoleDto,
   BulkCreateOrgEventsDto,
   CreateAnnouncementDto,
+  CreateCustomRoleDto,
   CreateOrgDto,
   CreateOrgEventDto,
   CreateVenueDto,
   JoinOrgDto,
   RsvpDto,
+  UpdateCustomRoleDto,
   UpdateMemberRoleDto,
+  UpdateOrgDto,
 } from './dto/organization.dto';
 import { OrgMemberStatus, OrgRole } from '@prisma/client';
 
@@ -57,6 +61,21 @@ export class OrganizationsService {
     return m;
   }
 
+  private async assertCanCreate(
+    orgId: string,
+    userId: string,
+    permission: 'canCreateEvents' | 'canCreateAnnouncements' | 'canCreateVenues',
+  ) {
+    const m = await this.prisma.orgMembership.findUnique({
+      where: { userId_organizationId: { userId, organizationId: orgId } },
+      include: { customRole: true },
+    });
+    if (!m || m.status !== 'ACTIVE') throw new ForbiddenException('Active membership required');
+    if (MANAGER_ROLES.includes(m.role)) return;
+    if (m.customRole?.[permission]) return;
+    throw new ForbiddenException('You do not have permission to perform this action');
+  }
+
   // ── Organizations ──────────────────────────────────────────────────────────
 
   async create(userId: string, dto: CreateOrgDto) {
@@ -81,6 +100,11 @@ export class OrganizationsService {
         },
       },
     });
+  }
+
+  async updateOrg(orgId: string, userId: string, dto: UpdateOrgDto) {
+    await this.assertManager(orgId, userId);
+    return this.prisma.organization.update({ where: { id: orgId }, data: dto });
   }
 
   async joinByCode(userId: string, dto: JoinOrgDto) {
@@ -135,7 +159,10 @@ export class OrganizationsService {
   }
 
   async findOne(orgId: string, userId: string) {
-    const membership = await this.getMembership(orgId, userId);
+    const membership = await this.prisma.orgMembership.findUnique({
+      where: { userId_organizationId: { userId, organizationId: orgId } },
+      include: { customRole: true },
+    });
     if (!membership) throw new ForbiddenException('You are not a member of this organization');
 
     const org = await this.prisma.organization.findUnique({
@@ -144,15 +171,22 @@ export class OrganizationsService {
         members: {
           include: {
             user: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
+            customRole: true,
           },
           orderBy: { joinedAt: 'asc' },
         },
         venues: true,
+        customRoles: { orderBy: { name: 'asc' } },
         _count: { select: { events: true, announcements: true } },
       },
     });
     if (!org) throw new NotFoundException('Organization not found');
-    return { ...org, myRole: membership.role, myStatus: membership.status };
+    return {
+      ...org,
+      myRole: membership.role,
+      myStatus: membership.status,
+      myCustomRole: membership.customRole,
+    };
   }
 
   async leave(orgId: string, userId: string) {
@@ -255,6 +289,7 @@ export class OrganizationsService {
       },
       include: {
         user: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
+        customRole: true,
       },
       orderBy: [{ role: 'asc' }, { user: { firstName: 'asc' } }],
     });
@@ -270,7 +305,7 @@ export class OrganizationsService {
   };
 
   async createEvent(orgId: string, userId: string, dto: CreateOrgEventDto) {
-    await this.assertManager(orgId, userId);
+    await this.assertCanCreate(orgId, userId, 'canCreateEvents');
     return this.prisma.orgEvent.create({
       data: {
         organizationId: orgId,
@@ -288,7 +323,7 @@ export class OrganizationsService {
   }
 
   async bulkCreateEvents(orgId: string, userId: string, dto: BulkCreateOrgEventsDto) {
-    await this.assertManager(orgId, userId);
+    await this.assertCanCreate(orgId, userId, 'canCreateEvents');
     const start = dto.startTime ?? '09:00';
     const end = dto.endTime ?? '10:00';
 
@@ -386,7 +421,7 @@ export class OrganizationsService {
   // ── Venues ─────────────────────────────────────────────────────────────────
 
   async createVenue(orgId: string, userId: string, dto: CreateVenueDto) {
-    await this.assertManager(orgId, userId);
+    await this.assertCanCreate(orgId, userId, 'canCreateVenues');
     return this.prisma.venue.create({
       data: { organizationId: orgId, ...dto },
     });
@@ -406,7 +441,7 @@ export class OrganizationsService {
   // ── Announcements ──────────────────────────────────────────────────────────
 
   async createAnnouncement(orgId: string, userId: string, dto: CreateAnnouncementDto) {
-    await this.assertManager(orgId, userId);
+    await this.assertCanCreate(orgId, userId, 'canCreateAnnouncements');
     return this.prisma.announcement.create({
       data: { organizationId: orgId, authorId: userId, ...dto },
       include: { author: { select: { id: true, firstName: true, lastName: true } } },
@@ -426,6 +461,50 @@ export class OrganizationsService {
     await this.assertManager(orgId, userId);
     await this.prisma.announcement.delete({ where: { id: announcementId, organizationId: orgId } });
     return { message: 'Announcement deleted' };
+  }
+
+  // ── Custom roles ───────────────────────────────────────────────────────────
+
+  async listCustomRoles(orgId: string, userId: string) {
+    await this.assertManager(orgId, userId);
+    return this.prisma.orgCustomRole.findMany({
+      where: { organizationId: orgId },
+      orderBy: { name: 'asc' },
+      include: { _count: { select: { members: true } } },
+    });
+  }
+
+  async createCustomRole(orgId: string, userId: string, dto: CreateCustomRoleDto) {
+    await this.assertManager(orgId, userId);
+    return this.prisma.orgCustomRole.create({
+      data: { organizationId: orgId, ...dto },
+    });
+  }
+
+  async updateCustomRole(orgId: string, roleId: string, userId: string, dto: UpdateCustomRoleDto) {
+    await this.assertManager(orgId, userId);
+    return this.prisma.orgCustomRole.update({
+      where: { id: roleId, organizationId: orgId },
+      data: dto,
+    });
+  }
+
+  async deleteCustomRole(orgId: string, roleId: string, userId: string) {
+    await this.assertManager(orgId, userId);
+    await this.prisma.orgCustomRole.delete({ where: { id: roleId, organizationId: orgId } });
+    return { message: 'Role deleted' };
+  }
+
+  async assignCustomRole(orgId: string, targetUserId: string, adminId: string, dto: AssignCustomRoleDto) {
+    await this.assertManager(orgId, adminId);
+    return this.prisma.orgMembership.update({
+      where: { userId_organizationId: { userId: targetUserId, organizationId: orgId } },
+      data: { customRoleId: dto.customRoleId ?? null },
+      include: {
+        customRole: true,
+        user: { select: { id: true, firstName: true, lastName: true, email: true } },
+      },
+    });
   }
 
   // ── Public calendar (no auth) ──────────────────────────────────────────────

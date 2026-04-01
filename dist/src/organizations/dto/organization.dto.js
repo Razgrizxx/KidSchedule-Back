@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateAnnouncementDto = exports.CreateVenueDto = exports.RsvpDto = exports.UpdateMemberRoleDto = exports.BulkCreateOrgEventsDto = exports.CreateOrgEventDto = exports.JoinOrgDto = exports.CreateOrgDto = void 0;
+exports.CreateAnnouncementDto = exports.CreateVenueDto = exports.RsvpDto = exports.AssignCustomRoleDto = exports.UpdateCustomRoleDto = exports.CreateCustomRoleDto = exports.UpdateMemberRoleDto = exports.UpdateOrgDto = exports.BulkCreateOrgEventsDto = exports.CreateOrgEventDto = exports.JoinOrgDto = exports.CreateOrgDto = void 0;
 const class_validator_1 = require("class-validator");
 const client_1 = require("@prisma/client");
 class CreateOrgDto {
@@ -140,6 +140,15 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], BulkCreateOrgEventsDto.prototype, "maxCapacity", void 0);
+class UpdateOrgDto {
+    isPublic;
+}
+exports.UpdateOrgDto = UpdateOrgDto;
+__decorate([
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], UpdateOrgDto.prototype, "isPublic", void 0);
 class UpdateMemberRoleDto {
     role;
 }
@@ -148,6 +157,72 @@ __decorate([
     (0, class_validator_1.IsEnum)(client_1.OrgRole),
     __metadata("design:type", String)
 ], UpdateMemberRoleDto.prototype, "role", void 0);
+class CreateCustomRoleDto {
+    name;
+    canCreateEvents;
+    canCreateAnnouncements;
+    canCreateVenues;
+}
+exports.CreateCustomRoleDto = CreateCustomRoleDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.MaxLength)(40),
+    __metadata("design:type", String)
+], CreateCustomRoleDto.prototype, "name", void 0);
+__decorate([
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], CreateCustomRoleDto.prototype, "canCreateEvents", void 0);
+__decorate([
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], CreateCustomRoleDto.prototype, "canCreateAnnouncements", void 0);
+__decorate([
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], CreateCustomRoleDto.prototype, "canCreateVenues", void 0);
+class UpdateCustomRoleDto {
+    name;
+    canCreateEvents;
+    canCreateAnnouncements;
+    canCreateVenues;
+}
+exports.UpdateCustomRoleDto = UpdateCustomRoleDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.MaxLength)(40),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateCustomRoleDto.prototype, "name", void 0);
+__decorate([
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], UpdateCustomRoleDto.prototype, "canCreateEvents", void 0);
+__decorate([
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], UpdateCustomRoleDto.prototype, "canCreateAnnouncements", void 0);
+__decorate([
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], UpdateCustomRoleDto.prototype, "canCreateVenues", void 0);
+class AssignCustomRoleDto {
+    customRoleId;
+}
+exports.AssignCustomRoleDto = AssignCustomRoleDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], AssignCustomRoleDto.prototype, "customRoleId", void 0);
 class RsvpDto {
     status;
     notes;

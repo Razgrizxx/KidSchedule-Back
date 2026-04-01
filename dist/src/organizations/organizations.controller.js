@@ -40,6 +40,9 @@ let OrganizationsController = class OrganizationsController {
     findOne(user, id) {
         return this.orgsService.findOne(id, user.id);
     }
+    update(user, id, dto) {
+        return this.orgsService.updateOrg(id, user.id, dto);
+    }
     remove(user, id) {
         return this.orgsService.remove(id, user.id);
     }
@@ -60,6 +63,21 @@ let OrganizationsController = class OrganizationsController {
     }
     removeMember(user, id, targetUserId) {
         return this.orgsService.removeMember(id, targetUserId, user.id);
+    }
+    assignCustomRole(user, id, targetUserId, dto) {
+        return this.orgsService.assignCustomRole(id, targetUserId, user.id, dto);
+    }
+    listRoles(user, id) {
+        return this.orgsService.listCustomRoles(id, user.id);
+    }
+    createRole(user, id, dto) {
+        return this.orgsService.createCustomRole(id, user.id, dto);
+    }
+    updateRole(user, id, roleId, dto) {
+        return this.orgsService.updateCustomRole(id, roleId, user.id, dto);
+    }
+    deleteRole(user, id, roleId) {
+        return this.orgsService.deleteCustomRole(id, roleId, user.id);
     }
     createEvent(user, id, dto) {
         return this.orgsService.createEvent(id, user.id, dto);
@@ -147,6 +165,15 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], OrganizationsController.prototype, "findOne", null);
 __decorate([
+    (0, common_1.Patch)(':id'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, organization_dto_1.UpdateOrgDto]),
+    __metadata("design:returntype", void 0)
+], OrganizationsController.prototype, "update", null);
+__decorate([
     (0, common_1.Delete)(':id'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Param)('id')),
@@ -208,6 +235,52 @@ __decorate([
     __metadata("design:paramtypes", [auth_user_1.AuthUser, String, String]),
     __metadata("design:returntype", void 0)
 ], OrganizationsController.prototype, "removeMember", null);
+__decorate([
+    (0, common_1.Patch)(':id/members/:userId/custom-role'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Param)('userId')),
+    __param(3, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, String, organization_dto_1.AssignCustomRoleDto]),
+    __metadata("design:returntype", void 0)
+], OrganizationsController.prototype, "assignCustomRole", null);
+__decorate([
+    (0, common_1.Get)(':id/roles'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String]),
+    __metadata("design:returntype", void 0)
+], OrganizationsController.prototype, "listRoles", null);
+__decorate([
+    (0, common_1.Post)(':id/roles'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, organization_dto_1.CreateCustomRoleDto]),
+    __metadata("design:returntype", void 0)
+], OrganizationsController.prototype, "createRole", null);
+__decorate([
+    (0, common_1.Patch)(':id/roles/:roleId'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Param)('roleId')),
+    __param(3, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, String, organization_dto_1.UpdateCustomRoleDto]),
+    __metadata("design:returntype", void 0)
+], OrganizationsController.prototype, "updateRole", null);
+__decorate([
+    (0, common_1.Delete)(':id/roles/:roleId'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Param)('roleId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, String]),
+    __metadata("design:returntype", void 0)
+], OrganizationsController.prototype, "deleteRole", null);
 __decorate([
     (0, common_1.Post)(':id/events'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),

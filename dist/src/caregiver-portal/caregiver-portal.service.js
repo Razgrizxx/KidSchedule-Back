@@ -37,7 +37,7 @@ let CaregiverPortalService = class CaregiverPortalService {
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        const [custodyEvents, contacts] = await Promise.all([
+        const [custodyEvents, contacts, assignedEvents] = await Promise.all([
             caregiver.canViewCalendar && caregiver.familyId && childIds.length > 0
                 ? this.prisma.custodyEvent.findMany({
                     where: {
@@ -63,6 +63,23 @@ let CaregiverPortalService = class CaregiverPortalService {
                     },
                 })
                 : Promise.resolve([]),
+            this.prisma.event.findMany({
+                where: {
+                    caregiverId: caregiver.id,
+                    startAt: {
+                        gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+                        lte: new Date(now.getFullYear(), now.getMonth() + 3, now.getDate()),
+                    },
+                },
+                orderBy: { startAt: 'asc' },
+                include: {
+                    children: {
+                        include: {
+                            child: { select: { id: true, firstName: true, lastName: true, color: true } },
+                        },
+                    },
+                },
+            }),
         ]);
         return {
             name: caregiver.name,
@@ -78,6 +95,7 @@ let CaregiverPortalService = class CaregiverPortalService {
             contacts: caregiver.canViewEmergencyContacts
                 ? contacts.map((m) => m.user)
                 : [],
+            assignedEvents,
         };
     }
 };

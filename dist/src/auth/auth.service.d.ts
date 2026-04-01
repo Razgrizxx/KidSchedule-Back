@@ -19,7 +19,9 @@ export declare class AuthService {
             firstName: string;
             lastName: string;
             email: string;
+            phone: string | null;
             isVerified: boolean;
+            avatarUrl: string | null;
         };
     }>;
     login(dto: LoginDto): Promise<{
@@ -29,7 +31,9 @@ export declare class AuthService {
             firstName: string;
             lastName: string;
             email: string;
+            phone: string | null;
             isVerified: boolean;
+            avatarUrl: string | null;
         };
     }>;
     forgotPassword(dto: ForgotPasswordDto): Promise<{
@@ -38,7 +42,8 @@ export declare class AuthService {
     resetPassword(dto: ResetPasswordDto): Promise<{
         message: string;
     }>;
-    private getTwilioClient;
+    private getVonageClient;
+    private normalizePhone;
     sendPhoneCode(userId: string, phone: string): Promise<{
         code?: string | undefined;
         message: string;

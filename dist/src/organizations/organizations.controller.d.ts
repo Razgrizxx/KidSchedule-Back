@@ -1,6 +1,6 @@
 import type { Response } from 'express';
 import { OrganizationsService } from './organizations.service';
-import { BulkCreateOrgEventsDto, CreateAnnouncementDto, CreateOrgDto, CreateOrgEventDto, CreateVenueDto, JoinOrgDto, RsvpDto, UpdateMemberRoleDto } from './dto/organization.dto';
+import { AssignCustomRoleDto, BulkCreateOrgEventsDto, CreateAnnouncementDto, CreateCustomRoleDto, CreateOrgDto, CreateOrgEventDto, CreateVenueDto, JoinOrgDto, RsvpDto, UpdateCustomRoleDto, UpdateMemberRoleDto, UpdateOrgDto } from './dto/organization.dto';
 import { AuthUser } from '../common/types/auth-user';
 export declare class OrganizationsController {
     private orgsService;
@@ -19,6 +19,7 @@ export declare class OrganizationsController {
             userId: string;
             joinedAt: Date;
             status: import("@prisma/client").$Enums.OrgMemberStatus;
+            customRoleId: string | null;
             organizationId: string;
             approvedById: string | null;
             approvedAt: Date | null;
@@ -87,6 +88,15 @@ export declare class OrganizationsController {
     findOne(user: AuthUser, id: string): Promise<{
         myRole: import("@prisma/client").$Enums.OrgRole;
         myStatus: import("@prisma/client").$Enums.OrgMemberStatus;
+        myCustomRole: {
+            id: string;
+            createdAt: Date;
+            name: string;
+            canCreateEvents: boolean;
+            canCreateAnnouncements: boolean;
+            canCreateVenues: boolean;
+            organizationId: string;
+        } | null;
         members: ({
             user: {
                 id: string;
@@ -95,12 +105,22 @@ export declare class OrganizationsController {
                 lastName: string;
                 avatarUrl: string | null;
             };
+            customRole: {
+                id: string;
+                createdAt: Date;
+                name: string;
+                canCreateEvents: boolean;
+                canCreateAnnouncements: boolean;
+                canCreateVenues: boolean;
+                organizationId: string;
+            } | null;
         } & {
             id: string;
             role: import("@prisma/client").$Enums.OrgRole;
             userId: string;
             joinedAt: Date;
             status: import("@prisma/client").$Enums.OrgMemberStatus;
+            customRoleId: string | null;
             organizationId: string;
             approvedById: string | null;
             approvedAt: Date | null;
@@ -118,6 +138,26 @@ export declare class OrganizationsController {
             mapUrl: string | null;
             organizationId: string;
         }[];
+        customRoles: {
+            id: string;
+            createdAt: Date;
+            name: string;
+            canCreateEvents: boolean;
+            canCreateAnnouncements: boolean;
+            canCreateVenues: boolean;
+            organizationId: string;
+        }[];
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        description: string | null;
+        type: import("@prisma/client").$Enums.OrgType;
+        isPublic: boolean;
+        inviteCode: string;
+        adminId: string;
+    }>;
+    update(user: AuthUser, id: string, dto: UpdateOrgDto): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
@@ -142,12 +182,22 @@ export declare class OrganizationsController {
             lastName: string;
             avatarUrl: string | null;
         };
+        customRole: {
+            id: string;
+            createdAt: Date;
+            name: string;
+            canCreateEvents: boolean;
+            canCreateAnnouncements: boolean;
+            canCreateVenues: boolean;
+            organizationId: string;
+        } | null;
     } & {
         id: string;
         role: import("@prisma/client").$Enums.OrgRole;
         userId: string;
         joinedAt: Date;
         status: import("@prisma/client").$Enums.OrgMemberStatus;
+        customRoleId: string | null;
         organizationId: string;
         approvedById: string | null;
         approvedAt: Date | null;
@@ -158,6 +208,7 @@ export declare class OrganizationsController {
         userId: string;
         joinedAt: Date;
         status: import("@prisma/client").$Enums.OrgMemberStatus;
+        customRoleId: string | null;
         organizationId: string;
         approvedById: string | null;
         approvedAt: Date | null;
@@ -171,11 +222,73 @@ export declare class OrganizationsController {
         userId: string;
         joinedAt: Date;
         status: import("@prisma/client").$Enums.OrgMemberStatus;
+        customRoleId: string | null;
         organizationId: string;
         approvedById: string | null;
         approvedAt: Date | null;
     }>;
     removeMember(user: AuthUser, id: string, targetUserId: string): Promise<{
+        message: string;
+    }>;
+    assignCustomRole(user: AuthUser, id: string, targetUserId: string, dto: AssignCustomRoleDto): Promise<{
+        user: {
+            id: string;
+            email: string;
+            firstName: string;
+            lastName: string;
+        };
+        customRole: {
+            id: string;
+            createdAt: Date;
+            name: string;
+            canCreateEvents: boolean;
+            canCreateAnnouncements: boolean;
+            canCreateVenues: boolean;
+            organizationId: string;
+        } | null;
+    } & {
+        id: string;
+        role: import("@prisma/client").$Enums.OrgRole;
+        userId: string;
+        joinedAt: Date;
+        status: import("@prisma/client").$Enums.OrgMemberStatus;
+        customRoleId: string | null;
+        organizationId: string;
+        approvedById: string | null;
+        approvedAt: Date | null;
+    }>;
+    listRoles(user: AuthUser, id: string): Promise<({
+        _count: {
+            members: number;
+        };
+    } & {
+        id: string;
+        createdAt: Date;
+        name: string;
+        canCreateEvents: boolean;
+        canCreateAnnouncements: boolean;
+        canCreateVenues: boolean;
+        organizationId: string;
+    })[]>;
+    createRole(user: AuthUser, id: string, dto: CreateCustomRoleDto): Promise<{
+        id: string;
+        createdAt: Date;
+        name: string;
+        canCreateEvents: boolean;
+        canCreateAnnouncements: boolean;
+        canCreateVenues: boolean;
+        organizationId: string;
+    }>;
+    updateRole(user: AuthUser, id: string, roleId: string, dto: UpdateCustomRoleDto): Promise<{
+        id: string;
+        createdAt: Date;
+        name: string;
+        canCreateEvents: boolean;
+        canCreateAnnouncements: boolean;
+        canCreateVenues: boolean;
+        organizationId: string;
+    }>;
+    deleteRole(user: AuthUser, id: string, roleId: string): Promise<{
         message: string;
     }>;
     createEvent(user: AuthUser, id: string, dto: CreateOrgEventDto): Promise<{

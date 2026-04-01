@@ -13,12 +13,15 @@ exports.SettingsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const family_service_1 = require("../family/family.service");
+const cloudinary_service_1 = require("../cloudinary/cloudinary.service");
 let SettingsService = class SettingsService {
     prisma;
     familyService;
-    constructor(prisma, familyService) {
+    cloudinary;
+    constructor(prisma, familyService, cloudinary) {
         this.prisma = prisma;
         this.familyService = familyService;
+        this.cloudinary = cloudinary;
     }
     async getFamilySettings(familyId, userId) {
         await this.familyService.assertMember(familyId, userId);
@@ -50,11 +53,30 @@ let SettingsService = class SettingsService {
             update: dto,
         });
     }
+    async uploadAvatar(userId, file) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { avatarUrl: true },
+        });
+        if (user?.avatarUrl) {
+            const match = user.avatarUrl.match(/kidschedule\/avatars\/[^/.]+/);
+            if (match)
+                await this.cloudinary.delete(match[0]).catch(() => null);
+        }
+        const result = await this.cloudinary.upload(file, `kidschedule/avatars`);
+        const updated = await this.prisma.user.update({
+            where: { id: userId },
+            data: { avatarUrl: result.secure_url },
+            select: { avatarUrl: true },
+        });
+        return { avatarUrl: updated.avatarUrl };
+    }
 };
 exports.SettingsService = SettingsService;
 exports.SettingsService = SettingsService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        family_service_1.FamilyService])
+        family_service_1.FamilyService,
+        cloudinary_service_1.CloudinaryService])
 ], SettingsService);
 //# sourceMappingURL=settings.service.js.map

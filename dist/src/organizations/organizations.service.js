@@ -48,6 +48,19 @@ let OrganizationsService = class OrganizationsService {
             throw new common_1.ForbiddenException('Admin or Owner role required');
         return m;
     }
+    async assertCanCreate(orgId, userId, permission) {
+        const m = await this.prisma.orgMembership.findUnique({
+            where: { userId_organizationId: { userId, organizationId: orgId } },
+            include: { customRole: true },
+        });
+        if (!m || m.status !== 'ACTIVE')
+            throw new common_1.ForbiddenException('Active membership required');
+        if (MANAGER_ROLES.includes(m.role))
+            return;
+        if (m.customRole?.[permission])
+            return;
+        throw new common_1.ForbiddenException('You do not have permission to perform this action');
+    }
     async create(userId, dto) {
         let inviteCode;
         do {
@@ -69,6 +82,10 @@ let OrganizationsService = class OrganizationsService {
                 },
             },
         });
+    }
+    async updateOrg(orgId, userId, dto) {
+        await this.assertManager(orgId, userId);
+        return this.prisma.organization.update({ where: { id: orgId }, data: dto });
     }
     async joinByCode(userId, dto) {
         const org = await this.prisma.organization.findUnique({
@@ -116,7 +133,10 @@ let OrganizationsService = class OrganizationsService {
         return memberships.map((m) => ({ ...m.organization, role: m.role, status: m.status }));
     }
     async findOne(orgId, userId) {
-        const membership = await this.getMembership(orgId, userId);
+        const membership = await this.prisma.orgMembership.findUnique({
+            where: { userId_organizationId: { userId, organizationId: orgId } },
+            include: { customRole: true },
+        });
         if (!membership)
             throw new common_1.ForbiddenException('You are not a member of this organization');
         const org = await this.prisma.organization.findUnique({
@@ -125,16 +145,23 @@ let OrganizationsService = class OrganizationsService {
                 members: {
                     include: {
                         user: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
+                        customRole: true,
                     },
                     orderBy: { joinedAt: 'asc' },
                 },
                 venues: true,
+                customRoles: { orderBy: { name: 'asc' } },
                 _count: { select: { events: true, announcements: true } },
             },
         });
         if (!org)
             throw new common_1.NotFoundException('Organization not found');
-        return { ...org, myRole: membership.role, myStatus: membership.status };
+        return {
+            ...org,
+            myRole: membership.role,
+            myStatus: membership.status,
+            myCustomRole: membership.customRole,
+        };
     }
     async leave(orgId, userId) {
         const org = await this.prisma.organization.findUnique({ where: { id: orgId } });
@@ -229,6 +256,7 @@ let OrganizationsService = class OrganizationsService {
             },
             include: {
                 user: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
+                customRole: true,
             },
             orderBy: [{ role: 'asc' }, { user: { firstName: 'asc' } }],
         });
@@ -240,7 +268,7 @@ let OrganizationsService = class OrganizationsService {
         _count: { select: { rsvps: true } },
     };
     async createEvent(orgId, userId, dto) {
-        await this.assertManager(orgId, userId);
+        await this.assertCanCreate(orgId, userId, 'canCreateEvents');
         return this.prisma.orgEvent.create({
             data: {
                 organizationId: orgId,
@@ -257,7 +285,7 @@ let OrganizationsService = class OrganizationsService {
         });
     }
     async bulkCreateEvents(orgId, userId, dto) {
-        await this.assertManager(orgId, userId);
+        await this.assertCanCreate(orgId, userId, 'canCreateEvents');
         const start = dto.startTime ?? '09:00';
         const end = dto.endTime ?? '10:00';
         const created = await Promise.all(dto.dates.map((date) => {
@@ -341,7 +369,7 @@ let OrganizationsService = class OrganizationsService {
         };
     }
     async createVenue(orgId, userId, dto) {
-        await this.assertManager(orgId, userId);
+        await this.assertCanCreate(orgId, userId, 'canCreateVenues');
         return this.prisma.venue.create({
             data: { organizationId: orgId, ...dto },
         });
@@ -356,7 +384,7 @@ let OrganizationsService = class OrganizationsService {
         return { message: 'Venue deleted' };
     }
     async createAnnouncement(orgId, userId, dto) {
-        await this.assertManager(orgId, userId);
+        await this.assertCanCreate(orgId, userId, 'canCreateAnnouncements');
         return this.prisma.announcement.create({
             data: { organizationId: orgId, authorId: userId, ...dto },
             include: { author: { select: { id: true, firstName: true, lastName: true } } },
@@ -374,6 +402,43 @@ let OrganizationsService = class OrganizationsService {
         await this.assertManager(orgId, userId);
         await this.prisma.announcement.delete({ where: { id: announcementId, organizationId: orgId } });
         return { message: 'Announcement deleted' };
+    }
+    async listCustomRoles(orgId, userId) {
+        await this.assertManager(orgId, userId);
+        return this.prisma.orgCustomRole.findMany({
+            where: { organizationId: orgId },
+            orderBy: { name: 'asc' },
+            include: { _count: { select: { members: true } } },
+        });
+    }
+    async createCustomRole(orgId, userId, dto) {
+        await this.assertManager(orgId, userId);
+        return this.prisma.orgCustomRole.create({
+            data: { organizationId: orgId, ...dto },
+        });
+    }
+    async updateCustomRole(orgId, roleId, userId, dto) {
+        await this.assertManager(orgId, userId);
+        return this.prisma.orgCustomRole.update({
+            where: { id: roleId, organizationId: orgId },
+            data: dto,
+        });
+    }
+    async deleteCustomRole(orgId, roleId, userId) {
+        await this.assertManager(orgId, userId);
+        await this.prisma.orgCustomRole.delete({ where: { id: roleId, organizationId: orgId } });
+        return { message: 'Role deleted' };
+    }
+    async assignCustomRole(orgId, targetUserId, adminId, dto) {
+        await this.assertManager(orgId, adminId);
+        return this.prisma.orgMembership.update({
+            where: { userId_organizationId: { userId: targetUserId, organizationId: orgId } },
+            data: { customRoleId: dto.customRoleId ?? null },
+            include: {
+                customRole: true,
+                user: { select: { id: true, firstName: true, lastName: true, email: true } },
+            },
+        });
     }
     async getPublicCalendar(orgId) {
         const org = await this.prisma.organization.findUnique({

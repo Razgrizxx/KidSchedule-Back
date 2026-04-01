@@ -41,6 +41,7 @@ let EventsService = class EventsService {
             include: {
                 children: { include: { child: { select: { id: true, firstName: true, lastName: true, color: true } } } },
                 assignedTo: { select: { id: true, firstName: true, lastName: true } },
+                caregiver: { select: { id: true, name: true } },
             },
         });
         this.eventEmitter.emit('calendar.event.upsert', {
@@ -54,8 +55,8 @@ let EventsService = class EventsService {
         const where = { familyId };
         if (month) {
             const [y, m] = month.split('-').map(Number);
-            const start = new Date(y, m - 1, 1);
-            const end = new Date(y, m, 1);
+            const start = new Date(Date.UTC(y, m - 1, 1));
+            const end = new Date(Date.UTC(y, m, 1));
             where.startAt = { gte: start, lt: end };
         }
         return this.prisma.event.findMany({
@@ -64,6 +65,7 @@ let EventsService = class EventsService {
             include: {
                 children: { include: { child: { select: { id: true, firstName: true, lastName: true, color: true } } } },
                 assignedTo: { select: { id: true, firstName: true, lastName: true } },
+                caregiver: { select: { id: true, name: true } },
             },
         });
     }

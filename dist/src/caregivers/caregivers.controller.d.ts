@@ -108,6 +108,9 @@ export declare class CaregiversController {
         caregiverId: string;
         assignedAt: Date;
     }>;
+    unassignFromChild(user: AuthUser, familyId: string, caregiverId: string, childId: string): Promise<{
+        message: string;
+    }>;
 }
 export declare class CaregiverInviteController {
     private caregiversService;

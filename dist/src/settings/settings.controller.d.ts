@@ -45,4 +45,7 @@ export declare class SettingsController {
         pushNotifications: boolean;
         appearance: import("@prisma/client").$Enums.AppearanceTheme;
     }>;
+    uploadAvatar(user: AuthUser, file: Express.Multer.File): Promise<{
+        avatarUrl: string | null;
+    }>;
 }

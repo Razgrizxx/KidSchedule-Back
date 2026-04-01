@@ -9,7 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { MailService } from '../mail/mail.service';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import * as twilio from 'twilio';
+import { Vonage } from '@vonage/server-sdk';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -126,67 +126,69 @@ export class AuthService {
     return { message: 'Password updated successfully. You can now log in.' };
   }
 
-  private getTwilioClient() {
-    const sid = this.config.get<string>('TWILIO_ACCOUNT_SID');
-    const token = this.config.get<string>('TWILIO_AUTH_TOKEN');
-    if (!sid || !token) return null;
-    return twilio.default(sid, token);
+  private getVonageClient() {
+    const apiKey = this.config.get<string>('VONAGE_API_KEY');
+    const apiSecret = this.config.get<string>('VONAGE_API_SECRET');
+    if (!apiKey || !apiSecret) return null;
+    return new Vonage({ apiKey, apiSecret });
+  }
+
+  private normalizePhone(phone: string): string {
+    const hasPlus = phone.trim().startsWith('+');
+    const digits = phone.replace(/\D/g, '');
+
+    if (hasPlus) return `+${digits}`;
+
+    // Argentine mobile: 10 digits starting with 11/2x/3x = area code + 8-digit number
+    // Add +549 prefix (9 = mobile indicator required by Twilio for AR)
+    if (digits.length === 10) return `+549${digits}`;
+
+    // Already has country code without +
+    return `+${digits}`;
   }
 
   async sendPhoneCode(userId: string, phone: string) {
-    // Normalize to E.164: strip all non-digit chars, re-add leading +
-    const digits = phone.replace(/\D/g, '');
-    phone = (phone.trim().startsWith('+') ? '+' : '') + digits;
+    phone = this.normalizePhone(phone);
+
+    // Clean up old verification attempts for this user
+    await this.prisma.phoneVerification.deleteMany({ where: { userId } });
 
     const devMode = this.config.get<string>('DEV_MODE') === 'true';
-    const serviceSid = this.config.get<string>('TWILIO_VERIFY_SERVICE_SID');
-    const client = this.getTwilioClient();
-    console.log(devMode, client, serviceSid);
-    if (!devMode && client && serviceSid) {
-      console.log('Using Twilio to send code');
-      try {
-        await client.verify.v2.services(serviceSid).verifications.create({
-          to: phone,
-          channel: 'sms',
-        });
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        console.error('Twilio error:', msg);
-        throw new Error(`Twilio: ${msg}`);
-      }
-      return { message: 'Code sent' };
-    }
-
-    // Dev / no-Twilio fallback: store code in DB
     const code = devMode
       ? '123456'
       : Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
     await this.prisma.phoneVerification.create({
       data: { userId, phone, code, expiresAt },
     });
+
+    if (!devMode) {
+      const vonage = this.getVonageClient();
+      if (!vonage) throw new Error('SMS provider not configured');
+      try {
+        await vonage.sms.send({
+          to: phone,
+          from: 'KidSchedule',
+          text: `Your KidSchedule verification code is: ${code}. Valid for 10 minutes.`,
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        throw new Error(`SMS error: ${msg}`);
+      }
+    }
+
     return { message: 'Code sent', ...(devMode && { code }) };
   }
 
   async verifyPhone(userId: string, phone: string, code: string) {
-    const digits = phone.replace(/\D/g, '');
-    phone = (phone.trim().startsWith('+') ? '+' : '') + digits;
+    phone = this.normalizePhone(phone);
 
     const devMode = this.config.get<string>('DEV_MODE') === 'true';
-    const serviceSid = this.config.get<string>('TWILIO_VERIFY_SERVICE_SID');
-    const client = this.getTwilioClient();
 
-    if (devMode) {
-      // Dev bypass: accept 123456 without any external call or DB lookup
-      if (code !== '123456')
-        throw new BadRequestException('Invalid or expired code');
-    } else if (client && serviceSid) {
-      const check = await client.verify.v2
-        .services(serviceSid)
-        .verificationChecks.create({ to: phone, code });
-      if (check.status !== 'approved')
-        throw new BadRequestException('Invalid or expired code');
-    } else {
+    if (devMode && code !== '123456') {
+      throw new BadRequestException('Invalid or expired code');
+    } else if (!devMode) {
       const record = await this.prisma.phoneVerification.findFirst({
         where: {
           userId,
@@ -204,6 +206,12 @@ export class AuthService {
       });
     }
 
+    // If phone is stored under a different format for this user, clear it first
+    await this.prisma.user.updateMany({
+      where: { phone, NOT: { id: userId } },
+      data: { phone: null, isVerified: false },
+    });
+
     await this.prisma.user.update({
       where: { id: userId },
       data: { phone, isVerified: true },
@@ -217,7 +225,9 @@ export class AuthService {
     firstName: string;
     lastName: string;
     email: string;
+    phone?: string | null;
     isVerified: boolean;
+    avatarUrl?: string | null;
   }) {
     const payload = { sub: user.id, email: user.email };
     return {
@@ -227,7 +237,9 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
+        phone: user.phone ?? null,
         isVerified: user.isVerified,
+        avatarUrl: user.avatarUrl ?? null,
       },
     };
   }

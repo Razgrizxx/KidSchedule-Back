@@ -113,6 +113,9 @@ export declare class CaregiversService {
         caregiverId: string;
         assignedAt: Date;
     }>;
+    unassignFromChild(familyId: string, caregiverId: string, childId: string, userId: string): Promise<{
+        message: string;
+    }>;
     resolveByToken(token: string): Promise<{
         name: string;
         canViewCalendar: boolean;
