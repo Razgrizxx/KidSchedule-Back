@@ -13,19 +13,19 @@ export declare class CaregiverPortalService {
         };
         children: {
             id: string;
-            familyId: string;
-            createdAt: Date;
-            updatedAt: Date;
             firstName: string;
             lastName: string;
+            avatarUrl: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+            familyId: string;
             dateOfBirth: Date;
             color: string;
-            avatarUrl: string | null;
         }[];
         custodyEvents: {
             id: string;
-            familyId: string;
             createdAt: Date;
+            familyId: string;
             childId: string;
             scheduleId: string;
             date: Date;
@@ -49,16 +49,16 @@ export declare class CaregiverPortalService {
             })[];
         } & {
             id: string;
-            familyId: string;
-            createdBy: string;
-            visibility: import("@prisma/client").$Enums.EventVisibility;
             createdAt: Date;
             updatedAt: Date;
             repeat: import("@prisma/client").$Enums.RepeatPattern;
+            familyId: string;
+            visibility: import("@prisma/client").$Enums.EventVisibility;
+            createdBy: string;
             caregiverId: string | null;
             googleEventId: string | null;
-            title: string;
             type: import("@prisma/client").$Enums.EventType;
+            title: string;
             startAt: Date;
             endAt: Date;
             allDay: boolean;
