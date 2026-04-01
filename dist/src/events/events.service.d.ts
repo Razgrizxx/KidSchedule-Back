@@ -30,10 +30,10 @@ export declare class EventsService {
             lastName: string;
         } | null;
     } & {
-        repeat: import("@prisma/client").$Enums.RepeatPattern;
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        repeat: import("@prisma/client").$Enums.RepeatPattern;
         familyId: string;
         visibility: import("@prisma/client").$Enums.EventVisibility;
         createdBy: string;
@@ -70,10 +70,10 @@ export declare class EventsService {
             lastName: string;
         } | null;
     } & {
-        repeat: import("@prisma/client").$Enums.RepeatPattern;
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        repeat: import("@prisma/client").$Enums.RepeatPattern;
         familyId: string;
         visibility: import("@prisma/client").$Enums.EventVisibility;
         createdBy: string;
@@ -106,10 +106,10 @@ export declare class EventsService {
             lastName: string;
         } | null;
     } & {
-        repeat: import("@prisma/client").$Enums.RepeatPattern;
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        repeat: import("@prisma/client").$Enums.RepeatPattern;
         familyId: string;
         visibility: import("@prisma/client").$Enums.EventVisibility;
         createdBy: string;
