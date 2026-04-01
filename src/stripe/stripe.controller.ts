@@ -4,6 +4,7 @@ import {
   Get,
   Headers,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -39,6 +40,12 @@ export class StripeController {
   @Post('portal')
   portal(@CurrentUser() user: AuthUser) {
     return this.stripeService.createPortalSession(user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('activate')
+  activate(@CurrentUser() user: AuthUser, @Query('session_id') sessionId: string) {
+    return this.stripeService.activateFromSession(sessionId, user.id);
   }
 
   @UseGuards(JwtAuthGuard)
