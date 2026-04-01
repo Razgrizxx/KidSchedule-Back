@@ -66,8 +66,10 @@ let CaregiverPortalService = class CaregiverPortalService {
             this.prisma.event.findMany({
                 where: {
                     caregiverId: caregiver.id,
-                    startAt: { gte: now },
-                    endAt: { lte: new Date(now.getFullYear(), now.getMonth() + 3, 0) },
+                    startAt: {
+                        gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+                        lte: new Date(now.getFullYear(), now.getMonth() + 3, now.getDate()),
+                    },
                 },
                 orderBy: { startAt: 'asc' },
                 include: {

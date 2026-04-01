@@ -55,8 +55,8 @@ let EventsService = class EventsService {
         const where = { familyId };
         if (month) {
             const [y, m] = month.split('-').map(Number);
-            const start = new Date(y, m - 1, 1);
-            const end = new Date(y, m, 1);
+            const start = new Date(Date.UTC(y, m - 1, 1));
+            const end = new Date(Date.UTC(y, m, 1));
             where.startAt = { gte: start, lt: end };
         }
         return this.prisma.event.findMany({
