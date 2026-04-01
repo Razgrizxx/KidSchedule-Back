@@ -69,7 +69,7 @@ let StripeService = StripeService_1 = class StripeService {
             customer: customerId,
             mode: 'subscription',
             line_items: [{ price: priceId, quantity: 1 }],
-            success_url: `${appUrl}/#/dashboard/settings?checkout=success`,
+            success_url: `${appUrl}/#/dashboard/settings?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${appUrl}/#/pricing?checkout=cancelled`,
             allow_promotion_codes: true,
             metadata: { userId },
@@ -186,6 +186,19 @@ let StripeService = StripeService_1 = class StripeService {
                 cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
             },
         });
+    }
+    async activateFromSession(sessionId, userId) {
+        const session = await this.stripe.checkout.sessions.retrieve(sessionId, {
+            expand: ['subscription'],
+        });
+        if (session.metadata?.userId !== userId) {
+            throw new common_1.BadRequestException('Session does not belong to this user');
+        }
+        if (session.payment_status !== 'paid') {
+            return { activated: false };
+        }
+        await this.handleCheckoutCompleted(session);
+        return { activated: true };
     }
     async handleSubscriptionDeleted(stripeSub) {
         const sub = await this.prisma.subscription.findUnique({

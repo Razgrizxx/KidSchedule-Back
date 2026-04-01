@@ -19,6 +19,7 @@ import {
   CreateCustomRoleDto,
   CreateOrgDto,
   CreateOrgEventDto,
+  CreateOrgRosterDto,
   CreateVenueDto,
   JoinOrgDto,
   RsvpDto,
@@ -247,6 +248,16 @@ export class OrganizationsController {
     return this.orgsService.findVenues(id, user.id);
   }
 
+  @Patch(':id/venues/:venueId')
+  updateVenue(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Param('venueId') venueId: string,
+    @Body() dto: CreateVenueDto,
+  ) {
+    return this.orgsService.updateVenue(id, venueId, user.id, dto);
+  }
+
   @Delete(':id/venues/:venueId')
   deleteVenue(
     @CurrentUser() user: AuthUser,
@@ -279,6 +290,43 @@ export class OrganizationsController {
     @Param('announcementId') announcementId: string,
   ) {
     return this.orgsService.deleteAnnouncement(id, announcementId, user.id);
+  }
+
+  // ── Members' children ─────────────────────────────────────────────────────
+
+  @Get(':id/members-children')
+  getMembersChildren(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.orgsService.getMembersChildren(id, user.id);
+  }
+
+  // ── Roster ─────────────────────────────────────────────────────────────────
+
+  @Get(':id/roster')
+  getRoster(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.orgsService.getRoster(id, user.id);
+  }
+
+  @Post(':id/roster')
+  addToRoster(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: CreateOrgRosterDto) {
+    return this.orgsService.addToRoster(id, user.id, dto);
+  }
+
+  @Delete(':id/roster/:rosterId')
+  removeFromRoster(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Param('rosterId') rosterId: string,
+  ) {
+    return this.orgsService.removeFromRoster(id, rosterId, user.id);
+  }
+
+  @Post(':id/roster/:rosterId/invite')
+  sendRosterInvite(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Param('rosterId') rosterId: string,
+  ) {
+    return this.orgsService.sendRosterInvite(id, rosterId, user.id);
   }
 
   // ── ICS Export ─────────────────────────────────────────────────────────────

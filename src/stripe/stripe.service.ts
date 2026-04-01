@@ -66,7 +66,7 @@ export class StripeService {
       customer: customerId,
       mode: 'subscription',
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}/#/dashboard/settings?checkout=success`,
+      success_url: `${appUrl}/#/dashboard/settings?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/#/pricing?checkout=cancelled`,
       allow_promotion_codes: true,
       metadata: { userId },
@@ -205,6 +205,26 @@ export class StripeService {
         cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
       },
     });
+  }
+
+  // ── Activate from session (fallback for when webhook hasn't fired yet) ────────
+
+  async activateFromSession(sessionId: string, userId: string) {
+    const session = await this.stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ['subscription'],
+    });
+
+    // Verify this session belongs to the requesting user
+    if (session.metadata?.userId !== userId) {
+      throw new BadRequestException('Session does not belong to this user');
+    }
+
+    if (session.payment_status !== 'paid') {
+      return { activated: false };
+    }
+
+    await this.handleCheckoutCompleted(session);
+    return { activated: true };
   }
 
   private async handleSubscriptionDeleted(stripeSub: Stripe.Subscription) {

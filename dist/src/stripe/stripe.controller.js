@@ -36,6 +36,9 @@ let StripeController = class StripeController {
     portal(user) {
         return this.stripeService.createPortalSession(user.id);
     }
+    activate(user, sessionId) {
+        return this.stripeService.activateFromSession(sessionId, user.id);
+    }
     getSubscription(user) {
         return this.subService.getFullSubscription(user.id);
     }
@@ -66,6 +69,15 @@ __decorate([
     __metadata("design:paramtypes", [auth_user_1.AuthUser]),
     __metadata("design:returntype", void 0)
 ], StripeController.prototype, "portal", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)('activate'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Query)('session_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String]),
+    __metadata("design:returntype", void 0)
+], StripeController.prototype, "activate", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Get)('subscription'),

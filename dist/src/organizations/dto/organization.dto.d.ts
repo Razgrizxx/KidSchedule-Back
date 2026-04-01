@@ -62,3 +62,12 @@ export declare class CreateAnnouncementDto {
     content: string;
     pinned?: boolean;
 }
+export declare class CreateOrgRosterDto {
+    firstName: string;
+    lastName: string;
+    parentName?: string;
+    parentEmail?: string;
+    parentPhone?: string;
+    notes?: string;
+    linkedChildId?: string;
+}

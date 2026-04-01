@@ -15,6 +15,9 @@ export declare class StripeController {
     portal(user: AuthUser): Promise<{
         url: string;
     }>;
+    activate(user: AuthUser, sessionId: string): Promise<{
+        activated: boolean;
+    }>;
     getSubscription(user: AuthUser): Promise<{
         plan: import("@prisma/client").$Enums.PlanType;
         ownPlan: import("@prisma/client").$Enums.PlanType;

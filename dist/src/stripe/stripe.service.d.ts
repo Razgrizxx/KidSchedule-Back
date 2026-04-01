@@ -25,5 +25,8 @@ export declare class StripeService {
     }>;
     private handleCheckoutCompleted;
     private handleSubscriptionUpdated;
+    activateFromSession(sessionId: string, userId: string): Promise<{
+        activated: boolean;
+    }>;
     private handleSubscriptionDeleted;
 }

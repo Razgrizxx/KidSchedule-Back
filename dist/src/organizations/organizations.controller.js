@@ -103,6 +103,9 @@ let OrganizationsController = class OrganizationsController {
     findVenues(user, id) {
         return this.orgsService.findVenues(id, user.id);
     }
+    updateVenue(user, id, venueId, dto) {
+        return this.orgsService.updateVenue(id, venueId, user.id, dto);
+    }
     deleteVenue(user, id, venueId) {
         return this.orgsService.deleteVenue(id, venueId, user.id);
     }
@@ -114,6 +117,21 @@ let OrganizationsController = class OrganizationsController {
     }
     deleteAnnouncement(user, id, announcementId) {
         return this.orgsService.deleteAnnouncement(id, announcementId, user.id);
+    }
+    getMembersChildren(user, id) {
+        return this.orgsService.getMembersChildren(id, user.id);
+    }
+    getRoster(user, id) {
+        return this.orgsService.getRoster(id, user.id);
+    }
+    addToRoster(user, id, dto) {
+        return this.orgsService.addToRoster(id, user.id, dto);
+    }
+    removeFromRoster(user, id, rosterId) {
+        return this.orgsService.removeFromRoster(id, rosterId, user.id);
+    }
+    sendRosterInvite(user, id, rosterId) {
+        return this.orgsService.sendRosterInvite(id, rosterId, user.id);
     }
     async exportIcs(user, id, res) {
         const ics = await this.orgsService.generateIcs(id, user.id);
@@ -354,6 +372,16 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], OrganizationsController.prototype, "findVenues", null);
 __decorate([
+    (0, common_1.Patch)(':id/venues/:venueId'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Param)('venueId')),
+    __param(3, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, String, organization_dto_1.CreateVenueDto]),
+    __metadata("design:returntype", void 0)
+], OrganizationsController.prototype, "updateVenue", null);
+__decorate([
     (0, common_1.Delete)(':id/venues/:venueId'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Param)('id')),
@@ -388,6 +416,49 @@ __decorate([
     __metadata("design:paramtypes", [auth_user_1.AuthUser, String, String]),
     __metadata("design:returntype", void 0)
 ], OrganizationsController.prototype, "deleteAnnouncement", null);
+__decorate([
+    (0, common_1.Get)(':id/members-children'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String]),
+    __metadata("design:returntype", void 0)
+], OrganizationsController.prototype, "getMembersChildren", null);
+__decorate([
+    (0, common_1.Get)(':id/roster'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String]),
+    __metadata("design:returntype", void 0)
+], OrganizationsController.prototype, "getRoster", null);
+__decorate([
+    (0, common_1.Post)(':id/roster'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, organization_dto_1.CreateOrgRosterDto]),
+    __metadata("design:returntype", void 0)
+], OrganizationsController.prototype, "addToRoster", null);
+__decorate([
+    (0, common_1.Delete)(':id/roster/:rosterId'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Param)('rosterId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, String]),
+    __metadata("design:returntype", void 0)
+], OrganizationsController.prototype, "removeFromRoster", null);
+__decorate([
+    (0, common_1.Post)(':id/roster/:rosterId/invite'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Param)('rosterId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, String]),
+    __metadata("design:returntype", void 0)
+], OrganizationsController.prototype, "sendRosterInvite", null);
 __decorate([
     (0, common_1.Get)(':id/calendar.ics'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),

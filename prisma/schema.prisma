@@ -195,6 +195,7 @@ model User {
   orgMemberships     OrgMembership[]
   orgMembershipsApproved OrgMembership[] @relation("OrgMemberApprover")
   orgEventsCreated   OrgEvent[]          @relation("OrgEventCreator")
+  orgRosterLinks     OrgRoster[]         @relation("OrgRosterLinkedUser")
   orgRsvps           OrgRsvp[]
   orgAnnouncements   Announcement[]      @relation("OrgAnnouncements")
   subscription       Subscription?
@@ -311,6 +312,7 @@ model Child {
   caregivers    ChildCaregiver[]
   moments       Moment[]
   eventChildren EventChild[]
+  orgRosters    OrgRoster[]
 
   @@map("children")
 }
@@ -626,6 +628,7 @@ model Organization {
   venues        Venue[]
   announcements Announcement[]
   customRoles   OrgCustomRole[]
+  roster        OrgRoster[]
 
   @@map("organizations")
 }
@@ -718,6 +721,28 @@ model OrgRsvp {
 
   @@unique([orgEventId, userId])
   @@map("org_rsvps")
+}
+
+model OrgRoster {
+  id            String   @id @default(uuid())
+  orgId         String
+  firstName     String
+  lastName      String
+  parentName    String?
+  parentEmail   String?
+  parentPhone   String?
+  notes         String?
+  linkedChildId String?
+  linkedUserId  String?
+  inviteToken   String?  @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  linkedChild Child?       @relation(fields: [linkedChildId], references: [id], onDelete: SetNull)
+  linkedUser  User?        @relation("OrgRosterLinkedUser", fields: [linkedUserId], references: [id], onDelete: SetNull)
+
+  @@map("org_roster")
 }
 
 model Announcement {

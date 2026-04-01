@@ -142,8 +142,15 @@ let RequestsService = class RequestsService {
         if (schedules.length === 0)
             return;
         const schedule = schedules[0];
+        const requestedDates = [];
+        const endDate = request.requestedDateTo ?? request.requestedDate;
+        const cur = new Date(request.requestedDate);
+        while (cur <= endDate) {
+            requestedDates.push(new Date(cur));
+            cur.setUTCDate(cur.getUTCDate() + 1);
+        }
         const overrides = [
-            [request.requestedDate, request.requesterId],
+            ...requestedDates.map((d) => [d, request.requesterId]),
             ...(request.originalDate ? [[request.originalDate, responderId]] : []),
         ];
         for (const [date, custodianId] of overrides) {

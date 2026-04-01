@@ -221,6 +221,20 @@ export class MailService {
       buildMemberApprovedEmail({ ...opts, orgUrl }),
     );
   }
+
+  async sendOrgRosterInvite(opts: {
+    toEmail: string;
+    parentName: string;
+    childName: string;
+    orgName: string;
+    portalUrl: string;
+  }): Promise<void> {
+    await this.sendEmail(
+      opts.toEmail,
+      `Ver el calendario de ${opts.orgName} en KidSchedule`,
+      buildOrgRosterInviteEmail(opts),
+    );
+  }
 }
 
 // ── Shared layout ─────────────────────────────────────────────────────────────
@@ -504,3 +518,34 @@ function buildMemberApprovedEmail(p: {
     `,
   });
 }
+
+function buildOrgRosterInviteEmail(p: {
+  parentName: string;
+  childName: string;
+  orgName: string;
+  portalUrl: string;
+}): string {
+  return layout({
+    headerGradient: 'linear-gradient(135deg,#7c3aed,#a855f7)',
+    headerIcon: '📅',
+    headerTitle: p.orgName,
+    headerSubtitle: `Calendario de ${p.childName}`,
+    body: `
+      <p style="margin:0 0 16px;color:#475569;font-size:15px;line-height:1.7;">
+        Hola <strong style="color:#0f172a;">${p.parentName}</strong>,
+      </p>
+      <p style="margin:0 0 16px;color:#475569;font-size:15px;line-height:1.7;">
+        Se te ha dado acceso de solo lectura al calendario de <strong style="color:#0f172a;">${p.orgName}</strong>
+        para que puedas ver los eventos relacionados con <strong style="color:#0f172a;">${p.childName}</strong>.
+      </p>
+      <p style="margin:0 0 24px;color:#475569;font-size:15px;line-height:1.7;">
+        No necesitás crear una cuenta — simplemente hacé click en el botón de abajo para ver el calendario.
+      </p>
+      ${btn('Ver calendario →', p.portalUrl, '#7c3aed')}
+      <p style="margin:16px 0 0;color:#94a3b8;font-size:12px;line-height:1.6;">
+        Este link es personal. No lo compartas con terceros.
+      </p>
+    `,
+  });
+}
+

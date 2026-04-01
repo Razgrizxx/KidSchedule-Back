@@ -23,6 +23,9 @@ let PublicOrgController = class PublicOrgController {
     getPublicCalendar(id) {
         return this.orgsService.getPublicCalendar(id);
     }
+    getPortal(token) {
+        return this.orgsService.getPortalData(token);
+    }
 };
 exports.PublicOrgController = PublicOrgController;
 __decorate([
@@ -32,6 +35,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], PublicOrgController.prototype, "getPublicCalendar", null);
+__decorate([
+    (0, common_1.Get)('portal'),
+    __param(0, (0, common_1.Query)('token')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], PublicOrgController.prototype, "getPortal", null);
 exports.PublicOrgController = PublicOrgController = __decorate([
     (0, common_1.Controller)('public/organizations'),
     __metadata("design:paramtypes", [organizations_service_1.OrganizationsService])
