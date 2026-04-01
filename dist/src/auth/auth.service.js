@@ -119,7 +119,7 @@ let AuthService = class AuthService {
             },
         });
         const frontendUrl = this.config.get('FRONTEND_URL', 'http://localhost:5173');
-        const resetUrl = `${frontendUrl}/reset-password?token=${token}`;
+        const resetUrl = `${frontendUrl}/#/reset-password?token=${token}`;
         await this.mail.sendPasswordReset(user.email, user.firstName, resetUrl);
         return response;
     }

@@ -149,7 +149,7 @@ export class MailService {
     childrenNames: string[];
     token: string;
   }): Promise<void> {
-    const joinUrl = `${this.appUrl}/join?token=${opts.token}`;
+    const joinUrl = `${this.appUrl}/#/join?token=${opts.token}`;
     const childrenText = opts.childrenNames.length > 0 ? opts.childrenNames.join(', ') : 'tu/s hijo/s';
     await this.sendEmail(
       opts.toEmail,
@@ -172,7 +172,7 @@ export class MailService {
       canViewAllergies: boolean;
     };
   }): Promise<void> {
-    const accessUrl = `${this.appUrl}/caregiver-access?token=${opts.inviteToken}`;
+    const accessUrl = `${this.appUrl}/#/caregiver-access?token=${opts.inviteToken}`;
     const childrenText = opts.childrenNames.length > 0 ? opts.childrenNames.join(', ') : 'un niño';
     const permList = [
       opts.permissions.canViewCalendar && 'Calendario de custodia',

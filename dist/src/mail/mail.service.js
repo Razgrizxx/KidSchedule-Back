@@ -110,12 +110,12 @@ let MailService = MailService_1 = class MailService {
         await this.sendEmail(opts.toEmail, `${opts.initiatorName} inició una sesión de mediación`, buildMediationAlertEmail({ ...opts, appUrl: this.appUrl }));
     }
     async sendCoParentInvitation(opts) {
-        const joinUrl = `${this.appUrl}/join?token=${opts.token}`;
+        const joinUrl = `${this.appUrl}/#/join?token=${opts.token}`;
         const childrenText = opts.childrenNames.length > 0 ? opts.childrenNames.join(', ') : 'tu/s hijo/s';
         await this.sendEmail(opts.toEmail, `${opts.inviterName} te invitó a co-gestionar la custodia en KidSchedule`, buildCoParentEmail({ inviterName: opts.inviterName, familyName: opts.familyName, childrenText, joinUrl }));
     }
     async sendCaregiverInvitation(opts) {
-        const accessUrl = `${this.appUrl}/caregiver-access?token=${opts.inviteToken}`;
+        const accessUrl = `${this.appUrl}/#/caregiver-access?token=${opts.inviteToken}`;
         const childrenText = opts.childrenNames.length > 0 ? opts.childrenNames.join(', ') : 'un niño';
         const permList = [
             opts.permissions.canViewCalendar && 'Calendario de custodia',
