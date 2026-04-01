@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateAnnouncementDto = exports.CreateVenueDto = exports.RsvpDto = exports.AssignCustomRoleDto = exports.UpdateCustomRoleDto = exports.CreateCustomRoleDto = exports.UpdateMemberRoleDto = exports.UpdateOrgDto = exports.BulkCreateOrgEventsDto = exports.CreateOrgEventDto = exports.JoinOrgDto = exports.CreateOrgDto = void 0;
+exports.CreateOrgRosterDto = exports.CreateAnnouncementDto = exports.CreateVenueDto = exports.RsvpDto = exports.AssignCustomRoleDto = exports.UpdateCustomRoleDto = exports.CreateCustomRoleDto = exports.UpdateMemberRoleDto = exports.UpdateOrgDto = exports.BulkCreateOrgEventsDto = exports.CreateOrgEventDto = exports.JoinOrgDto = exports.CreateOrgDto = void 0;
 const class_validator_1 = require("class-validator");
 const client_1 = require("@prisma/client");
 class CreateOrgDto {
@@ -285,4 +285,49 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Boolean)
 ], CreateAnnouncementDto.prototype, "pinned", void 0);
+class CreateOrgRosterDto {
+    firstName;
+    lastName;
+    parentName;
+    parentEmail;
+    parentPhone;
+    notes;
+    linkedChildId;
+}
+exports.CreateOrgRosterDto = CreateOrgRosterDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateOrgRosterDto.prototype, "firstName", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateOrgRosterDto.prototype, "lastName", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateOrgRosterDto.prototype, "parentName", void 0);
+__decorate([
+    (0, class_validator_1.IsEmail)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateOrgRosterDto.prototype, "parentEmail", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateOrgRosterDto.prototype, "parentPhone", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateOrgRosterDto.prototype, "notes", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateOrgRosterDto.prototype, "linkedChildId", void 0);
 //# sourceMappingURL=organization.dto.js.map

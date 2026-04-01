@@ -60,4 +60,11 @@ export declare class MailService {
         memberName: string;
         orgName: string;
     }): Promise<void>;
+    sendOrgRosterInvite(opts: {
+        toEmail: string;
+        parentName: string;
+        childName: string;
+        orgName: string;
+        portalUrl: string;
+    }): Promise<void>;
 }

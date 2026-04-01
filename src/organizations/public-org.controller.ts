@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
 
 /** Public endpoints — no JWT required */
@@ -9,5 +9,10 @@ export class PublicOrgController {
   @Get(':id/calendar')
   getPublicCalendar(@Param('id') id: string) {
     return this.orgsService.getPublicCalendar(id);
+  }
+
+  @Get('portal')
+  getPortal(@Query('token') token: string) {
+    return this.orgsService.getPortalData(token);
   }
 }

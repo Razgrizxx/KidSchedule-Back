@@ -14,6 +14,7 @@ import {
   CreateCustomRoleDto,
   CreateOrgDto,
   CreateOrgEventDto,
+  CreateOrgRosterDto,
   CreateVenueDto,
   JoinOrgDto,
   RsvpDto,
@@ -22,6 +23,7 @@ import {
   UpdateOrgDto,
 } from './dto/organization.dto';
 import { OrgMemberStatus, OrgRole } from '@prisma/client';
+import { randomUUID } from 'crypto';
 
 // Members with at least this role can manage content
 const MANAGER_ROLES: OrgRole[] = ['OWNER', 'ADMIN'];
@@ -432,6 +434,14 @@ export class OrganizationsService {
     return this.prisma.venue.findMany({ where: { organizationId: orgId }, orderBy: { name: 'asc' } });
   }
 
+  async updateVenue(orgId: string, venueId: string, userId: string, dto: CreateVenueDto) {
+    await this.assertManager(orgId, userId);
+    return this.prisma.venue.update({
+      where: { id: venueId, organizationId: orgId },
+      data: dto,
+    });
+  }
+
   async deleteVenue(orgId: string, venueId: string, userId: string) {
     await this.assertManager(orgId, userId);
     await this.prisma.venue.delete({ where: { id: venueId, organizationId: orgId } });
@@ -505,6 +515,160 @@ export class OrganizationsService {
         user: { select: { id: true, firstName: true, lastName: true, email: true } },
       },
     });
+  }
+
+  // ── Members' children (for quick-add to roster) ───────────────────────────
+
+  async getMembersChildren(orgId: string, userId: string) {
+    await this.assertActiveMember(orgId, userId);
+
+    const memberships = await this.prisma.orgMembership.findMany({
+      where: { organizationId: orgId, status: 'ACTIVE' },
+      select: { userId: true, user: { select: { id: true, firstName: true, lastName: true, email: true } } },
+    });
+
+    const userIds = memberships.map((m) => m.userId);
+    if (userIds.length === 0) return [];
+
+    const familyMembers = await this.prisma.familyMember.findMany({
+      where: { userId: { in: userIds } },
+      select: {
+        userId: true,
+        family: {
+          select: {
+            children: { select: { id: true, firstName: true, lastName: true, color: true } },
+          },
+        },
+      },
+    });
+
+    const userMap = Object.fromEntries(memberships.map((m) => [m.userId, m.user]));
+    const seen = new Set<string>();
+    const result: { parent: typeof memberships[number]['user']; child: { id: string; firstName: string; lastName: string; color: string } }[] = [];
+
+    for (const fm of familyMembers) {
+      const parent = userMap[fm.userId];
+      if (!parent) continue;
+      for (const child of fm.family.children) {
+        const key = `${child.id}:${parent.id}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        result.push({ parent, child });
+      }
+    }
+
+    return result;
+  }
+
+  // ── Roster ─────────────────────────────────────────────────────────────────
+
+  async getRoster(orgId: string, userId: string) {
+    await this.assertActiveMember(orgId, userId);
+    return this.prisma.orgRoster.findMany({
+      where: { orgId },
+      orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
+      include: {
+        linkedChild: {
+          include: {
+            family: {
+              select: {
+                members: {
+                  select: {
+                    user: { select: { id: true, firstName: true, lastName: true, email: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
+        linkedUser: { select: { id: true, firstName: true, lastName: true, email: true } },
+      },
+    });
+  }
+
+  async addToRoster(orgId: string, userId: string, dto: CreateOrgRosterDto) {
+    await this.assertManager(orgId, userId);
+
+    // Auto-link if parentEmail matches an existing user
+    let linkedUserId: string | undefined;
+    if (dto.parentEmail) {
+      const existing = await this.prisma.user.findUnique({
+        where: { email: dto.parentEmail },
+        select: { id: true },
+      });
+      if (existing) linkedUserId = existing.id;
+    }
+
+    return this.prisma.orgRoster.create({
+      data: {
+        orgId,
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        parentName: dto.parentName,
+        parentEmail: dto.parentEmail,
+        parentPhone: dto.parentPhone,
+        notes: dto.notes,
+        linkedChildId: dto.linkedChildId,
+        linkedUserId,
+      },
+      include: {
+        linkedChild: { select: { id: true, firstName: true, lastName: true, color: true } },
+        linkedUser: { select: { id: true, firstName: true, lastName: true, email: true } },
+      },
+    });
+  }
+
+  async removeFromRoster(orgId: string, rosterId: string, userId: string) {
+    await this.assertManager(orgId, userId);
+    await this.prisma.orgRoster.delete({ where: { id: rosterId, orgId } });
+    return { message: 'Removed from roster' };
+  }
+
+  async sendRosterInvite(orgId: string, rosterId: string, userId: string) {
+    await this.assertManager(orgId, userId);
+
+    const entry = await this.prisma.orgRoster.findUnique({ where: { id: rosterId, orgId } });
+    if (!entry) throw new NotFoundException('Roster entry not found');
+    if (!entry.parentEmail) throw new BadRequestException('No parent email on this entry');
+
+    const org = await this.prisma.organization.findUniqueOrThrow({
+      where: { id: orgId },
+      select: { name: true },
+    });
+
+    // Generate or reuse token
+    const token = entry.inviteToken ?? randomUUID();
+    if (!entry.inviteToken) {
+      await this.prisma.orgRoster.update({ where: { id: rosterId }, data: { inviteToken: token } });
+    }
+
+    const appUrl = this.config.get<string>('APP_URL', 'http://localhost:5173');
+    const portalUrl = `${appUrl}/#/org-portal?token=${token}`;
+
+    await this.mail.sendOrgRosterInvite({
+      toEmail: entry.parentEmail,
+      parentName: entry.parentName ?? entry.parentEmail,
+      childName: `${entry.firstName} ${entry.lastName}`,
+      orgName: org.name,
+      portalUrl,
+    });
+
+    return { message: 'Invite sent' };
+  }
+
+  // ── Org portal (token-based read-only for non-app parents) ─────────────────
+
+  async getPortalData(token: string) {
+    const entry = await this.prisma.orgRoster.findUnique({
+      where: { inviteToken: token },
+      include: { org: { include: { events: { orderBy: { startAt: 'asc' }, include: { venue: true } } } } },
+    });
+    if (!entry) throw new NotFoundException('Invalid portal link');
+    return {
+      childName: `${entry.firstName} ${entry.lastName}`,
+      org: { id: entry.org.id, name: entry.org.name, type: entry.org.type },
+      events: entry.org.events,
+    };
   }
 
   // ── Public calendar (no auth) ──────────────────────────────────────────────

@@ -11,27 +11,60 @@ export declare class PublicOrgController {
         events: ({
             venue: {
                 id: string;
-                createdAt: Date;
+                organizationId: string;
                 name: string;
-                notes: string | null;
+                createdAt: Date;
                 address: string | null;
                 mapUrl: string | null;
-                organizationId: string;
+                notes: string | null;
             } | null;
         } & {
             id: string;
+            organizationId: string;
+            type: import("@prisma/client").$Enums.EventType;
             createdAt: Date;
             updatedAt: Date;
-            type: import("@prisma/client").$Enums.EventType;
+            notes: string | null;
             title: string;
             startAt: Date;
             endAt: Date;
             allDay: boolean;
-            notes: string | null;
-            venueId: string | null;
             maxCapacity: number | null;
-            organizationId: string;
             createdById: string;
+            venueId: string | null;
+        })[];
+    }>;
+    getPortal(token: string): Promise<{
+        childName: string;
+        org: {
+            id: string;
+            name: string;
+            type: import("@prisma/client").$Enums.OrgType;
+        };
+        events: ({
+            venue: {
+                id: string;
+                organizationId: string;
+                name: string;
+                createdAt: Date;
+                address: string | null;
+                mapUrl: string | null;
+                notes: string | null;
+            } | null;
+        } & {
+            id: string;
+            organizationId: string;
+            type: import("@prisma/client").$Enums.EventType;
+            createdAt: Date;
+            updatedAt: Date;
+            notes: string | null;
+            title: string;
+            startAt: Date;
+            endAt: Date;
+            allDay: boolean;
+            maxCapacity: number | null;
+            createdById: string;
+            venueId: string | null;
         })[];
     }>;
 }

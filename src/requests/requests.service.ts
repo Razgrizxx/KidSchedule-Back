@@ -167,6 +167,7 @@ export class RequestsService {
       childId: string | null;
       originalDate: Date | null;
       requestedDate: Date;
+      requestedDateTo: Date | null;
     },
     responderId: string,
   ) {
@@ -181,11 +182,18 @@ export class RequestsService {
     if (schedules.length === 0) return;
     const schedule = schedules[0];
 
-    // Build the list of overrides to apply:
-    // - requestedDate → requester (always)
-    // - originalDate → responder (only when this is a swap)
+    // Expand requestedDate range into individual days
+    const requestedDates: Date[] = [];
+    const endDate = request.requestedDateTo ?? request.requestedDate;
+    const cur = new Date(request.requestedDate);
+    while (cur <= endDate) {
+      requestedDates.push(new Date(cur));
+      cur.setUTCDate(cur.getUTCDate() + 1);
+    }
+
+    // Build overrides: all days in requested range → requester, originalDate swap → responder
     const overrides: [Date, string][] = [
-      [request.requestedDate, request.requesterId],
+      ...requestedDates.map((d) => [d, request.requesterId] as [Date, string]),
       ...(request.originalDate ? [[request.originalDate, responderId] as [Date, string]] : []),
     ];
 

@@ -1,6 +1,7 @@
 import {
   IsArray,
   IsBoolean,
+  IsEmail,
   IsEnum,
   IsInt,
   IsNotEmpty,
@@ -193,4 +194,34 @@ export class CreateAnnouncementDto {
   @IsBoolean()
   @IsOptional()
   pinned?: boolean;
+}
+
+export class CreateOrgRosterDto {
+  @IsString()
+  @IsNotEmpty()
+  firstName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  lastName: string;
+
+  @IsString()
+  @IsOptional()
+  parentName?: string;
+
+  @IsEmail()
+  @IsOptional()
+  parentEmail?: string;
+
+  @IsString()
+  @IsOptional()
+  parentPhone?: string;
+
+  @IsString()
+  @IsOptional()
+  notes?: string;
+
+  @IsString()
+  @IsOptional()
+  linkedChildId?: string;
 }
