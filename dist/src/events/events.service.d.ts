@@ -20,6 +20,10 @@ export declare class EventsService {
             childId: string;
             eventId: string;
         })[];
+        caregiver: {
+            id: string;
+            name: string;
+        } | null;
         assignedTo: {
             id: string;
             firstName: string;
@@ -33,6 +37,7 @@ export declare class EventsService {
         familyId: string;
         visibility: import("@prisma/client").$Enums.EventVisibility;
         createdBy: string;
+        caregiverId: string | null;
         googleEventId: string | null;
         type: import("@prisma/client").$Enums.EventType;
         title: string;
@@ -55,6 +60,10 @@ export declare class EventsService {
             childId: string;
             eventId: string;
         })[];
+        caregiver: {
+            id: string;
+            name: string;
+        } | null;
         assignedTo: {
             id: string;
             firstName: string;
@@ -68,6 +77,7 @@ export declare class EventsService {
         familyId: string;
         visibility: import("@prisma/client").$Enums.EventVisibility;
         createdBy: string;
+        caregiverId: string | null;
         googleEventId: string | null;
         type: import("@prisma/client").$Enums.EventType;
         title: string;
@@ -103,6 +113,7 @@ export declare class EventsService {
         familyId: string;
         visibility: import("@prisma/client").$Enums.EventVisibility;
         createdBy: string;
+        caregiverId: string | null;
         googleEventId: string | null;
         type: import("@prisma/client").$Enums.EventType;
         title: string;

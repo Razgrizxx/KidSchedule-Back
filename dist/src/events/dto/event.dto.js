@@ -23,6 +23,7 @@ class CreateEventDto {
     repeat;
     notes;
     assignedToId;
+    caregiverId;
     childIds;
 }
 exports.CreateEventDto = CreateEventDto;
@@ -66,6 +67,11 @@ __decorate([
     (0, class_validator_1.IsUUID)(),
     __metadata("design:type", String)
 ], CreateEventDto.prototype, "assignedToId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsUUID)(),
+    __metadata("design:type", String)
+], CreateEventDto.prototype, "caregiverId", void 0);
 __decorate([
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.IsUUID)('4', { each: true }),

@@ -41,6 +41,7 @@ let EventsService = class EventsService {
             include: {
                 children: { include: { child: { select: { id: true, firstName: true, lastName: true, color: true } } } },
                 assignedTo: { select: { id: true, firstName: true, lastName: true } },
+                caregiver: { select: { id: true, name: true } },
             },
         });
         this.eventEmitter.emit('calendar.event.upsert', {
@@ -64,6 +65,7 @@ let EventsService = class EventsService {
             include: {
                 children: { include: { child: { select: { id: true, firstName: true, lastName: true, color: true } } } },
                 assignedTo: { select: { id: true, firstName: true, lastName: true } },
+                caregiver: { select: { id: true, name: true } },
             },
         });
     }

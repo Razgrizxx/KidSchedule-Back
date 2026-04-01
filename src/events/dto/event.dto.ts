@@ -43,6 +43,10 @@ export class CreateEventDto {
   @IsUUID()
   assignedToId?: string;
 
+  @IsOptional()
+  @IsUUID()
+  caregiverId?: string;
+
   @IsArray()
   @IsUUID('4', { each: true })
   childIds: string[];

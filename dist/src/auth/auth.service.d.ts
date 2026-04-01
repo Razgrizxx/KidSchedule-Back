@@ -21,6 +21,7 @@ export declare class AuthService {
             email: string;
             phone: string | null;
             isVerified: boolean;
+            avatarUrl: string | null;
         };
     }>;
     login(dto: LoginDto): Promise<{
@@ -32,6 +33,7 @@ export declare class AuthService {
             email: string;
             phone: string | null;
             isVerified: boolean;
+            avatarUrl: string | null;
         };
     }>;
     forgotPassword(dto: ForgotPasswordDto): Promise<{

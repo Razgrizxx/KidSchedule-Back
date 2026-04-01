@@ -1,11 +1,13 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { UpdateFamilySettingsDto } from './dto/update-family-settings.dto';
 import { UpdateUserSettingsDto } from './dto/update-user-settings.dto';
 export declare class SettingsService {
     private prisma;
     private familyService;
-    constructor(prisma: PrismaService, familyService: FamilyService);
+    private cloudinary;
+    constructor(prisma: PrismaService, familyService: FamilyService, cloudinary: CloudinaryService);
     getFamilySettings(familyId: string, userId: string): Promise<{
         id: string;
         createdAt: Date;
@@ -45,5 +47,8 @@ export declare class SettingsService {
         emailNotifications: boolean;
         pushNotifications: boolean;
         appearance: import("@prisma/client").$Enums.AppearanceTheme;
+    }>;
+    uploadAvatar(userId: string, file: Express.Multer.File): Promise<{
+        avatarUrl: string | null;
     }>;
 }

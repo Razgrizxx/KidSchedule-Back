@@ -14,6 +14,8 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SettingsController = void 0;
 const common_1 = require("@nestjs/common");
+const platform_express_1 = require("@nestjs/platform-express");
+const multer_1 = require("multer");
 const settings_service_1 = require("./settings.service");
 const update_family_settings_dto_1 = require("./dto/update-family-settings.dto");
 const update_user_settings_dto_1 = require("./dto/update-user-settings.dto");
@@ -36,6 +38,11 @@ let SettingsController = class SettingsController {
     }
     updateUserSettings(user, dto) {
         return this.settingsService.updateUserSettings(user.id, dto);
+    }
+    uploadAvatar(user, file) {
+        if (!file)
+            throw new common_1.BadRequestException('Image file is required');
+        return this.settingsService.uploadAvatar(user.id, file);
     }
 };
 exports.SettingsController = SettingsController;
@@ -73,6 +80,24 @@ __decorate([
         update_user_settings_dto_1.UpdateUserSettingsDto]),
     __metadata("design:returntype", void 0)
 ], SettingsController.prototype, "updateUserSettings", null);
+__decorate([
+    (0, common_1.Post)('users/me/avatar'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {
+        storage: (0, multer_1.memoryStorage)(),
+        limits: { fileSize: 5 * 1024 * 1024 },
+        fileFilter: (_req, file, cb) => {
+            if (!file.mimetype.startsWith('image/')) {
+                return cb(new common_1.BadRequestException('Only image files are allowed'), false);
+            }
+            cb(null, true);
+        },
+    })),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, Object]),
+    __metadata("design:returntype", void 0)
+], SettingsController.prototype, "uploadAvatar", null);
 exports.SettingsController = SettingsController = __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)(),

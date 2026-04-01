@@ -35,7 +35,7 @@ export class CaregiverPortalService {
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
     // Fetch data according to permissions
-    const [custodyEvents, contacts] = await Promise.all([
+    const [custodyEvents, contacts, assignedEvents] = await Promise.all([
       caregiver.canViewCalendar && caregiver.familyId && childIds.length > 0
         ? this.prisma.custodyEvent.findMany({
             where: {
@@ -62,6 +62,23 @@ export class CaregiverPortalService {
             },
           })
         : Promise.resolve([]),
+
+      // Events explicitly assigned to this caregiver (next 3 months)
+      this.prisma.event.findMany({
+        where: {
+          caregiverId: caregiver.id,
+          startAt: { gte: now },
+          endAt: { lte: new Date(now.getFullYear(), now.getMonth() + 3, 0) },
+        },
+        orderBy: { startAt: 'asc' },
+        include: {
+          children: {
+            include: {
+              child: { select: { id: true, firstName: true, lastName: true, color: true } },
+            },
+          },
+        },
+      }),
     ]);
 
     return {
@@ -78,6 +95,7 @@ export class CaregiverPortalService {
       contacts: caregiver.canViewEmergencyContacts
         ? contacts.map((m) => m.user)
         : [],
+      assignedEvents,
     };
   }
 }

@@ -9,6 +9,7 @@ export declare class CreateEventDto {
     repeat: RepeatPattern;
     notes?: string;
     assignedToId?: string;
+    caregiverId?: string;
     childIds: string[];
 }
 declare const UpdateEventDto_base: import("@nestjs/mapped-types").MappedType<Partial<CreateEventDto>>;

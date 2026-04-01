@@ -34,5 +34,36 @@ export declare class CaregiverPortalService {
             googleEventId: string | null;
         }[];
         contacts: any[];
+        assignedEvents: ({
+            children: ({
+                child: {
+                    id: string;
+                    firstName: string;
+                    lastName: string;
+                    color: string;
+                };
+            } & {
+                id: string;
+                childId: string;
+                eventId: string;
+            })[];
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            repeat: import("@prisma/client").$Enums.RepeatPattern;
+            familyId: string;
+            visibility: import("@prisma/client").$Enums.EventVisibility;
+            createdBy: string;
+            caregiverId: string | null;
+            googleEventId: string | null;
+            type: import("@prisma/client").$Enums.EventType;
+            title: string;
+            startAt: Date;
+            endAt: Date;
+            allDay: boolean;
+            notes: string | null;
+            assignedToId: string | null;
+        })[];
     }>;
 }

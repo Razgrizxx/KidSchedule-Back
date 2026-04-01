@@ -55,8 +55,8 @@ export declare class MediationController {
         } & {
             id: string;
             createdAt: Date;
-            content: string;
             senderId: string | null;
+            content: string;
             isAI: boolean;
             sessionId: string;
         })[];
@@ -97,8 +97,8 @@ export declare class MediationController {
     } & {
         id: string;
         createdAt: Date;
-        content: string;
         senderId: string | null;
+        content: string;
         isAI: boolean;
         sessionId: string;
     }>;
@@ -125,8 +125,8 @@ export declare class MediationController {
     } & {
         id: string;
         createdAt: Date;
-        content: string;
         senderId: string | null;
+        content: string;
         isAI: boolean;
         sessionId: string;
     }>;
@@ -173,8 +173,8 @@ export declare class MediationController {
             } & {
                 id: string;
                 createdAt: Date;
-                content: string;
                 senderId: string | null;
+                content: string;
                 isAI: boolean;
                 sessionId: string;
             })[];

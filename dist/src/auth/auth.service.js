@@ -233,6 +233,7 @@ let AuthService = class AuthService {
                 email: user.email,
                 phone: user.phone ?? null,
                 isVerified: user.isVerified,
+                avatarUrl: user.avatarUrl ?? null,
             },
         };
     }

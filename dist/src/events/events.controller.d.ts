@@ -17,6 +17,10 @@ export declare class EventsController {
             childId: string;
             eventId: string;
         })[];
+        caregiver: {
+            id: string;
+            name: string;
+        } | null;
         assignedTo: {
             id: string;
             firstName: string;
@@ -30,6 +34,7 @@ export declare class EventsController {
         familyId: string;
         visibility: import("@prisma/client").$Enums.EventVisibility;
         createdBy: string;
+        caregiverId: string | null;
         googleEventId: string | null;
         type: import("@prisma/client").$Enums.EventType;
         title: string;
@@ -52,6 +57,10 @@ export declare class EventsController {
             childId: string;
             eventId: string;
         })[];
+        caregiver: {
+            id: string;
+            name: string;
+        } | null;
         assignedTo: {
             id: string;
             firstName: string;
@@ -65,6 +74,7 @@ export declare class EventsController {
         familyId: string;
         visibility: import("@prisma/client").$Enums.EventVisibility;
         createdBy: string;
+        caregiverId: string | null;
         googleEventId: string | null;
         type: import("@prisma/client").$Enums.EventType;
         title: string;
@@ -100,6 +110,7 @@ export declare class EventsController {
         familyId: string;
         visibility: import("@prisma/client").$Enums.EventVisibility;
         createdBy: string;
+        caregiverId: string | null;
         googleEventId: string | null;
         type: import("@prisma/client").$Enums.EventType;
         title: string;
