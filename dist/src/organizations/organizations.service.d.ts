@@ -12,13 +12,13 @@ export declare class OrganizationsService {
     assertActiveMember(orgId: string, userId: string): Promise<{
         id: string;
         role: import("@prisma/client").$Enums.OrgRole;
-        userId: string;
         joinedAt: Date;
+        userId: string;
         status: import("@prisma/client").$Enums.OrgMemberStatus;
-        customRoleId: string | null;
         organizationId: string;
         approvedById: string | null;
         approvedAt: Date | null;
+        customRoleId: string | null;
     }>;
     private assertManager;
     private assertCanCreate;
@@ -33,13 +33,13 @@ export declare class OrganizationsService {
         } & {
             id: string;
             role: import("@prisma/client").$Enums.OrgRole;
-            userId: string;
             joinedAt: Date;
+            userId: string;
             status: import("@prisma/client").$Enums.OrgMemberStatus;
-            customRoleId: string | null;
             organizationId: string;
             approvedById: string | null;
             approvedAt: Date | null;
+            customRoleId: string | null;
         })[];
     } & {
         id: string;
@@ -48,9 +48,9 @@ export declare class OrganizationsService {
         name: string;
         description: string | null;
         type: import("@prisma/client").$Enums.OrgType;
-        isPublic: boolean;
         inviteCode: string;
         adminId: string;
+        isPublic: boolean;
     }>;
     updateOrg(orgId: string, userId: string, dto: UpdateOrgDto): Promise<{
         id: string;
@@ -59,9 +59,9 @@ export declare class OrganizationsService {
         name: string;
         description: string | null;
         type: import("@prisma/client").$Enums.OrgType;
-        isPublic: boolean;
         inviteCode: string;
         adminId: string;
+        isPublic: boolean;
     }>;
     joinByCode(userId: string, dto: JoinOrgDto): Promise<{
         pendingApproval: boolean;
@@ -71,16 +71,16 @@ export declare class OrganizationsService {
         name?: string | undefined;
         description?: string | null | undefined;
         type?: import("@prisma/client").$Enums.OrgType | undefined;
-        isPublic?: boolean | undefined;
         inviteCode?: string | undefined;
         adminId?: string | undefined;
+        isPublic?: boolean | undefined;
     }>;
     findMine(userId: string): Promise<{
         role: import("@prisma/client").$Enums.OrgRole;
         status: import("@prisma/client").$Enums.OrgMemberStatus;
         _count: {
-            members: number;
             events: number;
+            members: number;
         };
         id: string;
         createdAt: Date;
@@ -88,9 +88,9 @@ export declare class OrganizationsService {
         name: string;
         description: string | null;
         type: import("@prisma/client").$Enums.OrgType;
-        isPublic: boolean;
         inviteCode: string;
         adminId: string;
+        isPublic: boolean;
     }[]>;
     findOne(orgId: string, userId: string): Promise<{
         myRole: import("@prisma/client").$Enums.OrgRole;
@@ -99,11 +99,15 @@ export declare class OrganizationsService {
             id: string;
             createdAt: Date;
             name: string;
+            organizationId: string;
             canCreateEvents: boolean;
             canCreateAnnouncements: boolean;
             canCreateVenues: boolean;
-            organizationId: string;
         } | null;
+        _count: {
+            events: number;
+            announcements: number;
+        };
         members: ({
             user: {
                 id: string;
@@ -116,43 +120,39 @@ export declare class OrganizationsService {
                 id: string;
                 createdAt: Date;
                 name: string;
+                organizationId: string;
                 canCreateEvents: boolean;
                 canCreateAnnouncements: boolean;
                 canCreateVenues: boolean;
-                organizationId: string;
             } | null;
         } & {
             id: string;
             role: import("@prisma/client").$Enums.OrgRole;
-            userId: string;
             joinedAt: Date;
+            userId: string;
             status: import("@prisma/client").$Enums.OrgMemberStatus;
-            customRoleId: string | null;
             organizationId: string;
             approvedById: string | null;
             approvedAt: Date | null;
+            customRoleId: string | null;
         })[];
-        _count: {
-            events: number;
-            announcements: number;
-        };
         venues: {
             id: string;
             createdAt: Date;
             name: string;
             notes: string | null;
+            organizationId: string;
             address: string | null;
             mapUrl: string | null;
-            organizationId: string;
         }[];
         customRoles: {
             id: string;
             createdAt: Date;
             name: string;
+            organizationId: string;
             canCreateEvents: boolean;
             canCreateAnnouncements: boolean;
             canCreateVenues: boolean;
-            organizationId: string;
         }[];
         id: string;
         createdAt: Date;
@@ -160,9 +160,9 @@ export declare class OrganizationsService {
         name: string;
         description: string | null;
         type: import("@prisma/client").$Enums.OrgType;
-        isPublic: boolean;
         inviteCode: string;
         adminId: string;
+        isPublic: boolean;
     }>;
     leave(orgId: string, userId: string): Promise<{
         message: string;
@@ -173,13 +173,13 @@ export declare class OrganizationsService {
     approveMember(orgId: string, targetUserId: string, adminId: string): Promise<{
         id: string;
         role: import("@prisma/client").$Enums.OrgRole;
-        userId: string;
         joinedAt: Date;
+        userId: string;
         status: import("@prisma/client").$Enums.OrgMemberStatus;
-        customRoleId: string | null;
         organizationId: string;
         approvedById: string | null;
         approvedAt: Date | null;
+        customRoleId: string | null;
     }>;
     rejectMember(orgId: string, targetUserId: string, adminId: string): Promise<{
         message: string;
@@ -187,13 +187,13 @@ export declare class OrganizationsService {
     updateMemberRole(orgId: string, targetUserId: string, adminId: string, dto: UpdateMemberRoleDto): Promise<{
         id: string;
         role: import("@prisma/client").$Enums.OrgRole;
-        userId: string;
         joinedAt: Date;
+        userId: string;
         status: import("@prisma/client").$Enums.OrgMemberStatus;
-        customRoleId: string | null;
         organizationId: string;
         approvedById: string | null;
         approvedAt: Date | null;
+        customRoleId: string | null;
     }>;
     removeMember(orgId: string, targetUserId: string, adminId: string): Promise<{
         message: string;
@@ -210,24 +210,27 @@ export declare class OrganizationsService {
             id: string;
             createdAt: Date;
             name: string;
+            organizationId: string;
             canCreateEvents: boolean;
             canCreateAnnouncements: boolean;
             canCreateVenues: boolean;
-            organizationId: string;
         } | null;
     } & {
         id: string;
         role: import("@prisma/client").$Enums.OrgRole;
-        userId: string;
         joinedAt: Date;
+        userId: string;
         status: import("@prisma/client").$Enums.OrgMemberStatus;
-        customRoleId: string | null;
         organizationId: string;
         approvedById: string | null;
         approvedAt: Date | null;
+        customRoleId: string | null;
     })[]>;
     private readonly EVENT_INCLUDE;
     createEvent(orgId: string, userId: string, dto: CreateOrgEventDto): Promise<{
+        _count: {
+            rsvps: number;
+        };
         organization: {
             id: string;
             name: string;
@@ -238,13 +241,10 @@ export declare class OrganizationsService {
             createdAt: Date;
             name: string;
             notes: string | null;
+            organizationId: string;
             address: string | null;
             mapUrl: string | null;
-            organizationId: string;
         } | null;
-        _count: {
-            rsvps: number;
-        };
         rsvps: ({
             user: {
                 id: string;
@@ -270,10 +270,10 @@ export declare class OrganizationsService {
         endAt: Date;
         allDay: boolean;
         notes: string | null;
-        venueId: string | null;
-        maxCapacity: number | null;
         organizationId: string;
+        maxCapacity: number | null;
         createdById: string;
+        venueId: string | null;
     }>;
     bulkCreateEvents(orgId: string, userId: string, dto: BulkCreateOrgEventsDto): Promise<{
         created: number;
@@ -287,13 +287,16 @@ export declare class OrganizationsService {
             endAt: Date;
             allDay: boolean;
             notes: string | null;
-            venueId: string | null;
-            maxCapacity: number | null;
             organizationId: string;
+            maxCapacity: number | null;
             createdById: string;
+            venueId: string | null;
         }[];
     }>;
     findEvents(orgId: string, userId: string, month?: string): Promise<({
+        _count: {
+            rsvps: number;
+        };
         organization: {
             id: string;
             name: string;
@@ -304,13 +307,10 @@ export declare class OrganizationsService {
             createdAt: Date;
             name: string;
             notes: string | null;
+            organizationId: string;
             address: string | null;
             mapUrl: string | null;
-            organizationId: string;
         } | null;
-        _count: {
-            rsvps: number;
-        };
         rsvps: ({
             user: {
                 id: string;
@@ -336,10 +336,10 @@ export declare class OrganizationsService {
         endAt: Date;
         allDay: boolean;
         notes: string | null;
-        venueId: string | null;
-        maxCapacity: number | null;
         organizationId: string;
+        maxCapacity: number | null;
         createdById: string;
+        venueId: string | null;
     })[]>;
     deleteEvent(orgId: string, eventId: string, userId: string): Promise<{
         message: string;
@@ -360,10 +360,10 @@ export declare class OrganizationsService {
         endAt: Date;
         allDay: boolean;
         notes: string | null;
-        venueId: string | null;
-        maxCapacity: number | null;
         organizationId: string;
+        maxCapacity: number | null;
         createdById: string;
+        venueId: string | null;
     })[]>;
     upsertRsvp(orgId: string, eventId: string, userId: string, dto: RsvpDto): Promise<{
         user: {
@@ -451,18 +451,18 @@ export declare class OrganizationsService {
         createdAt: Date;
         name: string;
         notes: string | null;
+        organizationId: string;
         address: string | null;
         mapUrl: string | null;
-        organizationId: string;
     }>;
     findVenues(orgId: string, userId: string): Promise<{
         id: string;
         createdAt: Date;
         name: string;
         notes: string | null;
+        organizationId: string;
         address: string | null;
         mapUrl: string | null;
-        organizationId: string;
     }[]>;
     deleteVenue(orgId: string, venueId: string, userId: string): Promise<{
         message: string;
@@ -479,8 +479,8 @@ export declare class OrganizationsService {
         updatedAt: Date;
         content: string;
         title: string;
-        pinned: boolean;
         organizationId: string;
+        pinned: boolean;
         authorId: string;
     }>;
     findAnnouncements(orgId: string, userId: string): Promise<({
@@ -495,8 +495,8 @@ export declare class OrganizationsService {
         updatedAt: Date;
         content: string;
         title: string;
-        pinned: boolean;
         organizationId: string;
+        pinned: boolean;
         authorId: string;
     })[]>;
     deleteAnnouncement(orgId: string, announcementId: string, userId: string): Promise<{
@@ -510,28 +510,28 @@ export declare class OrganizationsService {
         id: string;
         createdAt: Date;
         name: string;
+        organizationId: string;
         canCreateEvents: boolean;
         canCreateAnnouncements: boolean;
         canCreateVenues: boolean;
-        organizationId: string;
     })[]>;
     createCustomRole(orgId: string, userId: string, dto: CreateCustomRoleDto): Promise<{
         id: string;
         createdAt: Date;
         name: string;
+        organizationId: string;
         canCreateEvents: boolean;
         canCreateAnnouncements: boolean;
         canCreateVenues: boolean;
-        organizationId: string;
     }>;
     updateCustomRole(orgId: string, roleId: string, userId: string, dto: UpdateCustomRoleDto): Promise<{
         id: string;
         createdAt: Date;
         name: string;
+        organizationId: string;
         canCreateEvents: boolean;
         canCreateAnnouncements: boolean;
         canCreateVenues: boolean;
-        organizationId: string;
     }>;
     deleteCustomRole(orgId: string, roleId: string, userId: string): Promise<{
         message: string;
@@ -547,21 +547,21 @@ export declare class OrganizationsService {
             id: string;
             createdAt: Date;
             name: string;
+            organizationId: string;
             canCreateEvents: boolean;
             canCreateAnnouncements: boolean;
             canCreateVenues: boolean;
-            organizationId: string;
         } | null;
     } & {
         id: string;
         role: import("@prisma/client").$Enums.OrgRole;
-        userId: string;
         joinedAt: Date;
+        userId: string;
         status: import("@prisma/client").$Enums.OrgMemberStatus;
-        customRoleId: string | null;
         organizationId: string;
         approvedById: string | null;
         approvedAt: Date | null;
+        customRoleId: string | null;
     }>;
     getPublicCalendar(orgId: string): Promise<{
         org: {
@@ -575,9 +575,9 @@ export declare class OrganizationsService {
                 createdAt: Date;
                 name: string;
                 notes: string | null;
+                organizationId: string;
                 address: string | null;
                 mapUrl: string | null;
-                organizationId: string;
             } | null;
         } & {
             id: string;
@@ -589,10 +589,10 @@ export declare class OrganizationsService {
             endAt: Date;
             allDay: boolean;
             notes: string | null;
-            venueId: string | null;
-            maxCapacity: number | null;
             organizationId: string;
+            maxCapacity: number | null;
             createdById: string;
+            venueId: string | null;
         })[];
     }>;
     generateIcs(orgId: string, userId: string): Promise<string>;

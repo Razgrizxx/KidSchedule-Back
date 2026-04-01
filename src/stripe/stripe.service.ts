@@ -66,8 +66,8 @@ export class StripeService {
       customer: customerId,
       mode: 'subscription',
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}/dashboard/settings?checkout=success`,
-      cancel_url: `${appUrl}/pricing?checkout=cancelled`,
+      success_url: `${appUrl}/#/dashboard/settings?checkout=success`,
+      cancel_url: `${appUrl}/#/pricing?checkout=cancelled`,
       allow_promotion_codes: true,
       metadata: { userId },
     });
