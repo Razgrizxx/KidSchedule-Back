@@ -196,6 +196,7 @@ model User {
   orgMembershipsApproved OrgMembership[] @relation("OrgMemberApprover")
   orgEventsCreated   OrgEvent[]          @relation("OrgEventCreator")
   orgRosterLinks     OrgRoster[]         @relation("OrgRosterLinkedUser")
+  createdOrgEntities OrgEntity[]         @relation("CreatedOrgEntities")
   orgRsvps           OrgRsvp[]
   orgAnnouncements   Announcement[]      @relation("OrgAnnouncements")
   subscription       Subscription?
@@ -611,18 +612,35 @@ model EventChild {
 //  ORGANIZATIONS (Teams & Schools)
 // ─────────────────────────────────────────
 
-model Organization {
-  id         String    @id @default(uuid())
-  name       String
-  type       OrgType
-  inviteCode String    @unique
-  adminId    String
-  isPublic   Boolean   @default(false)
+model OrgEntity {
+  id          String   @id @default(uuid())
+  name        String
+  type        OrgType
   description String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User         @relation("CreatedOrgEntities", fields: [createdById], references: [id])
+  groups    Organization[]
+
+  @@map("org_entities")
+}
+
+model Organization {
+  id          String    @id @default(uuid())
+  name        String
+  type        OrgType
+  inviteCode  String    @unique
+  adminId     String
+  isPublic    Boolean   @default(false)
+  description String?
+  entityId    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   admin         User            @relation("OrgAdmin", fields: [adminId], references: [id])
+  entity        OrgEntity?      @relation(fields: [entityId], references: [id], onDelete: SetNull)
   members       OrgMembership[]
   events        OrgEvent[]
   venues        Venue[]

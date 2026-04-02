@@ -1,9 +1,15 @@
 import { OrgRole, OrgType, RsvpStatus } from '@prisma/client';
+export declare class CreateOrgEntityDto {
+    name: string;
+    type: OrgType;
+    description?: string;
+}
 export declare class CreateOrgDto {
     name: string;
     type: OrgType;
     description?: string;
     isPublic?: boolean;
+    entityId?: string;
 }
 export declare class JoinOrgDto {
     inviteCode: string;

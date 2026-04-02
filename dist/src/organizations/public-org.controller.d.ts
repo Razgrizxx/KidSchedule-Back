@@ -11,27 +11,27 @@ export declare class PublicOrgController {
         events: ({
             venue: {
                 id: string;
-                createdAt: Date;
+                organizationId: string;
                 name: string;
-                notes: string | null;
+                createdAt: Date;
                 address: string | null;
                 mapUrl: string | null;
-                organizationId: string;
+                notes: string | null;
             } | null;
         } & {
             id: string;
+            organizationId: string;
+            type: import("@prisma/client").$Enums.EventType;
             createdAt: Date;
             updatedAt: Date;
-            type: import("@prisma/client").$Enums.EventType;
+            createdById: string;
+            notes: string | null;
             title: string;
             startAt: Date;
             endAt: Date;
             allDay: boolean;
-            notes: string | null;
-            venueId: string | null;
             maxCapacity: number | null;
-            organizationId: string;
-            createdById: string;
+            venueId: string | null;
         })[];
     }>;
     getPortal(token: string): Promise<{
@@ -44,27 +44,27 @@ export declare class PublicOrgController {
         events: ({
             venue: {
                 id: string;
-                createdAt: Date;
+                organizationId: string;
                 name: string;
-                notes: string | null;
+                createdAt: Date;
                 address: string | null;
                 mapUrl: string | null;
-                organizationId: string;
+                notes: string | null;
             } | null;
         } & {
             id: string;
+            organizationId: string;
+            type: import("@prisma/client").$Enums.EventType;
             createdAt: Date;
             updatedAt: Date;
-            type: import("@prisma/client").$Enums.EventType;
+            createdById: string;
+            notes: string | null;
             title: string;
             startAt: Date;
             endAt: Date;
             allDay: boolean;
-            notes: string | null;
-            venueId: string | null;
             maxCapacity: number | null;
-            organizationId: string;
-            createdById: string;
+            venueId: string | null;
         })[];
     }>;
 }

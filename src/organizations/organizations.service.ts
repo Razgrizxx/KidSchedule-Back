@@ -13,6 +13,7 @@ import {
   CreateAnnouncementDto,
   CreateCustomRoleDto,
   CreateOrgDto,
+  CreateOrgEntityDto,
   CreateOrgEventDto,
   CreateOrgRosterDto,
   CreateVenueDto,
@@ -78,6 +79,47 @@ export class OrganizationsService {
     throw new ForbiddenException('You do not have permission to perform this action');
   }
 
+  // ── Entities ───────────────────────────────────────────────────────────────
+
+  async createEntity(userId: string, dto: CreateOrgEntityDto) {
+    return this.prisma.orgEntity.create({
+      data: { ...dto, createdById: userId },
+    });
+  }
+
+  async findMyEntities(userId: string) {
+    // Entities the user created OR that contain groups the user belongs to
+    const memberships = await this.prisma.orgMembership.findMany({
+      where: { userId, status: 'ACTIVE' },
+      select: { organization: { select: { entityId: true } } },
+    });
+    const entityIds = memberships
+      .map((m) => m.organization.entityId)
+      .filter((id): id is string => !!id);
+
+    return this.prisma.orgEntity.findMany({
+      where: { OR: [{ createdById: userId }, { id: { in: entityIds } }] },
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async updateEntity(entityId: string, userId: string, dto: Partial<CreateOrgEntityDto>) {
+    const entity = await this.prisma.orgEntity.findUnique({ where: { id: entityId } });
+    if (!entity) throw new NotFoundException('Entity not found');
+    if (entity.createdById !== userId) throw new ForbiddenException('Only the creator can edit this entity');
+    return this.prisma.orgEntity.update({ where: { id: entityId }, data: dto });
+  }
+
+  async deleteEntity(entityId: string, userId: string) {
+    const entity = await this.prisma.orgEntity.findUnique({ where: { id: entityId } });
+    if (!entity) throw new NotFoundException('Entity not found');
+    if (entity.createdById !== userId) throw new ForbiddenException('Only the creator can delete this entity');
+    // Detach groups before deleting
+    await this.prisma.organization.updateMany({ where: { entityId }, data: { entityId: null } });
+    await this.prisma.orgEntity.delete({ where: { id: entityId } });
+    return { message: 'Entity deleted' };
+  }
+
   // ── Organizations ──────────────────────────────────────────────────────────
 
   async create(userId: string, dto: CreateOrgDto) {
@@ -94,9 +136,11 @@ export class OrganizationsService {
         adminId: userId,
         description: dto.description,
         isPublic: dto.isPublic ?? false,
+        entityId: dto.entityId ?? null,
         members: { create: { userId, role: 'OWNER', status: 'ACTIVE' } },
       },
       include: {
+        entity: { select: { id: true, name: true, type: true } },
         members: {
           include: { user: { select: { id: true, firstName: true, lastName: true, email: true } } },
         },
@@ -153,7 +197,12 @@ export class OrganizationsService {
     const memberships = await this.prisma.orgMembership.findMany({
       where: { userId },
       include: {
-        organization: { include: { _count: { select: { members: true, events: true } } } },
+        organization: {
+          include: {
+            entity: { select: { id: true, name: true, type: true } },
+            _count: { select: { members: true, events: true } },
+          },
+        },
       },
       orderBy: { joinedAt: 'desc' },
     });
