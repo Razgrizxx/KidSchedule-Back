@@ -15,6 +15,18 @@ export declare class BlogService {
         readTime: number;
         publishedAt: Date | null;
     }[]>;
+    findAllAdmin(): Promise<{
+        id: string;
+        category: string;
+        slug: string;
+        title: string;
+        excerpt: string;
+        coverImage: string | null;
+        author: string;
+        published: boolean;
+        readTime: number;
+        publishedAt: Date | null;
+    }[]>;
     findBySlug(slug: string): Promise<{
         id: string;
         createdAt: Date;

@@ -28,11 +28,11 @@ export declare class ChatGateway implements OnGatewayConnection, OnGatewayDiscon
         createdAt: Date;
         familyId: string;
         status: import("@prisma/client").$Enums.MessageStatus;
-        senderId: string;
         content: string;
+        attachmentUrl: string | null;
+        senderId: string;
         contentHash: string;
         previousHash: string;
-        attachmentUrl: string | null;
         isSystemMessage: boolean;
     }) | undefined>;
     handleTyping(client: Socket, familyId: string): void;

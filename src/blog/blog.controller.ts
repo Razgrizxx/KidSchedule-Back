@@ -11,6 +11,7 @@ import {
 import { BlogService } from './blog.service';
 import { CreatePostDto, UpdatePostDto } from './dto/post.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { AdminGuard } from '../common/guards/admin.guard';
 
 @Controller('blog')
 export class BlogController {
@@ -34,22 +35,28 @@ export class BlogController {
     return this.blogService.findRelated(slug, post.category);
   }
 
-  // ── Admin endpoints (JWT required) ─────────────────────────────────────
+  // ── Admin endpoints (site owner only) ──────────────────────────────────
+
+  @Get('admin/all')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  findAllAdmin() {
+    return this.blogService.findAllAdmin();
+  }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   create(@Body() dto: CreatePostDto) {
     return this.blogService.create(dto);
   }
 
   @Patch(':slug')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   update(@Param('slug') slug: string, @Body() dto: UpdatePostDto) {
     return this.blogService.update(slug, dto);
   }
 
   @Delete(':slug')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   remove(@Param('slug') slug: string) {
     return this.blogService.remove(slug);
   }

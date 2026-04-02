@@ -16,15 +16,20 @@ export class BlogService {
       where: { published: true },
       orderBy: { publishedAt: 'desc' },
       select: {
-        id: true,
-        slug: true,
-        title: true,
-        excerpt: true,
-        coverImage: true,
-        category: true,
-        author: true,
-        readTime: true,
-        publishedAt: true,
+        id: true, slug: true, title: true, excerpt: true,
+        coverImage: true, category: true, author: true,
+        readTime: true, publishedAt: true,
+      },
+    });
+  }
+
+  async findAllAdmin() {
+    return this.prisma.post.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true, slug: true, title: true, excerpt: true,
+        coverImage: true, category: true, author: true,
+        readTime: true, publishedAt: true, published: true,
       },
     });
   }
