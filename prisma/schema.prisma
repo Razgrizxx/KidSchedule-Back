@@ -173,6 +173,13 @@ model User {
   googleAccessToken    String?
   googleTokenExpiry    DateTime?
   googleCalendarId     String?  // ID of the dedicated "KidSchedule" calendar
+  // Outlook Calendar integration (tokens stored AES-256 encrypted)
+  outlookAccessToken   String?
+  outlookRefreshToken  String?
+  outlookTokenExpiry   DateTime?
+  outlookCalendarId    String?  // ID of the dedicated "KidSchedule" Outlook calendar
+  // iCal subscription feed
+  icalFeedToken        String?  @unique  // secret token for the Apple/iCal webcal feed URL
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
@@ -399,8 +406,9 @@ model CustodyEvent {
   date          DateTime @db.Date
   custodianId   String
   isOverride    Boolean  @default(false)
-  googleEventId String?  // Google Calendar event ID (stored on the first day of each synced block)
-  createdAt     DateTime @default(now())
+  googleEventId  String?  // Google Calendar event ID (stored on the first day of each synced block)
+  outlookEventId String?  // Outlook Calendar event ID
+  createdAt      DateTime @default(now())
 
   schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
   child    Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
@@ -583,9 +591,10 @@ model Event {
   notes         String?
   assignedToId  String?
   caregiverId   String?        // Optional caregiver responsible for this event
-  googleEventId String?        // Google Calendar event ID for bi-directional sync
-  createdAt     DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  googleEventId  String?  // Google Calendar event ID for bi-directional sync
+  outlookEventId String?  // Outlook Calendar event ID
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   family     Family       @relation(fields: [familyId], references: [id], onDelete: Cascade)
   creator    User         @relation("CreatedEvents", fields: [createdBy], references: [id])

@@ -57,8 +57,8 @@ export declare class MediationService {
         } & {
             id: string;
             createdAt: Date;
-            content: string;
             senderId: string | null;
+            content: string;
             isAI: boolean;
             sessionId: string;
         })[];
@@ -99,8 +99,8 @@ export declare class MediationService {
     } & {
         id: string;
         createdAt: Date;
-        content: string;
         senderId: string | null;
+        content: string;
         isAI: boolean;
         sessionId: string;
     }>;
@@ -109,6 +109,7 @@ export declare class MediationService {
             id: string;
             email: string;
             phone: string | null;
+            icalFeedToken: string | null;
             firstName: string;
             lastName: string;
             passwordHash: string;
@@ -121,14 +122,18 @@ export declare class MediationService {
             googleAccessToken: string | null;
             googleTokenExpiry: Date | null;
             googleCalendarId: string | null;
+            outlookAccessToken: string | null;
+            outlookRefreshToken: string | null;
+            outlookTokenExpiry: Date | null;
+            outlookCalendarId: string | null;
             createdAt: Date;
             updatedAt: Date;
         } | null;
     } & {
         id: string;
         createdAt: Date;
-        content: string;
         senderId: string | null;
+        content: string;
         isAI: boolean;
         sessionId: string;
     }>;
@@ -175,8 +180,8 @@ export declare class MediationService {
             } & {
                 id: string;
                 createdAt: Date;
-                content: string;
                 senderId: string | null;
+                content: string;
                 isAI: boolean;
                 sessionId: string;
             })[];

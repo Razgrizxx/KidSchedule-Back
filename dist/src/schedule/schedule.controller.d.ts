@@ -67,6 +67,7 @@ export declare class ScheduleController {
         custodianId: string;
         isOverride: boolean;
         googleEventId: string | null;
+        outlookEventId: string | null;
     })[]>;
     overrideDay(user: AuthUser, familyId: string, scheduleId: string, body: {
         date: string;
@@ -81,5 +82,6 @@ export declare class ScheduleController {
         custodianId: string;
         isOverride: boolean;
         googleEventId: string | null;
+        outlookEventId: string | null;
     }>;
 }

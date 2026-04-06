@@ -32,6 +32,7 @@ export declare class CaregiverPortalService {
             custodianId: string;
             isOverride: boolean;
             googleEventId: string | null;
+            outlookEventId: string | null;
         }[];
         contacts: any[];
         assignedEvents: ({
@@ -57,6 +58,7 @@ export declare class CaregiverPortalService {
             createdBy: string;
             caregiverId: string | null;
             googleEventId: string | null;
+            outlookEventId: string | null;
             type: import("@prisma/client").$Enums.EventType;
             title: string;
             startAt: Date;

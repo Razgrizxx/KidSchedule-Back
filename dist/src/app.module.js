@@ -26,6 +26,9 @@ const blog_module_1 = require("./blog/blog.module");
 const caregiver_portal_module_1 = require("./caregiver-portal/caregiver-portal.module");
 const events_module_1 = require("./events/events.module");
 const google_module_1 = require("./google/google.module");
+const outlook_module_1 = require("./outlook/outlook.module");
+const ical_module_1 = require("./ical/ical.module");
+const ai_module_1 = require("./ai/ai.module");
 const mediation_module_1 = require("./mediation/mediation.module");
 const organizations_module_1 = require("./organizations/organizations.module");
 const stripe_module_1 = require("./stripe/stripe.module");
@@ -53,6 +56,9 @@ exports.AppModule = AppModule = __decorate([
             caregiver_portal_module_1.CaregiverPortalModule,
             events_module_1.EventsModule,
             google_module_1.GoogleModule,
+            outlook_module_1.OutlookModule,
+            ical_module_1.IcalModule,
+            ai_module_1.AiModule,
             mediation_module_1.MediationModule,
             organizations_module_1.OrganizationsModule,
             stripe_module_1.StripeModule,

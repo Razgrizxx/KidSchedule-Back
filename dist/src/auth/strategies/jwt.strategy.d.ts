@@ -14,6 +14,7 @@ export declare class JwtStrategy extends JwtStrategy_base {
         id: string;
         email: string;
         phone: string | null;
+        icalFeedToken: string | null;
         firstName: string;
         lastName: string;
         passwordHash: string;
@@ -26,6 +27,10 @@ export declare class JwtStrategy extends JwtStrategy_base {
         googleAccessToken: string | null;
         googleTokenExpiry: Date | null;
         googleCalendarId: string | null;
+        outlookAccessToken: string | null;
+        outlookRefreshToken: string | null;
+        outlookTokenExpiry: Date | null;
+        outlookCalendarId: string | null;
         createdAt: Date;
         updatedAt: Date;
     }>;

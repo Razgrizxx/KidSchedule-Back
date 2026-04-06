@@ -17,6 +17,9 @@ import { BlogModule } from './blog/blog.module';
 import { CaregiverPortalModule } from './caregiver-portal/caregiver-portal.module';
 import { EventsModule } from './events/events.module';
 import { GoogleModule } from './google/google.module';
+import { OutlookModule } from './outlook/outlook.module';
+import { IcalModule } from './ical/ical.module';
+import { AiModule } from './ai/ai.module';
 import { MediationModule } from './mediation/mediation.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { StripeModule } from './stripe/stripe.module';
@@ -41,6 +44,9 @@ import { StripeModule } from './stripe/stripe.module';
     CaregiverPortalModule,
     EventsModule,
     GoogleModule,
+    OutlookModule,
+    IcalModule,
+    AiModule,
     MediationModule,
     OrganizationsModule,
     StripeModule,

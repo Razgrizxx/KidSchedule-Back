@@ -39,6 +39,7 @@ export declare class EventsService {
         createdBy: string;
         caregiverId: string | null;
         googleEventId: string | null;
+        outlookEventId: string | null;
         type: import("@prisma/client").$Enums.EventType;
         title: string;
         startAt: Date;
@@ -79,6 +80,7 @@ export declare class EventsService {
         createdBy: string;
         caregiverId: string | null;
         googleEventId: string | null;
+        outlookEventId: string | null;
         type: import("@prisma/client").$Enums.EventType;
         title: string;
         startAt: Date;
@@ -115,6 +117,7 @@ export declare class EventsService {
         createdBy: string;
         caregiverId: string | null;
         googleEventId: string | null;
+        outlookEventId: string | null;
         type: import("@prisma/client").$Enums.EventType;
         title: string;
         startAt: Date;

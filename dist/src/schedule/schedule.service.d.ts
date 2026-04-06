@@ -70,6 +70,7 @@ export declare class ScheduleService {
         custodianId: string;
         isOverride: boolean;
         googleEventId: string | null;
+        outlookEventId: string | null;
     })[]>;
     overrideDay(familyId: string, scheduleId: string, date: string, custodianId: string, userId: string): Promise<{
         id: string;
@@ -81,5 +82,6 @@ export declare class ScheduleService {
         custodianId: string;
         isOverride: boolean;
         googleEventId: string | null;
+        outlookEventId: string | null;
     }>;
 }
