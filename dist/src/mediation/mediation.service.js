@@ -11,12 +11,14 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MediationService = void 0;
 const common_1 = require("@nestjs/common");
+const crypto_1 = require("crypto");
 const prisma_service_1 = require("../prisma/prisma.service");
 const family_service_1 = require("../family/family.service");
 const claude_service_1 = require("../claude/claude.service");
 const messaging_service_1 = require("../messaging/messaging.service");
 const chat_gateway_1 = require("../messaging/chat.gateway");
 const mail_service_1 = require("../mail/mail.service");
+const config_1 = require("@nestjs/config");
 let MediationService = class MediationService {
     prisma;
     familyService;
@@ -24,13 +26,15 @@ let MediationService = class MediationService {
     messaging;
     chatGateway;
     mail;
-    constructor(prisma, familyService, claude, messaging, chatGateway, mail) {
+    config;
+    constructor(prisma, familyService, claude, messaging, chatGateway, mail, config) {
         this.prisma = prisma;
         this.familyService = familyService;
         this.claude = claude;
         this.messaging = messaging;
         this.chatGateway = chatGateway;
         this.mail = mail;
+        this.config = config;
     }
     async createSession(familyId, userId, dto) {
         await this.familyService.assertMember(familyId, userId);
@@ -301,6 +305,95 @@ let MediationService = class MediationService {
         const resolutionRate = total > 0 ? Math.round((resolved / total) * 100) : 0;
         return { total, active, resolved, escalated, resolutionRate };
     }
+    async inviteMediator(familyId, sessionId, userId, dto) {
+        await this.familyService.assertMember(familyId, userId);
+        const session = await this.prisma.mediationSession.findFirst({
+            where: { id: sessionId, familyId },
+        });
+        if (!session)
+            throw new common_1.NotFoundException('Session not found');
+        await this.prisma.mediatorInvite.updateMany({
+            where: { sessionId, email: dto.email, revokedAt: null },
+            data: { revokedAt: new Date() },
+        });
+        const token = (0, crypto_1.randomBytes)(32).toString('hex');
+        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        const invite = await this.prisma.mediatorInvite.create({
+            data: {
+                sessionId,
+                invitedBy: userId,
+                email: dto.email,
+                name: dto.name,
+                role: dto.role ?? 'Mediador',
+                token,
+                expiresAt,
+            },
+            include: { inviter: { select: { firstName: true, lastName: true } } },
+        });
+        const frontendUrl = this.config.get('FRONTEND_URL', 'http://localhost:5173');
+        const viewUrl = `${frontendUrl}/#/mediator/${token}`;
+        void this.mail.sendMediatorInvite?.({
+            toEmail: dto.email,
+            recipientName: dto.name,
+            inviterName: `${invite.inviter.firstName} ${invite.inviter.lastName}`,
+            sessionTopic: session.topic,
+            viewUrl,
+        }).catch(() => { });
+        return { ...invite, viewUrl };
+    }
+    async getInvites(familyId, sessionId, userId) {
+        await this.familyService.assertMember(familyId, userId);
+        const session = await this.prisma.mediationSession.findFirst({
+            where: { id: sessionId, familyId },
+        });
+        if (!session)
+            throw new common_1.NotFoundException('Session not found');
+        return this.prisma.mediatorInvite.findMany({
+            where: { sessionId },
+            orderBy: { createdAt: 'desc' },
+            include: { inviter: { select: { firstName: true, lastName: true } } },
+        });
+    }
+    async revokeInvite(familyId, sessionId, inviteId, userId) {
+        await this.familyService.assertMember(familyId, userId);
+        const invite = await this.prisma.mediatorInvite.findFirst({
+            where: { id: inviteId, sessionId },
+        });
+        if (!invite)
+            throw new common_1.NotFoundException('Invite not found');
+        return this.prisma.mediatorInvite.update({
+            where: { id: inviteId },
+            data: { revokedAt: new Date() },
+        });
+    }
+    async getSessionByToken(token) {
+        const invite = await this.prisma.mediatorInvite.findUnique({
+            where: { token },
+            include: { session: { include: {
+                        messages: {
+                            orderBy: { createdAt: 'asc' },
+                            include: { sender: { select: { id: true, firstName: true, lastName: true } } },
+                        },
+                        proposals: {
+                            orderBy: { createdAt: 'desc' },
+                            include: {
+                                proposer: { select: { id: true, firstName: true, lastName: true } },
+                                accepter: { select: { id: true, firstName: true, lastName: true } },
+                            },
+                        },
+                    } } },
+        });
+        if (!invite)
+            throw new common_1.NotFoundException('Invalid or expired link');
+        if (invite.revokedAt)
+            throw new common_1.ForbiddenException('This access link has been revoked');
+        if (invite.expiresAt < new Date())
+            throw new common_1.ForbiddenException('This access link has expired');
+        return {
+            mediator: { name: invite.name, role: invite.role, email: invite.email },
+            session: invite.session,
+        };
+    }
 };
 exports.MediationService = MediationService;
 exports.MediationService = MediationService = __decorate([
@@ -310,6 +403,7 @@ exports.MediationService = MediationService = __decorate([
         claude_service_1.ClaudeService,
         messaging_service_1.MessagingService,
         chat_gateway_1.ChatGateway,
-        mail_service_1.MailService])
+        mail_service_1.MailService,
+        config_1.ConfigService])
 ], MediationService);
 //# sourceMappingURL=mediation.service.js.map

@@ -231,10 +231,11 @@ model User {
   orgRsvps           OrgRsvp[]
   orgAnnouncements   Announcement[]      @relation("OrgAnnouncements")
   subscription       Subscription?
-  healthRecordsCreated   HealthRecord[]   @relation("HealthRecordCreator")
+  healthRecordsCreated    HealthRecord[]   @relation("HealthRecordCreator")
   healthDocumentsUploaded HealthDocument[] @relation("HealthDocumentUploader")
-  medicationsCreated     Medication[]     @relation("MedicationCreator")
-  allergiesCreated       Allergy[]        @relation("AllergyCreator")
+  medicationsCreated      Medication[]     @relation("MedicationCreator")
+  allergiesCreated        Allergy[]        @relation("AllergyCreator")
+  mediatorInvitesSent     MediatorInvite[] @relation("MediatorInvites")
 
   @@map("users")
 }
@@ -839,6 +840,7 @@ model MediationSession {
   family    Family               @relation(fields: [familyId], references: [id], onDelete: Cascade)
   messages  MediationMessage[]
   proposals ResolutionProposal[]
+  mediatorInvites MediatorInvite[]
 
   @@map("mediation_sessions")
 }
@@ -871,6 +873,24 @@ model ResolutionProposal {
   accepter User?            @relation("AcceptedResolutions", fields: [acceptedBy], references: [id])
 
   @@map("resolution_proposals")
+}
+
+model MediatorInvite {
+  id          String    @id @default(uuid())
+  sessionId   String
+  invitedBy   String
+  email       String
+  name        String
+  role        String    @default("Mediador")   // e.g. "Abogado", "Terapeuta"
+  token       String    @unique
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  session   MediationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  inviter   User             @relation("MediatorInvites", fields: [invitedBy], references: [id])
+
+  @@map("mediator_invites")
 }
 
 // ─────────────────────────────────────────

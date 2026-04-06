@@ -4,17 +4,20 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
+import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
 import { ClaudeService } from '../claude/claude.service';
 import { MessagingService } from '../messaging/messaging.service';
 import { ChatGateway } from '../messaging/chat.gateway';
 import { MailService } from '../mail/mail.service';
+import { ConfigService } from '@nestjs/config';
 import {
   CreateSessionDto,
   SendMessageDto,
   ProposeResolutionDto,
   RespondProposalDto,
+  InviteMediatorDto,
 } from './dto/mediation.dto';
 
 @Injectable()
@@ -26,6 +29,7 @@ export class MediationService {
     private messaging: MessagingService,
     private chatGateway: ChatGateway,
     private mail: MailService,
+    private config: ConfigService,
   ) {}
 
   async createSession(familyId: string, userId: string, dto: CreateSessionDto) {
@@ -357,5 +361,113 @@ export class MediationService {
     ]);
     const resolutionRate = total > 0 ? Math.round((resolved / total) * 100) : 0;
     return { total, active, resolved, escalated, resolutionRate };
+  }
+
+  // ── External Mediator Invites ──────────────────────────────────────────────
+
+  async inviteMediator(
+    familyId: string,
+    sessionId: string,
+    userId: string,
+    dto: InviteMediatorDto,
+  ) {
+    await this.familyService.assertMember(familyId, userId);
+
+    const session = await this.prisma.mediationSession.findFirst({
+      where: { id: sessionId, familyId },
+    });
+    if (!session) throw new NotFoundException('Session not found');
+
+    // Revoke any previous active invite for this email on this session
+    await this.prisma.mediatorInvite.updateMany({
+      where: { sessionId, email: dto.email, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+
+    const token = randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+
+    const invite = await this.prisma.mediatorInvite.create({
+      data: {
+        sessionId,
+        invitedBy: userId,
+        email: dto.email,
+        name: dto.name,
+        role: dto.role ?? 'Mediador',
+        token,
+        expiresAt,
+      },
+      include: { inviter: { select: { firstName: true, lastName: true } } },
+    });
+
+    const frontendUrl = this.config.get<string>('FRONTEND_URL', 'http://localhost:5173');
+    const viewUrl = `${frontendUrl}/#/mediator/${token}`;
+
+    void this.mail.sendMediatorInvite?.({
+      toEmail: dto.email,
+      recipientName: dto.name,
+      inviterName: `${invite.inviter.firstName} ${invite.inviter.lastName}`,
+      sessionTopic: session.topic,
+      viewUrl,
+    }).catch(() => {});
+
+    return { ...invite, viewUrl };
+  }
+
+  async getInvites(familyId: string, sessionId: string, userId: string) {
+    await this.familyService.assertMember(familyId, userId);
+    const session = await this.prisma.mediationSession.findFirst({
+      where: { id: sessionId, familyId },
+    });
+    if (!session) throw new NotFoundException('Session not found');
+
+    return this.prisma.mediatorInvite.findMany({
+      where: { sessionId },
+      orderBy: { createdAt: 'desc' },
+      include: { inviter: { select: { firstName: true, lastName: true } } },
+    });
+  }
+
+  async revokeInvite(familyId: string, sessionId: string, inviteId: string, userId: string) {
+    await this.familyService.assertMember(familyId, userId);
+    const invite = await this.prisma.mediatorInvite.findFirst({
+      where: { id: inviteId, sessionId },
+    });
+    if (!invite) throw new NotFoundException('Invite not found');
+
+    return this.prisma.mediatorInvite.update({
+      where: { id: inviteId },
+      data: { revokedAt: new Date() },
+    });
+  }
+
+  // ── Public: resolve token → read-only session view ────────────────────────
+
+  async getSessionByToken(token: string) {
+    const invite = await this.prisma.mediatorInvite.findUnique({
+      where: { token },
+      include: { session: { include: {
+        messages: {
+          orderBy: { createdAt: 'asc' },
+          include: { sender: { select: { id: true, firstName: true, lastName: true } } },
+        },
+        proposals: {
+          orderBy: { createdAt: 'desc' },
+          include: {
+            proposer: { select: { id: true, firstName: true, lastName: true } },
+            accepter: { select: { id: true, firstName: true, lastName: true } },
+          },
+        },
+      }}},
+    });
+
+    if (!invite) throw new NotFoundException('Invalid or expired link');
+    if (invite.revokedAt) throw new ForbiddenException('This access link has been revoked');
+    if (invite.expiresAt < new Date()) throw new ForbiddenException('This access link has expired');
+
+    return {
+      mediator: { name: invite.name, role: invite.role, email: invite.email },
+      session: invite.session,
+    };
   }
 }

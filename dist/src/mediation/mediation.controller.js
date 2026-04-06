@@ -55,6 +55,15 @@ let MediationController = class MediationController {
     getCourtReport(user, familyId, sessionId) {
         return this.mediationService.getCourtReport(familyId, sessionId, user.id);
     }
+    inviteMediator(user, familyId, sessionId, dto) {
+        return this.mediationService.inviteMediator(familyId, sessionId, user.id, dto);
+    }
+    getInvites(user, familyId, sessionId) {
+        return this.mediationService.getInvites(familyId, sessionId, user.id);
+    }
+    revokeInvite(user, familyId, sessionId, inviteId) {
+        return this.mediationService.revokeInvite(familyId, sessionId, inviteId, user.id);
+    }
 };
 exports.MediationController = MediationController;
 __decorate([
@@ -153,6 +162,35 @@ __decorate([
     __metadata("design:paramtypes", [auth_user_1.AuthUser, String, String]),
     __metadata("design:returntype", void 0)
 ], MediationController.prototype, "getCourtReport", null);
+__decorate([
+    (0, common_1.Post)(':sessionId/mediator-invites'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('familyId')),
+    __param(2, (0, common_1.Param)('sessionId')),
+    __param(3, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, String, mediation_dto_1.InviteMediatorDto]),
+    __metadata("design:returntype", void 0)
+], MediationController.prototype, "inviteMediator", null);
+__decorate([
+    (0, common_1.Get)(':sessionId/mediator-invites'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('familyId')),
+    __param(2, (0, common_1.Param)('sessionId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, String]),
+    __metadata("design:returntype", void 0)
+], MediationController.prototype, "getInvites", null);
+__decorate([
+    (0, common_1.Delete)(':sessionId/mediator-invites/:inviteId'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('familyId')),
+    __param(2, (0, common_1.Param)('sessionId')),
+    __param(3, (0, common_1.Param)('inviteId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, String, String]),
+    __metadata("design:returntype", void 0)
+], MediationController.prototype, "revokeInvite", null);
 exports.MediationController = MediationController = __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)('families/:familyId/mediation'),

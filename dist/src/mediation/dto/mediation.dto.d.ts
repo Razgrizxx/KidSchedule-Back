@@ -10,3 +10,8 @@ export declare class ProposeResolutionDto {
 export declare class RespondProposalDto {
     action: 'ACCEPTED' | 'REJECTED';
 }
+export declare class InviteMediatorDto {
+    email: string;
+    name: string;
+    role?: string;
+}

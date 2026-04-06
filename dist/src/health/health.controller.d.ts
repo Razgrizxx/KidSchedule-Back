@@ -7,9 +7,9 @@ export declare class HealthController {
     getSummary(user: AuthUser, familyId: string, childId: string): Promise<{
         recentRecords: {
             id: string;
+            date: Date;
             type: import("@prisma/client").$Enums.HealthRecordType;
             title: string;
-            date: Date;
             doctorName: string | null;
         }[];
         activeMedications: {
@@ -44,28 +44,28 @@ export declare class HealthController {
             };
         } & {
             id: string;
+            createdAt: Date;
             familyId: string;
             childId: string;
             type: import("@prisma/client").$Enums.DocumentType;
-            title: string;
-            createdAt: Date;
-            recordId: string | null;
-            fileUrl: string;
             cloudinaryPublicId: string | null;
             uploadedBy: string;
+            title: string;
+            recordId: string | null;
+            fileUrl: string;
         })[];
     } & {
         id: string;
-        familyId: string;
-        childId: string;
-        type: import("@prisma/client").$Enums.HealthRecordType;
-        title: string;
-        date: Date;
-        doctorName: string | null;
-        notes: string | null;
-        createdBy: string;
         createdAt: Date;
         updatedAt: Date;
+        familyId: string;
+        childId: string;
+        createdBy: string;
+        date: Date;
+        type: import("@prisma/client").$Enums.HealthRecordType;
+        title: string;
+        notes: string | null;
+        doctorName: string | null;
     }>;
     getRecords(user: AuthUser, familyId: string, childId?: string): Promise<({
         child: {
@@ -86,28 +86,28 @@ export declare class HealthController {
             };
         } & {
             id: string;
+            createdAt: Date;
             familyId: string;
             childId: string;
             type: import("@prisma/client").$Enums.DocumentType;
-            title: string;
-            createdAt: Date;
-            recordId: string | null;
-            fileUrl: string;
             cloudinaryPublicId: string | null;
             uploadedBy: string;
+            title: string;
+            recordId: string | null;
+            fileUrl: string;
         })[];
     } & {
         id: string;
-        familyId: string;
-        childId: string;
-        type: import("@prisma/client").$Enums.HealthRecordType;
-        title: string;
-        date: Date;
-        doctorName: string | null;
-        notes: string | null;
-        createdBy: string;
         createdAt: Date;
         updatedAt: Date;
+        familyId: string;
+        childId: string;
+        createdBy: string;
+        date: Date;
+        type: import("@prisma/client").$Enums.HealthRecordType;
+        title: string;
+        notes: string | null;
+        doctorName: string | null;
     })[]>;
     getRecord(user: AuthUser, familyId: string, recordId: string): Promise<{
         child: {
@@ -128,28 +128,28 @@ export declare class HealthController {
             };
         } & {
             id: string;
+            createdAt: Date;
             familyId: string;
             childId: string;
             type: import("@prisma/client").$Enums.DocumentType;
-            title: string;
-            createdAt: Date;
-            recordId: string | null;
-            fileUrl: string;
             cloudinaryPublicId: string | null;
             uploadedBy: string;
+            title: string;
+            recordId: string | null;
+            fileUrl: string;
         })[];
     } & {
         id: string;
-        familyId: string;
-        childId: string;
-        type: import("@prisma/client").$Enums.HealthRecordType;
-        title: string;
-        date: Date;
-        doctorName: string | null;
-        notes: string | null;
-        createdBy: string;
         createdAt: Date;
         updatedAt: Date;
+        familyId: string;
+        childId: string;
+        createdBy: string;
+        date: Date;
+        type: import("@prisma/client").$Enums.HealthRecordType;
+        title: string;
+        notes: string | null;
+        doctorName: string | null;
     }>;
     updateRecord(user: AuthUser, familyId: string, recordId: string, dto: UpdateHealthRecordDto): Promise<{
         child: {
@@ -170,28 +170,28 @@ export declare class HealthController {
             };
         } & {
             id: string;
+            createdAt: Date;
             familyId: string;
             childId: string;
             type: import("@prisma/client").$Enums.DocumentType;
-            title: string;
-            createdAt: Date;
-            recordId: string | null;
-            fileUrl: string;
             cloudinaryPublicId: string | null;
             uploadedBy: string;
+            title: string;
+            recordId: string | null;
+            fileUrl: string;
         })[];
     } & {
         id: string;
-        familyId: string;
-        childId: string;
-        type: import("@prisma/client").$Enums.HealthRecordType;
-        title: string;
-        date: Date;
-        doctorName: string | null;
-        notes: string | null;
-        createdBy: string;
         createdAt: Date;
         updatedAt: Date;
+        familyId: string;
+        childId: string;
+        createdBy: string;
+        date: Date;
+        type: import("@prisma/client").$Enums.HealthRecordType;
+        title: string;
+        notes: string | null;
+        doctorName: string | null;
     }>;
     deleteRecord(user: AuthUser, familyId: string, recordId: string): Promise<{
         message: string;
@@ -209,15 +209,15 @@ export declare class HealthController {
         };
     } & {
         id: string;
+        createdAt: Date;
         familyId: string;
         childId: string;
         type: import("@prisma/client").$Enums.DocumentType;
-        title: string;
-        createdAt: Date;
-        recordId: string | null;
-        fileUrl: string;
         cloudinaryPublicId: string | null;
         uploadedBy: string;
+        title: string;
+        recordId: string | null;
+        fileUrl: string;
     }>;
     getDocuments(user: AuthUser, familyId: string, childId?: string): Promise<({
         child: {
@@ -237,15 +237,15 @@ export declare class HealthController {
         } | null;
     } & {
         id: string;
+        createdAt: Date;
         familyId: string;
         childId: string;
         type: import("@prisma/client").$Enums.DocumentType;
-        title: string;
-        createdAt: Date;
-        recordId: string | null;
-        fileUrl: string;
         cloudinaryPublicId: string | null;
         uploadedBy: string;
+        title: string;
+        recordId: string | null;
+        fileUrl: string;
     })[]>;
     deleteDocument(user: AuthUser, familyId: string, documentId: string): Promise<{
         message: string;
@@ -263,19 +263,19 @@ export declare class HealthController {
         };
     } & {
         id: string;
-        familyId: string;
-        childId: string;
-        notes: string | null;
-        createdBy: string;
         createdAt: Date;
         updatedAt: Date;
         name: string;
+        familyId: string;
+        childId: string;
+        createdBy: string;
+        startDate: Date;
+        isActive: boolean;
+        notes: string | null;
         dosage: string;
         frequency: string;
-        startDate: Date;
         endDate: Date | null;
         prescribedBy: string | null;
-        isActive: boolean;
     }>;
     getMedications(user: AuthUser, familyId: string, childId?: string): Promise<({
         child: {
@@ -290,19 +290,19 @@ export declare class HealthController {
         };
     } & {
         id: string;
-        familyId: string;
-        childId: string;
-        notes: string | null;
-        createdBy: string;
         createdAt: Date;
         updatedAt: Date;
         name: string;
+        familyId: string;
+        childId: string;
+        createdBy: string;
+        startDate: Date;
+        isActive: boolean;
+        notes: string | null;
         dosage: string;
         frequency: string;
-        startDate: Date;
         endDate: Date | null;
         prescribedBy: string | null;
-        isActive: boolean;
     })[]>;
     updateMedication(user: AuthUser, familyId: string, medicationId: string, dto: UpdateMedicationDto): Promise<{
         child: {
@@ -317,19 +317,19 @@ export declare class HealthController {
         };
     } & {
         id: string;
-        familyId: string;
-        childId: string;
-        notes: string | null;
-        createdBy: string;
         createdAt: Date;
         updatedAt: Date;
         name: string;
+        familyId: string;
+        childId: string;
+        createdBy: string;
+        startDate: Date;
+        isActive: boolean;
+        notes: string | null;
         dosage: string;
         frequency: string;
-        startDate: Date;
         endDate: Date | null;
         prescribedBy: string | null;
-        isActive: boolean;
     }>;
     deleteMedication(user: AuthUser, familyId: string, medicationId: string): Promise<{
         message: string;
@@ -342,12 +342,12 @@ export declare class HealthController {
         };
     } & {
         id: string;
-        familyId: string;
-        childId: string;
-        notes: string | null;
-        createdBy: string;
         createdAt: Date;
         name: string;
+        familyId: string;
+        childId: string;
+        createdBy: string;
+        notes: string | null;
         severity: import("@prisma/client").$Enums.AllergySeverity;
     }>;
     getAllergies(user: AuthUser, familyId: string, childId?: string): Promise<({
@@ -358,12 +358,12 @@ export declare class HealthController {
         };
     } & {
         id: string;
-        familyId: string;
-        childId: string;
-        notes: string | null;
-        createdBy: string;
         createdAt: Date;
         name: string;
+        familyId: string;
+        childId: string;
+        createdBy: string;
+        notes: string | null;
         severity: import("@prisma/client").$Enums.AllergySeverity;
     })[]>;
     deleteAllergy(user: AuthUser, familyId: string, allergyId: string): Promise<{

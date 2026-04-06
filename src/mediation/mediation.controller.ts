@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -13,6 +14,7 @@ import {
   SendMessageDto,
   ProposeResolutionDto,
   RespondProposalDto,
+  InviteMediatorDto,
 } from './dto/mediation.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -120,5 +122,36 @@ export class MediationController {
     @Param('sessionId') sessionId: string,
   ) {
     return this.mediationService.getCourtReport(familyId, sessionId, user.id);
+  }
+
+  // ── External mediator invites ──────────────────────────────────────────────
+
+  @Post(':sessionId/mediator-invites')
+  inviteMediator(
+    @CurrentUser() user: AuthUser,
+    @Param('familyId') familyId: string,
+    @Param('sessionId') sessionId: string,
+    @Body() dto: InviteMediatorDto,
+  ) {
+    return this.mediationService.inviteMediator(familyId, sessionId, user.id, dto);
+  }
+
+  @Get(':sessionId/mediator-invites')
+  getInvites(
+    @CurrentUser() user: AuthUser,
+    @Param('familyId') familyId: string,
+    @Param('sessionId') sessionId: string,
+  ) {
+    return this.mediationService.getInvites(familyId, sessionId, user.id);
+  }
+
+  @Delete(':sessionId/mediator-invites/:inviteId')
+  revokeInvite(
+    @CurrentUser() user: AuthUser,
+    @Param('familyId') familyId: string,
+    @Param('sessionId') sessionId: string,
+    @Param('inviteId') inviteId: string,
+  ) {
+    return this.mediationService.revokeInvite(familyId, sessionId, inviteId, user.id);
   }
 }
