@@ -128,6 +128,7 @@ export declare class EventsController {
         country: "AR" | "US";
         category: "NATIONAL" | "SCHOOL";
     }[]>;
+    extractFromImage(user: AuthUser, familyId: string, file: Express.Multer.File): Promise<any[]>;
     bulkCreate(user: AuthUser, familyId: string, dto: BulkImportDto): Promise<{
         created: number;
         skipped: number;

@@ -23,8 +23,8 @@ export declare class BlogService {
         excerpt: string;
         coverImage: string | null;
         author: string;
-        readTime: number;
         published: boolean;
+        readTime: number;
         publishedAt: Date | null;
     }[]>;
     findBySlug(slug: string): Promise<{
@@ -38,8 +38,8 @@ export declare class BlogService {
         excerpt: string;
         coverImage: string | null;
         author: string;
-        readTime: number;
         published: boolean;
+        readTime: number;
         publishedAt: Date | null;
     }>;
     create(dto: CreatePostDto): Promise<{
@@ -53,8 +53,8 @@ export declare class BlogService {
         excerpt: string;
         coverImage: string | null;
         author: string;
-        readTime: number;
         published: boolean;
+        readTime: number;
         publishedAt: Date | null;
     }>;
     update(slug: string, dto: UpdatePostDto): Promise<{
@@ -68,8 +68,8 @@ export declare class BlogService {
         excerpt: string;
         coverImage: string | null;
         author: string;
-        readTime: number;
         published: boolean;
+        readTime: number;
         publishedAt: Date | null;
     }>;
     remove(slug: string): Promise<{

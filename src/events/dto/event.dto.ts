@@ -64,6 +64,18 @@ export class BulkImportItemDto {
 
   @IsString()
   type: string;
+
+  @IsOptional()
+  @IsString()
+  startTime?: string; // HH:MM
+
+  @IsOptional()
+  @IsString()
+  endTime?: string; // HH:MM
+
+  @IsOptional()
+  @IsString()
+  notes?: string;
 }
 
 export class BulkImportDto {

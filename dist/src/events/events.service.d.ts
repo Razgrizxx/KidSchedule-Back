@@ -135,6 +135,7 @@ export declare class EventsService {
         created: number;
         skipped: number;
     }>;
+    extractFromImage(familyId: string, userId: string, file: Express.Multer.File): Promise<any[]>;
     remove(familyId: string, eventId: string, userId: string): Promise<{
         message: string;
     }>;

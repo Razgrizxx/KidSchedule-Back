@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EventType, EventVisibility, Prisma } from '@prisma/client';
+import Anthropic from '@anthropic-ai/sdk';
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
 import { BulkImportDto, CreateEventDto, UpdateEventDto } from './dto/event.dto';
@@ -123,11 +124,18 @@ export class EventsService {
     let skipped = 0;
 
     for (const item of dto.events) {
-      const startAt = new Date(item.date + 'T00:00:00.000Z');
-      const endAt = new Date(item.date + 'T23:59:59.000Z');
+      const hasTime = !!item.startTime;
+      const startAt = hasTime
+        ? new Date(`${item.date}T${item.startTime}:00.000Z`)
+        : new Date(item.date + 'T00:00:00.000Z');
+      const endAt = hasTime
+        ? new Date(`${item.date}T${item.endTime ?? item.startTime}:00.000Z`)
+        : new Date(item.date + 'T23:59:59.000Z');
 
+      const dayStart = new Date(item.date + 'T00:00:00.000Z');
+      const dayEnd = new Date(item.date + 'T23:59:59.000Z');
       const existing = await this.prisma.event.findFirst({
-        where: { familyId, title: item.title, startAt: { gte: startAt, lte: endAt } },
+        where: { familyId, title: item.title, startAt: { gte: dayStart, lte: dayEnd } },
       });
 
       if (existing) { skipped++; continue; }
@@ -141,8 +149,9 @@ export class EventsService {
           visibility: dto.visibility as EventVisibility,
           startAt,
           endAt,
-          allDay: true,
+          allDay: !hasTime,
           repeat: 'NONE',
+          notes: item.notes ?? undefined,
           ...(dto.childIds.length > 0 && {
             children: { create: dto.childIds.map((childId) => ({ childId })) },
           }),
@@ -152,6 +161,54 @@ export class EventsService {
     }
 
     return { created, skipped };
+  }
+
+  async extractFromImage(familyId: string, userId: string, file: Express.Multer.File) {
+    await this.familyService.assertMember(familyId, userId);
+
+    const client = new Anthropic();
+    const base64 = file.buffer.toString('base64');
+    const mediaType = file.mimetype as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
+
+    const response = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 2048,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: mediaType, data: base64 },
+            },
+            {
+              type: 'text',
+              text: `Extract all events and scheduled activities from this schedule image.
+Return ONLY a raw JSON array — no markdown, no code blocks, no explanation.
+Each object must have:
+  "title": string
+  "date": "YYYY-MM-DD"
+  "startTime": "HH:MM" or null
+  "endTime": "HH:MM" or null
+  "type": one of SCHOOL | ACTIVITY | MEDICAL | VACATION | OTHER
+  "notes": string or null
+If the year is not shown, assume ${new Date().getFullYear()}.
+Return [] if no events are found.`,
+            },
+          ],
+        },
+      ],
+    });
+
+    const raw = (response.content[0] as { text: string }).text.trim();
+    const clean = raw.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
+
+    try {
+      const events = JSON.parse(clean);
+      return Array.isArray(events) ? events : [];
+    } catch {
+      return [];
+    }
   }
 
   async remove(familyId: string, eventId: string, userId: string) {

@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EventsController = void 0;
 const common_1 = require("@nestjs/common");
+const platform_express_1 = require("@nestjs/platform-express");
 const events_service_1 = require("./events.service");
 const event_dto_1 = require("./dto/event.dto");
 const jwt_auth_guard_1 = require("../common/guards/jwt-auth.guard");
@@ -36,6 +37,9 @@ let EventsController = class EventsController {
     getHolidays(user, familyId, yearStr, country) {
         const year = yearStr ? parseInt(yearStr, 10) : new Date().getFullYear();
         return this.eventsService.getHolidays(familyId, user.id, year, country);
+    }
+    extractFromImage(user, familyId, file) {
+        return this.eventsService.extractFromImage(familyId, user.id, file);
     }
     bulkCreate(user, familyId, dto) {
         return this.eventsService.bulkCreate(familyId, user.id, dto);
@@ -83,6 +87,16 @@ __decorate([
     __metadata("design:paramtypes", [auth_user_1.AuthUser, String, String, String]),
     __metadata("design:returntype", void 0)
 ], EventsController.prototype, "getHolidays", null);
+__decorate([
+    (0, common_1.Post)('extract-from-image'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('image')),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('familyId')),
+    __param(2, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, Object]),
+    __metadata("design:returntype", void 0)
+], EventsController.prototype, "extractFromImage", null);
 __decorate([
     (0, common_1.Post)('bulk'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),

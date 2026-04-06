@@ -9,6 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.EventsModule = void 0;
 const common_1 = require("@nestjs/common");
 const event_emitter_1 = require("@nestjs/event-emitter");
+const platform_express_1 = require("@nestjs/platform-express");
 const events_controller_1 = require("./events.controller");
 const events_service_1 = require("./events.service");
 const family_module_1 = require("../family/family.module");
@@ -17,7 +18,7 @@ let EventsModule = class EventsModule {
 exports.EventsModule = EventsModule;
 exports.EventsModule = EventsModule = __decorate([
     (0, common_1.Module)({
-        imports: [family_module_1.FamilyModule, event_emitter_1.EventEmitterModule],
+        imports: [family_module_1.FamilyModule, event_emitter_1.EventEmitterModule, platform_express_1.MulterModule.register({})],
         controllers: [events_controller_1.EventsController],
         providers: [events_service_1.EventsService],
     })

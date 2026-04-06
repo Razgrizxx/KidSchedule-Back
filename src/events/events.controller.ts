@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { EventsService } from './events.service';
 import { BulkImportDto, CreateEventDto, UpdateEventDto } from './dto/event.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -47,6 +48,16 @@ export class EventsController {
   ) {
     const year = yearStr ? parseInt(yearStr, 10) : new Date().getFullYear();
     return this.eventsService.getHolidays(familyId, user.id, year, country);
+  }
+
+  @Post('extract-from-image')
+  @UseInterceptors(FileInterceptor('image'))
+  extractFromImage(
+    @CurrentUser() user: AuthUser,
+    @Param('familyId') familyId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.eventsService.extractFromImage(familyId, user.id, file);
   }
 
   @Post('bulk')

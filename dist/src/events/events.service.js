@@ -8,10 +8,14 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EventsService = void 0;
 const common_1 = require("@nestjs/common");
 const event_emitter_1 = require("@nestjs/event-emitter");
+const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const prisma_service_1 = require("../prisma/prisma.service");
 const family_service_1 = require("../family/family.service");
 const holidays_data_1 = require("./holidays.data");
@@ -118,10 +122,17 @@ let EventsService = class EventsService {
         let created = 0;
         let skipped = 0;
         for (const item of dto.events) {
-            const startAt = new Date(item.date + 'T00:00:00.000Z');
-            const endAt = new Date(item.date + 'T23:59:59.000Z');
+            const hasTime = !!item.startTime;
+            const startAt = hasTime
+                ? new Date(`${item.date}T${item.startTime}:00.000Z`)
+                : new Date(item.date + 'T00:00:00.000Z');
+            const endAt = hasTime
+                ? new Date(`${item.date}T${item.endTime ?? item.startTime}:00.000Z`)
+                : new Date(item.date + 'T23:59:59.000Z');
+            const dayStart = new Date(item.date + 'T00:00:00.000Z');
+            const dayEnd = new Date(item.date + 'T23:59:59.000Z');
             const existing = await this.prisma.event.findFirst({
-                where: { familyId, title: item.title, startAt: { gte: startAt, lte: endAt } },
+                where: { familyId, title: item.title, startAt: { gte: dayStart, lte: dayEnd } },
             });
             if (existing) {
                 skipped++;
@@ -136,8 +147,9 @@ let EventsService = class EventsService {
                     visibility: dto.visibility,
                     startAt,
                     endAt,
-                    allDay: true,
+                    allDay: !hasTime,
                     repeat: 'NONE',
+                    notes: item.notes ?? undefined,
                     ...(dto.childIds.length > 0 && {
                         children: { create: dto.childIds.map((childId) => ({ childId })) },
                     }),
@@ -146,6 +158,50 @@ let EventsService = class EventsService {
             created++;
         }
         return { created, skipped };
+    }
+    async extractFromImage(familyId, userId, file) {
+        await this.familyService.assertMember(familyId, userId);
+        const client = new sdk_1.default();
+        const base64 = file.buffer.toString('base64');
+        const mediaType = file.mimetype;
+        const response = await client.messages.create({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 2048,
+            messages: [
+                {
+                    role: 'user',
+                    content: [
+                        {
+                            type: 'image',
+                            source: { type: 'base64', media_type: mediaType, data: base64 },
+                        },
+                        {
+                            type: 'text',
+                            text: `Extract all events and scheduled activities from this schedule image.
+Return ONLY a raw JSON array — no markdown, no code blocks, no explanation.
+Each object must have:
+  "title": string
+  "date": "YYYY-MM-DD"
+  "startTime": "HH:MM" or null
+  "endTime": "HH:MM" or null
+  "type": one of SCHOOL | ACTIVITY | MEDICAL | VACATION | OTHER
+  "notes": string or null
+If the year is not shown, assume ${new Date().getFullYear()}.
+Return [] if no events are found.`,
+                        },
+                    ],
+                },
+            ],
+        });
+        const raw = response.content[0].text.trim();
+        const clean = raw.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
+        try {
+            const events = JSON.parse(clean);
+            return Array.isArray(events) ? events : [];
+        }
+        catch {
+            return [];
+        }
     }
     async remove(familyId, eventId, userId) {
         await this.familyService.assertMember(familyId, userId);
