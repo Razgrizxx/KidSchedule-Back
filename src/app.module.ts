@@ -23,6 +23,7 @@ import { AiModule } from './ai/ai.module';
 import { MediationModule } from './mediation/mediation.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { StripeModule } from './stripe/stripe.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { StripeModule } from './stripe/stripe.module';
     MediationModule,
     OrganizationsModule,
     StripeModule,
+    HealthModule,
   ],
 })
 export class AppModule {}

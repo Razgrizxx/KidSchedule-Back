@@ -32,6 +32,7 @@ const ai_module_1 = require("./ai/ai.module");
 const mediation_module_1 = require("./mediation/mediation.module");
 const organizations_module_1 = require("./organizations/organizations.module");
 const stripe_module_1 = require("./stripe/stripe.module");
+const health_module_1 = require("./health/health.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -62,6 +63,7 @@ exports.AppModule = AppModule = __decorate([
             mediation_module_1.MediationModule,
             organizations_module_1.OrganizationsModule,
             stripe_module_1.StripeModule,
+            health_module_1.HealthModule,
         ],
     })
 ], AppModule);

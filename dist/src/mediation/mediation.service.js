@@ -59,9 +59,10 @@ let MediationService = class MediationService {
                     recipientName: m.user.firstName,
                     initiatorName,
                     topic: dto.topic,
-                });
+                }).catch(() => { });
             }
-        });
+        })
+            .catch(() => { });
         return session;
     }
     async getSessions(familyId, userId) {

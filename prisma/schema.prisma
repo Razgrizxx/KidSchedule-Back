@@ -152,6 +152,30 @@ enum BillingType {
   FAMILY
 }
 
+enum HealthRecordType {
+  VISIT
+  VACCINATION
+  LAB_RESULT
+  SPECIALIST
+  EMERGENCY
+  OTHER
+}
+
+enum DocumentType {
+  PRESCRIPTION
+  LAB_ORDER
+  LAB_RESULT
+  VACCINATION_CARD
+  IMAGING
+  OTHER
+}
+
+enum AllergySeverity {
+  MILD
+  MODERATE
+  SEVERE
+}
+
 // ─────────────────────────────────────────
 //  USER & AUTH
 // ─────────────────────────────────────────
@@ -207,6 +231,10 @@ model User {
   orgRsvps           OrgRsvp[]
   orgAnnouncements   Announcement[]      @relation("OrgAnnouncements")
   subscription       Subscription?
+  healthRecordsCreated   HealthRecord[]   @relation("HealthRecordCreator")
+  healthDocumentsUploaded HealthDocument[] @relation("HealthDocumentUploader")
+  medicationsCreated     Medication[]     @relation("MedicationCreator")
+  allergiesCreated       Allergy[]        @relation("AllergyCreator")
 
   @@map("users")
 }
@@ -264,6 +292,10 @@ model Family {
   settings       FamilySettings?
   events             Event[]
   mediationSessions  MediationSession[]
+  healthRecords      HealthRecord[]
+  healthDocuments    HealthDocument[]
+  medications        Medication[]
+  allergies          Allergy[]
 
   @@map("families")
 }
@@ -321,6 +353,10 @@ model Child {
   moments       Moment[]
   eventChildren EventChild[]
   orgRosters    OrgRoster[]
+  healthRecords   HealthRecord[]
+  healthDocuments HealthDocument[]
+  medications     Medication[]
+  allergies       Allergy[]
 
   @@map("children")
 }
@@ -835,4 +871,89 @@ model ResolutionProposal {
   accepter User?            @relation("AcceptedResolutions", fields: [acceptedBy], references: [id])
 
   @@map("resolution_proposals")
+}
+
+// ─────────────────────────────────────────
+//  HEALTH
+// ─────────────────────────────────────────
+
+model HealthRecord {
+  id          String           @id @default(uuid())
+  familyId    String
+  childId     String
+  type        HealthRecordType
+  title       String
+  date        DateTime
+  doctorName  String?
+  notes       String?
+  createdBy   String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  family    Family         @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  child     Child          @relation(fields: [childId], references: [id], onDelete: Cascade)
+  uploader  User           @relation("HealthRecordCreator", fields: [createdBy], references: [id])
+  documents HealthDocument[]
+
+  @@map("health_records")
+}
+
+model HealthDocument {
+  id                 String       @id @default(uuid())
+  familyId           String
+  childId            String
+  recordId           String?
+  type               DocumentType
+  title              String
+  fileUrl            String
+  cloudinaryPublicId String?
+  uploadedBy         String
+  createdAt          DateTime     @default(now())
+
+  family   Family        @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  child    Child         @relation(fields: [childId], references: [id], onDelete: Cascade)
+  uploader User          @relation("HealthDocumentUploader", fields: [uploadedBy], references: [id])
+  record   HealthRecord? @relation(fields: [recordId], references: [id], onDelete: SetNull)
+
+  @@map("health_documents")
+}
+
+model Medication {
+  id           String    @id @default(uuid())
+  familyId     String
+  childId      String
+  name         String
+  dosage       String
+  frequency    String
+  startDate    DateTime
+  endDate      DateTime?
+  prescribedBy String?
+  notes        String?
+  isActive     Boolean   @default(true)
+  createdBy    String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  family   Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  child    Child  @relation(fields: [childId], references: [id], onDelete: Cascade)
+  uploader User   @relation("MedicationCreator", fields: [createdBy], references: [id])
+
+  @@map("medications")
+}
+
+model Allergy {
+  id        String          @id @default(uuid())
+  familyId  String
+  childId   String
+  name      String
+  severity  AllergySeverity
+  notes     String?
+  createdBy String
+  createdAt DateTime        @default(now())
+
+  family   Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  child    Child  @relation(fields: [childId], references: [id], onDelete: Cascade)
+  uploader User   @relation("AllergyCreator", fields: [createdBy], references: [id])
+
+  @@map("allergies")
 }

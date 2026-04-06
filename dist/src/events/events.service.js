@@ -23,6 +23,7 @@ let EventsService = class EventsService {
     prisma;
     familyService;
     eventEmitter;
+    anthropic = new sdk_1.default();
     constructor(prisma, familyService, eventEmitter) {
         this.prisma = prisma;
         this.familyService = familyService;
@@ -121,14 +122,24 @@ let EventsService = class EventsService {
         await this.familyService.assertMember(familyId, userId);
         let created = 0;
         let skipped = 0;
+        const timeRegex = /^\d{2}:\d{2}$/;
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
         for (const item of dto.events) {
-            const hasTime = !!item.startTime;
+            if (!dateRegex.test(item.date)) {
+                skipped++;
+                continue;
+            }
+            const hasTime = !!item.startTime && timeRegex.test(item.startTime);
             const startAt = hasTime
                 ? new Date(`${item.date}T${item.startTime}:00.000Z`)
                 : new Date(item.date + 'T00:00:00.000Z');
             const endAt = hasTime
-                ? new Date(`${item.date}T${item.endTime ?? item.startTime}:00.000Z`)
+                ? new Date(`${item.date}T${(item.endTime && timeRegex.test(item.endTime) ? item.endTime : item.startTime)}:00.000Z`)
                 : new Date(item.date + 'T23:59:59.000Z');
+            if (isNaN(startAt.getTime()) || isNaN(endAt.getTime())) {
+                skipped++;
+                continue;
+            }
             const dayStart = new Date(item.date + 'T00:00:00.000Z');
             const dayEnd = new Date(item.date + 'T23:59:59.000Z');
             const existing = await this.prisma.event.findFirst({
@@ -161,10 +172,9 @@ let EventsService = class EventsService {
     }
     async extractFromImage(familyId, userId, file) {
         await this.familyService.assertMember(familyId, userId);
-        const client = new sdk_1.default();
         const base64 = file.buffer.toString('base64');
         const mediaType = file.mimetype;
-        const response = await client.messages.create({
+        const response = await this.anthropic.messages.create({
             model: 'claude-haiku-4-5-20251001',
             max_tokens: 2048,
             messages: [

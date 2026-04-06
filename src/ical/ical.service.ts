@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomBytes } from 'crypto';
+import { CustodyEvent, Child } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+
+type CustodyEventWithChild = CustodyEvent & { child: Pick<Child, 'firstName'> };
 
 @Injectable()
 export class IcalService {
@@ -101,7 +104,7 @@ export class IcalService {
     }
 
     // Custody events — group consecutive same-child/custodian days into blocks
-    const blocks = this.groupCustodyBlocks(custodyEvents as any[]);
+    const blocks = this.groupCustodyBlocks(custodyEvents as CustodyEventWithChild[]);
     for (const block of blocks) {
       const endDate = new Date(block.endDate.getTime() + 86_400_000);
       lines.push(
@@ -121,8 +124,8 @@ export class IcalService {
 
   // ── Group consecutive custody days (same logic as Google/Outlook sync) ────
 
-  private groupCustodyBlocks(events: any[]) {
-    const blocks: any[] = [];
+  private groupCustodyBlocks(events: CustodyEventWithChild[]) {
+    const blocks: { childId: string; childName: string; custodianId: string; startDate: Date; endDate: Date; anchorId: string }[] = [];
     const ONE_DAY_MS = 86_400_000;
 
     for (const ev of events) {
@@ -137,12 +140,12 @@ export class IcalService {
         last.endDate = ev.date;
       } else {
         blocks.push({
-          childId:    ev.childId,
-          childName:  ev.child.firstName,
+          childId: ev.childId,
+          childName: ev.child.firstName,
           custodianId: ev.custodianId,
-          startDate:  ev.date,
-          endDate:    ev.date,
-          anchorId:   ev.id,
+          startDate: ev.date,
+          endDate: ev.date,
+          anchorId: ev.id,
         });
       }
     }

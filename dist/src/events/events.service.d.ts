@@ -6,6 +6,7 @@ export declare class EventsService {
     private prisma;
     private familyService;
     private eventEmitter;
+    private readonly anthropic;
     constructor(prisma: PrismaService, familyService: FamilyService, eventEmitter: EventEmitter2);
     create(familyId: string, userId: string, dto: CreateEventDto): Promise<{
         children: ({

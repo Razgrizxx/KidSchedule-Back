@@ -66,7 +66,7 @@ let RequestsService = class RequestsService {
             requestedDate: new Date(dto.requestedDate).toLocaleDateString('es-AR', {
                 day: 'numeric', month: 'long', year: 'numeric',
             }),
-        });
+        }).catch(() => { });
         return created;
     }
     async findAll(familyId, userId) {

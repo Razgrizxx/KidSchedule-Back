@@ -27,7 +27,8 @@
       "Bash(grep -n \"variant: ''destructive''\\\\|variant=\"\"destructive\"\"\" d:/downloads/Projects/KidScheduleFront/src/components/dashboard/Sidebar.tsx d:/downloads/Projects/KidScheduleFront/src/pages/dashboard/CalendarPage.tsx d:/downloads/Projects/KidScheduleFront/src/pages/dashboard/MediationPage.tsx d:/downloads/Projects/KidScheduleFront/src/pages/dashboard/FamilyPage.tsx)",
       "Bash(pnpm build:*)",
       "Bash(grep -E \"\\\\.\\(ts|js\\)$\")",
-      "Bash(\"d:/downloads/Projects/kidSchedule/src/mail/mail.service.ts\")"
+      "Bash(\"d:/downloads/Projects/kidSchedule/src/mail/mail.service.ts\")",
+      "Bash(xargs wc:*)"
     ]
   }
 }

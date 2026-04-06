@@ -254,6 +254,9 @@ let GoogleCalendarSyncService = GoogleCalendarSyncService_1 = class GoogleCalend
         }
     }
     async getRefreshedClient(user) {
+        if (!user.googleAccessToken || !user.googleRefreshToken) {
+            throw new Error(`Google tokens missing for user ${user.id} — integration may have been disconnected`);
+        }
         const encKey = this.config.getOrThrow('GOOGLE_TOKEN_ENCRYPTION_KEY');
         const oauth2Client = this.googleAuth.createOAuth2Client();
         oauth2Client.setCredentials({

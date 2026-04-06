@@ -371,12 +371,16 @@ export class GoogleCalendarSyncService {
   // ── Token rotation ────────────────────────────────────────────────────────
 
   private async getRefreshedClient(user: User) {
+    if (!user.googleAccessToken || !user.googleRefreshToken) {
+      throw new Error(`Google tokens missing for user ${user.id} — integration may have been disconnected`);
+    }
+
     const encKey = this.config.getOrThrow<string>('GOOGLE_TOKEN_ENCRYPTION_KEY');
     const oauth2Client = this.googleAuth.createOAuth2Client();
 
     oauth2Client.setCredentials({
-      access_token: decrypt(user.googleAccessToken!, encKey),
-      refresh_token: decrypt(user.googleRefreshToken!, encKey),
+      access_token: decrypt(user.googleAccessToken, encKey),
+      refresh_token: decrypt(user.googleRefreshToken, encKey),
       expiry_date: user.googleTokenExpiry?.getTime(),
     });
 

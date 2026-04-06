@@ -10,6 +10,8 @@ import type { CalendarEventUpsertPayload } from '../google/google-calendar-sync.
 
 @Injectable()
 export class EventsService {
+  private readonly anthropic = new Anthropic();
+
   constructor(
     private prisma: PrismaService,
     private familyService: FamilyService,
@@ -123,14 +125,19 @@ export class EventsService {
     let created = 0;
     let skipped = 0;
 
+    const timeRegex = /^\d{2}:\d{2}$/;
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
     for (const item of dto.events) {
-      const hasTime = !!item.startTime;
+      if (!dateRegex.test(item.date)) { skipped++; continue; }
+      const hasTime = !!item.startTime && timeRegex.test(item.startTime);
       const startAt = hasTime
         ? new Date(`${item.date}T${item.startTime}:00.000Z`)
         : new Date(item.date + 'T00:00:00.000Z');
       const endAt = hasTime
-        ? new Date(`${item.date}T${item.endTime ?? item.startTime}:00.000Z`)
+        ? new Date(`${item.date}T${(item.endTime && timeRegex.test(item.endTime) ? item.endTime : item.startTime)}:00.000Z`)
         : new Date(item.date + 'T23:59:59.000Z');
+      if (isNaN(startAt.getTime()) || isNaN(endAt.getTime())) { skipped++; continue; }
 
       const dayStart = new Date(item.date + 'T00:00:00.000Z');
       const dayEnd = new Date(item.date + 'T23:59:59.000Z');
@@ -166,11 +173,10 @@ export class EventsService {
   async extractFromImage(familyId: string, userId: string, file: Express.Multer.File) {
     await this.familyService.assertMember(familyId, userId);
 
-    const client = new Anthropic();
     const base64 = file.buffer.toString('base64');
     const mediaType = file.mimetype as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
 
-    const response = await client.messages.create({
+    const response = await this.anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 2048,
       messages: [
