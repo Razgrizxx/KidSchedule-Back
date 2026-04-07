@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
 import { ScheduleGeneratorService } from './schedule-generator.service';
+import { AuditService } from '../audit/audit.service';
 import { CreateScheduleDto } from './dto/schedule.dto';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class ScheduleService {
     private prisma: PrismaService,
     private familyService: FamilyService,
     private generator: ScheduleGeneratorService,
+    private audit: AuditService,
   ) {}
 
   async create(familyId: string, userId: string, dto: CreateScheduleDto) {
@@ -99,6 +101,14 @@ export class ScheduleService {
         skipDuplicates: true,
       });
     }
+
+    void this.audit.log({
+      familyId,
+      actorId:  userId,
+      action:   'SCHEDULE_CREATED',
+      childId:  dto.childId,
+      newValue: `${dto.pattern} · ${dto.name}`,
+    });
 
     return { schedule, eventsGenerated: assignments.length };
   }

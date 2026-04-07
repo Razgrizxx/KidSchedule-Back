@@ -5,6 +5,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { AuditService } from '../audit/audit.service';
 import { BulkImportDto, CreateEventDto, UpdateEventDto } from './dto/event.dto';
 import { getHolidaysForYear } from './holidays.data';
 import type { CalendarEventUpsertPayload } from '../google/google-calendar-sync.service';
@@ -18,6 +19,7 @@ export class EventsService {
     private familyService: FamilyService,
     private eventEmitter: EventEmitter2,
     private notifications: NotificationsService,
+    private audit: AuditService,
   ) {}
 
   async create(familyId: string, userId: string, dto: CreateEventDto) {
@@ -54,6 +56,15 @@ export class EventsService {
       body: `${dateStr} · ${event.type.toLowerCase().replace(/_/g, ' ')}`,
       data: { type: 'EVENT', familyId, eventId: event.id },
     }).catch(() => {});
+
+    void this.audit.log({
+      familyId,
+      actorId:     userId,
+      action:      'EVENT_CREATED',
+      affectedDate: event.startAt,
+      eventId:     event.id,
+      newValue:    event.title,
+    });
 
     return event;
   }
@@ -109,6 +120,16 @@ export class EventsService {
       eventId: event.id,
       userId,
     } satisfies CalendarEventUpsertPayload);
+
+    void this.audit.log({
+      familyId,
+      actorId:     userId,
+      action:      'EVENT_UPDATED',
+      affectedDate: event.startAt,
+      eventId:     event.id,
+      newValue:    event.title,
+    });
+
     return event;
   }
 
@@ -232,7 +253,21 @@ Return [] if no events are found.`,
 
   async remove(familyId: string, eventId: string, userId: string) {
     await this.familyService.assertMember(familyId, userId);
+    const event = await this.prisma.event.findUnique({
+      where: { id: eventId },
+      select: { title: true, startAt: true },
+    });
     await this.prisma.event.delete({ where: { id: eventId, familyId } });
+
+    void this.audit.log({
+      familyId,
+      actorId:      userId,
+      action:       'EVENT_DELETED',
+      affectedDate: event?.startAt,
+      eventId,
+      previousValue: event?.title,
+    });
+
     return { message: 'Event deleted' };
   }
 }

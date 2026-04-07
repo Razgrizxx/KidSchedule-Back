@@ -26,12 +26,16 @@ import { StripeModule } from './stripe/stripe.module';
 import { HealthModule } from './health/health.module';
 import { ReportsModule } from './reports/reports.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { AuditModule } from './audit/audit.module';
+import { HandoffsModule } from './handoffs/handoffs.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     EventEmitterModule.forRoot(),
     NotificationsModule,
+    AuditModule,
     MailModule,
     PrismaModule,
     AuthModule,
@@ -56,6 +60,8 @@ import { NotificationsModule } from './notifications/notifications.module';
     StripeModule,
     HealthModule,
     ReportsModule,
+    HandoffsModule,
+    DashboardModule,
   ],
 })
 export class AppModule {}

@@ -10,6 +10,7 @@ import { MessagingService } from '../messaging/messaging.service';
 import { ChatGateway } from '../messaging/chat.gateway';
 import { MailService } from '../mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { AuditService } from '../audit/audit.service';
 import {
   CreateChangeRequestDto,
   RespondChangeRequestDto,
@@ -24,6 +25,7 @@ export class RequestsService {
     private chatGateway: ChatGateway,
     private mail: MailService,
     private notifications: NotificationsService,
+    private audit: AuditService,
   ) {}
 
   async create(
@@ -63,6 +65,17 @@ export class RequestsService {
           })()
         : `System: ${requesterName} has requested an extra day on ${reqFmt}.`;
     await this.messaging.sendSystemMessage(familyId, msg);
+
+    // Audit log (fire-and-forget)
+    void this.audit.log({
+      familyId,
+      actorId:         requesterId,
+      action:          'REQUEST_CREATED',
+      childId:         dto.childId ?? undefined,
+      affectedDate:    new Date(dto.requestedDate),
+      changeRequestId: created.id,
+      notes:           dto.reason ?? undefined,
+    });
 
     // Notify the co-parent by email (fire-and-forget)
     void this.notifyCoParentByEmail(familyId, created.requester.id, {
@@ -149,6 +162,24 @@ export class RequestsService {
       payload: { requestId, status: dto.action },
     });
 
+    // Audit log (fire-and-forget)
+    const auditAction =
+      dto.action === 'ACCEPTED'         ? 'REQUEST_ACCEPTED' as const :
+      dto.action === 'DECLINED'         ? 'REQUEST_DECLINED' as const :
+      dto.action === 'COUNTER_PROPOSED' ? 'REQUEST_COUNTER'  as const :
+      null;
+    if (auditAction) {
+      void this.audit.log({
+        familyId,
+        actorId:         responderId,
+        action:          auditAction,
+        childId:         request.childId ?? undefined,
+        affectedDate:    request.requestedDate,
+        changeRequestId: requestId,
+        notes:           dto.counterReason ?? undefined,
+      });
+    }
+
     return updated;
   }
 
@@ -210,6 +241,12 @@ export class RequestsService {
     ];
 
     for (const [date, custodianId] of overrides) {
+      // Read the current custodian before overriding (for audit previousValue)
+      const existing = await this.prisma.custodyEvent.findUnique({
+        where: { scheduleId_date: { scheduleId: schedule.id, date } },
+        include: { child: { select: { firstName: true } } },
+      });
+
       await this.prisma.custodyEvent.upsert({
         where: { scheduleId_date: { scheduleId: schedule.id, date } },
         update: { custodianId, isOverride: true },
@@ -221,6 +258,17 @@ export class RequestsService {
           custodianId,
           isOverride: true,
         },
+      });
+
+      void this.audit.log({
+        familyId:        request.familyId,
+        actorId:         responderId,
+        action:          'CUSTODY_OVERRIDE',
+        childId:         schedule.childId,
+        affectedDate:    date,
+        previousValue:   existing?.custodianId ?? undefined,
+        newValue:        custodianId,
+        changeRequestId: undefined,
       });
     }
   }
