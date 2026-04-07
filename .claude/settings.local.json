@@ -28,7 +28,17 @@
       "Bash(pnpm build:*)",
       "Bash(grep -E \"\\\\.\\(ts|js\\)$\")",
       "Bash(\"d:/downloads/Projects/kidSchedule/src/mail/mail.service.ts\")",
-      "Bash(xargs wc:*)"
+      "Bash(xargs wc:*)",
+      "Bash(python -c \"import sys,json; j=json.load\\(sys.stdin\\); print\\(json.dumps\\(j.get\\('jest',{}\\), indent=2\\)\\)\")",
+      "Bash(node -e \"const j=require\\('./package.json'\\); console.log\\(JSON.stringify\\(j.jest, null, 2\\)\\)\")",
+      "Bash(npx jest:*)",
+      "Bash(node -e \"const d=require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\); const r=JSON.parse\\(d\\); r.testResults[0].testResults.forEach\\(t=>console.log\\(\\(t.status==='passed'?'✓':'✗'\\)+' '+t.fullName\\)\\)\")",
+      "Bash(node -e \"const r=require\\('./test-results.json'\\); r.testResults[0].testResults.forEach\\(t=>console.log\\(\\(t.status==='passed'?'pass':'FAIL'\\)+' | '+t.fullName\\)\\); require\\('fs'\\).unlinkSync\\('./test-results.json'\\)\")",
+      "Bash(node -e \"const r=require\\('./test-results.json'\\); console.log\\(JSON.stringify\\(Object.keys\\(r\\),null,2\\)\\)\")",
+      "Bash(node -e \"const r=require\\('./test-results.json'\\); r.testResults.forEach\\(suite=>{ suite.testResults.forEach\\(t=>console.log\\(\\(t.status==='passed'?'pass':'FAIL'\\)+' | '+t.fullName\\)\\) }\\); require\\('fs'\\).unlinkSync\\('./test-results.json'\\)\")",
+      "Bash(node -e \"const r=require\\('./test-results.json'\\); const s=r.testResults[0]; console.log\\(typeof s, JSON.stringify\\(Object.keys\\(s||{}\\)\\)\\)\")",
+      "Bash(rm test-results.json)",
+      "Bash(node -e \"const r=require\\('./test-results.json'\\); r.testResults.forEach\\(s=>s.assertionResults.forEach\\(t=>console.log\\(\\(t.status==='passed'?'pass':'FAIL'\\)+' | '+t.fullName\\)\\)\\)\")"
     ]
   }
 }
