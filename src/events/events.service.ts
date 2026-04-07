@@ -4,6 +4,7 @@ import { EventType, EventVisibility, Prisma } from '@prisma/client';
 import Anthropic from '@anthropic-ai/sdk';
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { BulkImportDto, CreateEventDto, UpdateEventDto } from './dto/event.dto';
 import { getHolidaysForYear } from './holidays.data';
 import type { CalendarEventUpsertPayload } from '../google/google-calendar-sync.service';
@@ -16,6 +17,7 @@ export class EventsService {
     private prisma: PrismaService,
     private familyService: FamilyService,
     private eventEmitter: EventEmitter2,
+    private notifications: NotificationsService,
   ) {}
 
   async create(familyId: string, userId: string, dto: CreateEventDto) {
@@ -42,6 +44,17 @@ export class EventsService {
       eventId: event.id,
       userId,
     } satisfies CalendarEventUpsertPayload);
+
+    // Push notification to co-parent (fire-and-forget)
+    const dateStr = new Date(dto.startAt).toLocaleDateString('es-AR', {
+      day: 'numeric', month: 'short',
+    });
+    void this.notifications.sendToFamily(familyId, userId, {
+      title: `Nuevo evento: ${event.title}`,
+      body: `${dateStr} · ${event.type.toLowerCase().replace(/_/g, ' ')}`,
+      data: { type: 'EVENT', familyId, eventId: event.id },
+    }).catch(() => {});
+
     return event;
   }
 

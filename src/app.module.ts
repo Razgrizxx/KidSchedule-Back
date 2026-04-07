@@ -24,11 +24,14 @@ import { MediationModule } from './mediation/mediation.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { StripeModule } from './stripe/stripe.module';
 import { HealthModule } from './health/health.module';
+import { ReportsModule } from './reports/reports.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     EventEmitterModule.forRoot(),
+    NotificationsModule,
     MailModule,
     PrismaModule,
     AuthModule,
@@ -52,6 +55,7 @@ import { HealthModule } from './health/health.module';
     OrganizationsModule,
     StripeModule,
     HealthModule,
+    ReportsModule,
   ],
 })
 export class AppModule {}

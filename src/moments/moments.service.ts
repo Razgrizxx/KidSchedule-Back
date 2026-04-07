@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateMomentDto } from './dto/moment.dto';
 import { SubscriptionService, FREE_MOMENTS_LIMIT } from '../stripe/subscription.service';
 
@@ -16,6 +17,7 @@ export class MomentsService {
     private familyService: FamilyService,
     private cloudinary: CloudinaryService,
     private subService: SubscriptionService,
+    private notifications: NotificationsService,
   ) {}
 
   async create(
@@ -42,7 +44,7 @@ export class MomentsService {
       `kidschedule/moments/${familyId}`,
     );
 
-    return this.prisma.moment.create({
+    const moment = await this.prisma.moment.create({
       data: {
         familyId,
         uploadedBy: userId,
@@ -56,6 +58,21 @@ export class MomentsService {
         child: { select: { id: true, firstName: true, color: true } },
       },
     });
+
+    // Push notification to co-parent (fire-and-forget)
+    const uploaderName = moment.uploader
+      ? `${moment.uploader.firstName} ${moment.uploader.lastName}`
+      : 'Tu co-padre';
+    const childName = moment.child?.firstName ?? '';
+    void this.notifications.sendToFamily(familyId, userId, {
+      title: `${uploaderName} compartió un momento`,
+      body: moment.caption
+        ? `${childName}: ${moment.caption}`
+        : `Nueva foto de ${childName}`,
+      data: { type: 'MOMENT', familyId, momentId: moment.id },
+    }).catch(() => {});
+
+    return moment;
   }
 
   async findAll(familyId: string, userId: string) {

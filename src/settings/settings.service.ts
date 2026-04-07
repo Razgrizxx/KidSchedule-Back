@@ -51,6 +51,35 @@ export class SettingsService {
     });
   }
 
+  async registerFcmToken(userId: string, token: string) {
+    // Add token if not already present (set-like behaviour)
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { fcmTokens: true },
+    });
+    if (user && !user.fcmTokens.includes(token)) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { fcmTokens: { push: token } },
+      });
+    }
+    return { ok: true };
+  }
+
+  async removeFcmToken(userId: string, token: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { fcmTokens: true },
+    });
+    if (user) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { fcmTokens: { set: user.fcmTokens.filter((t) => t !== token) } },
+      });
+    }
+    return { ok: true };
+  }
+
   async uploadAvatar(userId: string, file: Express.Multer.File) {
     // Delete old avatar from Cloudinary if it exists
     const user = await this.prisma.user.findUnique({

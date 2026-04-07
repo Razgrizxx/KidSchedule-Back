@@ -204,6 +204,8 @@ model User {
   outlookCalendarId    String?  // ID of the dedicated "KidSchedule" Outlook calendar
   // iCal subscription feed
   icalFeedToken        String?  @unique  // secret token for the Apple/iCal webcal feed URL
+  // FCM push notification tokens (one per device/browser)
+  fcmTokens            String[]
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 

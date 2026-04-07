@@ -9,6 +9,7 @@ import { FamilyService } from '../family/family.service';
 import { MessagingService } from '../messaging/messaging.service';
 import { ChatGateway } from '../messaging/chat.gateway';
 import { MailService } from '../mail/mail.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import {
   CreateChangeRequestDto,
   RespondChangeRequestDto,
@@ -22,6 +23,7 @@ export class RequestsService {
     private messaging: MessagingService,
     private chatGateway: ChatGateway,
     private mail: MailService,
+    private notifications: NotificationsService,
   ) {}
 
   async create(
@@ -69,6 +71,16 @@ export class RequestsService {
       requestedDate: new Date(dto.requestedDate).toLocaleDateString('es-AR', {
         day: 'numeric', month: 'long', year: 'numeric',
       }),
+    }).catch(() => {});
+
+    // Push notification to co-parent (fire-and-forget)
+    const reqDateStr = new Date(dto.requestedDate).toLocaleDateString('es-AR', {
+      day: 'numeric', month: 'short',
+    });
+    void this.notifications.sendToFamily(familyId, created.requester.id, {
+      title: `${requesterName} envió una solicitud`,
+      body: `Cambio de custodia para el ${reqDateStr}`,
+      data: { type: 'REQUEST', familyId, requestId: created.id },
     }).catch(() => {});
 
     return created;
