@@ -12,9 +12,9 @@ export declare class FamilyService {
         members: {
             id: string;
             role: import("@prisma/client").$Enums.UserRole;
+            joinedAt: Date;
             familyId: string;
             userId: string;
-            joinedAt: Date;
         }[];
     } & {
         id: string;
@@ -23,20 +23,6 @@ export declare class FamilyService {
         name: string;
     }>;
     findAllForUser(userId: string): Promise<({
-        members: ({
-            user: {
-                id: string;
-                email: string;
-                firstName: string;
-                lastName: string;
-            };
-        } & {
-            id: string;
-            role: import("@prisma/client").$Enums.UserRole;
-            familyId: string;
-            userId: string;
-            joinedAt: Date;
-        })[];
         children: {
             id: string;
             firstName: string;
@@ -48,6 +34,20 @@ export declare class FamilyService {
             dateOfBirth: Date;
             color: string;
         }[];
+        members: ({
+            user: {
+                id: string;
+                email: string;
+                firstName: string;
+                lastName: string;
+            };
+        } & {
+            id: string;
+            role: import("@prisma/client").$Enums.UserRole;
+            joinedAt: Date;
+            familyId: string;
+            userId: string;
+        })[];
     } & {
         id: string;
         createdAt: Date;
@@ -55,6 +55,17 @@ export declare class FamilyService {
         name: string;
     })[]>;
     findOne(familyId: string, userId: string): Promise<({
+        children: {
+            id: string;
+            firstName: string;
+            lastName: string;
+            avatarUrl: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+            familyId: string;
+            dateOfBirth: Date;
+            color: string;
+        }[];
         members: ({
             user: {
                 id: string;
@@ -66,21 +77,10 @@ export declare class FamilyService {
         } & {
             id: string;
             role: import("@prisma/client").$Enums.UserRole;
+            joinedAt: Date;
             familyId: string;
             userId: string;
-            joinedAt: Date;
         })[];
-        children: {
-            id: string;
-            firstName: string;
-            lastName: string;
-            avatarUrl: string | null;
-            createdAt: Date;
-            updatedAt: Date;
-            familyId: string;
-            dateOfBirth: Date;
-            color: string;
-        }[];
     } & {
         id: string;
         createdAt: Date;
@@ -104,8 +104,8 @@ export declare class FamilyService {
     assertMember(familyId: string, userId: string): Promise<{
         id: string;
         role: import("@prisma/client").$Enums.UserRole;
+        joinedAt: Date;
         familyId: string;
         userId: string;
-        joinedAt: Date;
     }>;
 }

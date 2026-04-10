@@ -332,7 +332,7 @@ let MediationService = class MediationService {
         });
         const frontendUrl = this.config.get('FRONTEND_URL', 'http://localhost:5173');
         const viewUrl = `${frontendUrl}/#/mediator/${token}`;
-        void this.mail.sendMediatorInvite?.({
+        void this.mail.sendMediatorInvite({
             toEmail: dto.email,
             recipientName: dto.name,
             inviterName: `${invite.inviter.firstName} ${invite.inviter.lastName}`,

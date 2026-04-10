@@ -14,9 +14,9 @@ export declare class PublicOrgController {
                 createdAt: Date;
                 name: string;
                 notes: string | null;
+                organizationId: string;
                 address: string | null;
                 mapUrl: string | null;
-                organizationId: string;
             } | null;
         } & {
             id: string;
@@ -28,10 +28,10 @@ export declare class PublicOrgController {
             endAt: Date;
             allDay: boolean;
             notes: string | null;
-            venueId: string | null;
-            maxCapacity: number | null;
             organizationId: string;
             createdById: string;
+            maxCapacity: number | null;
+            venueId: string | null;
         })[];
     }>;
     getPortal(token: string): Promise<{
@@ -47,9 +47,9 @@ export declare class PublicOrgController {
                 createdAt: Date;
                 name: string;
                 notes: string | null;
+                organizationId: string;
                 address: string | null;
                 mapUrl: string | null;
-                organizationId: string;
             } | null;
         } & {
             id: string;
@@ -61,10 +61,10 @@ export declare class PublicOrgController {
             endAt: Date;
             allDay: boolean;
             notes: string | null;
-            venueId: string | null;
-            maxCapacity: number | null;
             organizationId: string;
             createdById: string;
+            maxCapacity: number | null;
+            venueId: string | null;
         })[];
     }>;
 }

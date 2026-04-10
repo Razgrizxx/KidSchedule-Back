@@ -29,6 +29,9 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { AuditModule } from './audit/audit.module';
 import { HandoffsModule } from './handoffs/handoffs.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { EmergencyContactsModule } from './emergency-contacts/emergency-contacts.module';
+import { DocumentsModule } from './documents/documents.module';
+import { TravelModule } from './travel/travel.module';
 
 @Module({
   imports: [
@@ -62,6 +65,9 @@ import { DashboardModule } from './dashboard/dashboard.module';
     ReportsModule,
     HandoffsModule,
     DashboardModule,
+    EmergencyContactsModule,
+    DocumentsModule,
+    TravelModule,
   ],
 })
 export class AppModule {}

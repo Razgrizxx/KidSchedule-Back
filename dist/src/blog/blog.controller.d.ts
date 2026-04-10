@@ -5,9 +5,9 @@ export declare class BlogController {
     constructor(blogService: BlogService);
     findAll(): Promise<{
         id: string;
+        title: string;
         category: string;
         slug: string;
-        title: string;
         excerpt: string;
         coverImage: string | null;
         author: string;
@@ -18,21 +18,21 @@ export declare class BlogController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        title: string;
         content: string;
         category: string;
         slug: string;
-        title: string;
         excerpt: string;
         coverImage: string | null;
         author: string;
-        readTime: number;
         published: boolean;
+        readTime: number;
         publishedAt: Date | null;
     }>;
     findRelated(slug: string): Promise<{
+        title: string;
         category: string;
         slug: string;
-        title: string;
         excerpt: string;
         coverImage: string | null;
         readTime: number;
@@ -40,44 +40,44 @@ export declare class BlogController {
     }[]>;
     findAllAdmin(): Promise<{
         id: string;
+        title: string;
         category: string;
         slug: string;
-        title: string;
         excerpt: string;
         coverImage: string | null;
         author: string;
-        readTime: number;
         published: boolean;
+        readTime: number;
         publishedAt: Date | null;
     }[]>;
     create(dto: CreatePostDto): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        title: string;
         content: string;
         category: string;
         slug: string;
-        title: string;
         excerpt: string;
         coverImage: string | null;
         author: string;
-        readTime: number;
         published: boolean;
+        readTime: number;
         publishedAt: Date | null;
     }>;
     update(slug: string, dto: UpdatePostDto): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        title: string;
         content: string;
         category: string;
         slug: string;
-        title: string;
         excerpt: string;
         coverImage: string | null;
         author: string;
-        readTime: number;
         published: boolean;
+        readTime: number;
         publishedAt: Date | null;
     }>;
     remove(slug: string): Promise<{

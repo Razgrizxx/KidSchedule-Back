@@ -1,4 +1,4 @@
-import { AuthUser } from '../common/interfaces/auth-user.interface';
+import { AuthUser } from '../common/types/auth-user';
 import { HealthService } from './health.service';
 import { CreateHealthRecordDto, UpdateHealthRecordDto, CreateMedicationDto, UpdateMedicationDto, CreateAllergyDto, CreateDocumentDto } from './dto/health.dto';
 export declare class HealthController {
@@ -26,16 +26,6 @@ export declare class HealthController {
         documentCount: number;
     }>;
     createRecord(user: AuthUser, familyId: string, dto: CreateHealthRecordDto): Promise<{
-        child: {
-            id: string;
-            firstName: string;
-            color: string;
-        };
-        uploader: {
-            id: string;
-            firstName: string;
-            lastName: string;
-        };
         documents: ({
             uploader: {
                 id: string;
@@ -54,6 +44,16 @@ export declare class HealthController {
             recordId: string | null;
             fileUrl: string;
         })[];
+        child: {
+            id: string;
+            firstName: string;
+            color: string;
+        };
+        uploader: {
+            id: string;
+            firstName: string;
+            lastName: string;
+        };
     } & {
         id: string;
         createdAt: Date;
@@ -68,16 +68,6 @@ export declare class HealthController {
         doctorName: string | null;
     }>;
     getRecords(user: AuthUser, familyId: string, childId?: string): Promise<({
-        child: {
-            id: string;
-            firstName: string;
-            color: string;
-        };
-        uploader: {
-            id: string;
-            firstName: string;
-            lastName: string;
-        };
         documents: ({
             uploader: {
                 id: string;
@@ -96,6 +86,16 @@ export declare class HealthController {
             recordId: string | null;
             fileUrl: string;
         })[];
+        child: {
+            id: string;
+            firstName: string;
+            color: string;
+        };
+        uploader: {
+            id: string;
+            firstName: string;
+            lastName: string;
+        };
     } & {
         id: string;
         createdAt: Date;
@@ -110,16 +110,6 @@ export declare class HealthController {
         doctorName: string | null;
     })[]>;
     getRecord(user: AuthUser, familyId: string, recordId: string): Promise<{
-        child: {
-            id: string;
-            firstName: string;
-            color: string;
-        };
-        uploader: {
-            id: string;
-            firstName: string;
-            lastName: string;
-        };
         documents: ({
             uploader: {
                 id: string;
@@ -138,6 +128,16 @@ export declare class HealthController {
             recordId: string | null;
             fileUrl: string;
         })[];
+        child: {
+            id: string;
+            firstName: string;
+            color: string;
+        };
+        uploader: {
+            id: string;
+            firstName: string;
+            lastName: string;
+        };
     } & {
         id: string;
         createdAt: Date;
@@ -152,16 +152,6 @@ export declare class HealthController {
         doctorName: string | null;
     }>;
     updateRecord(user: AuthUser, familyId: string, recordId: string, dto: UpdateHealthRecordDto): Promise<{
-        child: {
-            id: string;
-            firstName: string;
-            color: string;
-        };
-        uploader: {
-            id: string;
-            firstName: string;
-            lastName: string;
-        };
         documents: ({
             uploader: {
                 id: string;
@@ -180,6 +170,16 @@ export declare class HealthController {
             recordId: string | null;
             fileUrl: string;
         })[];
+        child: {
+            id: string;
+            firstName: string;
+            color: string;
+        };
+        uploader: {
+            id: string;
+            firstName: string;
+            lastName: string;
+        };
     } & {
         id: string;
         createdAt: Date;
@@ -269,8 +269,8 @@ export declare class HealthController {
         familyId: string;
         childId: string;
         createdBy: string;
-        startDate: Date;
         isActive: boolean;
+        startDate: Date;
         notes: string | null;
         dosage: string;
         frequency: string;
@@ -296,8 +296,8 @@ export declare class HealthController {
         familyId: string;
         childId: string;
         createdBy: string;
-        startDate: Date;
         isActive: boolean;
+        startDate: Date;
         notes: string | null;
         dosage: string;
         frequency: string;
@@ -323,8 +323,8 @@ export declare class HealthController {
         familyId: string;
         childId: string;
         createdBy: string;
-        startDate: Date;
         isActive: boolean;
+        startDate: Date;
         notes: string | null;
         dosage: string;
         frequency: string;

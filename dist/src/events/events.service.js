@@ -18,16 +18,22 @@ const event_emitter_1 = require("@nestjs/event-emitter");
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const prisma_service_1 = require("../prisma/prisma.service");
 const family_service_1 = require("../family/family.service");
+const notifications_service_1 = require("../notifications/notifications.service");
+const audit_service_1 = require("../audit/audit.service");
 const holidays_data_1 = require("./holidays.data");
 let EventsService = class EventsService {
     prisma;
     familyService;
     eventEmitter;
+    notifications;
+    audit;
     anthropic = new sdk_1.default();
-    constructor(prisma, familyService, eventEmitter) {
+    constructor(prisma, familyService, eventEmitter, notifications, audit) {
         this.prisma = prisma;
         this.familyService = familyService;
         this.eventEmitter = eventEmitter;
+        this.notifications = notifications;
+        this.audit = audit;
     }
     async create(familyId, userId, dto) {
         await this.familyService.assertMember(familyId, userId);
@@ -52,6 +58,22 @@ let EventsService = class EventsService {
         this.eventEmitter.emit('calendar.event.upsert', {
             eventId: event.id,
             userId,
+        });
+        const dateStr = new Date(dto.startAt).toLocaleDateString('en-US', {
+            day: 'numeric', month: 'short',
+        });
+        void this.notifications.sendToFamily(familyId, userId, {
+            title: `New event: ${event.title}`,
+            body: `${dateStr} · ${event.type.toLowerCase().replace(/_/g, ' ')}`,
+            data: { type: 'EVENT', familyId, eventId: event.id },
+        }).catch(() => { });
+        void this.audit.log({
+            familyId,
+            actorId: userId,
+            action: 'EVENT_CREATED',
+            affectedDate: event.startAt,
+            eventId: event.id,
+            newValue: event.title,
         });
         return event;
     }
@@ -100,6 +122,14 @@ let EventsService = class EventsService {
         this.eventEmitter.emit('calendar.event.upsert', {
             eventId: event.id,
             userId,
+        });
+        void this.audit.log({
+            familyId,
+            actorId: userId,
+            action: 'EVENT_UPDATED',
+            affectedDate: event.startAt,
+            eventId: event.id,
+            newValue: event.title,
         });
         return event;
     }
@@ -215,7 +245,19 @@ Return [] if no events are found.`,
     }
     async remove(familyId, eventId, userId) {
         await this.familyService.assertMember(familyId, userId);
+        const event = await this.prisma.event.findUnique({
+            where: { id: eventId },
+            select: { title: true, startAt: true },
+        });
         await this.prisma.event.delete({ where: { id: eventId, familyId } });
+        void this.audit.log({
+            familyId,
+            actorId: userId,
+            action: 'EVENT_DELETED',
+            affectedDate: event?.startAt,
+            eventId,
+            previousValue: event?.title,
+        });
         return { message: 'Event deleted' };
     }
 };
@@ -224,6 +266,8 @@ exports.EventsService = EventsService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         family_service_1.FamilyService,
-        event_emitter_1.EventEmitter2])
+        event_emitter_1.EventEmitter2,
+        notifications_service_1.NotificationsService,
+        audit_service_1.AuditService])
 ], EventsService);
 //# sourceMappingURL=events.service.js.map

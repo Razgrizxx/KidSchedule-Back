@@ -8,16 +8,6 @@ export declare class HealthService {
     private cloudinary;
     constructor(prisma: PrismaService, familyService: FamilyService, cloudinary: CloudinaryService);
     createRecord(familyId: string, userId: string, dto: CreateHealthRecordDto): Promise<{
-        child: {
-            id: string;
-            firstName: string;
-            color: string;
-        };
-        uploader: {
-            id: string;
-            firstName: string;
-            lastName: string;
-        };
         documents: ({
             uploader: {
                 id: string;
@@ -36,6 +26,16 @@ export declare class HealthService {
             recordId: string | null;
             fileUrl: string;
         })[];
+        child: {
+            id: string;
+            firstName: string;
+            color: string;
+        };
+        uploader: {
+            id: string;
+            firstName: string;
+            lastName: string;
+        };
     } & {
         id: string;
         createdAt: Date;
@@ -50,16 +50,6 @@ export declare class HealthService {
         doctorName: string | null;
     }>;
     getRecords(familyId: string, userId: string, childId?: string): Promise<({
-        child: {
-            id: string;
-            firstName: string;
-            color: string;
-        };
-        uploader: {
-            id: string;
-            firstName: string;
-            lastName: string;
-        };
         documents: ({
             uploader: {
                 id: string;
@@ -78,6 +68,16 @@ export declare class HealthService {
             recordId: string | null;
             fileUrl: string;
         })[];
+        child: {
+            id: string;
+            firstName: string;
+            color: string;
+        };
+        uploader: {
+            id: string;
+            firstName: string;
+            lastName: string;
+        };
     } & {
         id: string;
         createdAt: Date;
@@ -92,16 +92,6 @@ export declare class HealthService {
         doctorName: string | null;
     })[]>;
     getRecord(familyId: string, recordId: string, userId: string): Promise<{
-        child: {
-            id: string;
-            firstName: string;
-            color: string;
-        };
-        uploader: {
-            id: string;
-            firstName: string;
-            lastName: string;
-        };
         documents: ({
             uploader: {
                 id: string;
@@ -120,6 +110,16 @@ export declare class HealthService {
             recordId: string | null;
             fileUrl: string;
         })[];
+        child: {
+            id: string;
+            firstName: string;
+            color: string;
+        };
+        uploader: {
+            id: string;
+            firstName: string;
+            lastName: string;
+        };
     } & {
         id: string;
         createdAt: Date;
@@ -134,16 +134,6 @@ export declare class HealthService {
         doctorName: string | null;
     }>;
     updateRecord(familyId: string, recordId: string, userId: string, dto: UpdateHealthRecordDto): Promise<{
-        child: {
-            id: string;
-            firstName: string;
-            color: string;
-        };
-        uploader: {
-            id: string;
-            firstName: string;
-            lastName: string;
-        };
         documents: ({
             uploader: {
                 id: string;
@@ -162,6 +152,16 @@ export declare class HealthService {
             recordId: string | null;
             fileUrl: string;
         })[];
+        child: {
+            id: string;
+            firstName: string;
+            color: string;
+        };
+        uploader: {
+            id: string;
+            firstName: string;
+            lastName: string;
+        };
     } & {
         id: string;
         createdAt: Date;
@@ -251,8 +251,8 @@ export declare class HealthService {
         familyId: string;
         childId: string;
         createdBy: string;
-        startDate: Date;
         isActive: boolean;
+        startDate: Date;
         notes: string | null;
         dosage: string;
         frequency: string;
@@ -278,8 +278,8 @@ export declare class HealthService {
         familyId: string;
         childId: string;
         createdBy: string;
-        startDate: Date;
         isActive: boolean;
+        startDate: Date;
         notes: string | null;
         dosage: string;
         frequency: string;
@@ -305,8 +305,8 @@ export declare class HealthService {
         familyId: string;
         childId: string;
         createdBy: string;
-        startDate: Date;
         isActive: boolean;
+        startDate: Date;
         notes: string | null;
         dosage: string;
         frequency: string;

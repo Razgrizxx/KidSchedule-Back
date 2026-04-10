@@ -33,21 +33,34 @@ export class NotificationsService implements OnModuleInit {
       return;
     }
 
-    // Avoid re-initialising on hot reload
-    if (admin.apps.length === 0) {
-      this.app = admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId,
-          clientEmail,
-          // Env vars encode newlines as literal \n — replace them
-          privateKey: privateKey.replace(/\\n/g, '\n'),
-        }),
-      });
-    } else {
-      this.app = admin.apps[0]!;
-    }
+    try {
+      // Avoid re-initialising on hot reload
+      if (admin.apps.length === 0) {
+        // .env stores newlines as literal \n — normalise regardless of dotenv version
+        const normalizedKey = privateKey
+          .replace(/\\n/g, '\n')           // literal \n  → real newline
+          .replace(/^["']|["']$/g, '');    // strip accidental surrounding quotes
 
-    this.logger.log('Firebase Admin initialised — push notifications enabled');
+        this.app = admin.initializeApp({
+          credential: admin.credential.cert({
+            projectId,
+            clientEmail,
+            privateKey: normalizedKey,
+          }),
+        });
+      } else {
+        this.app = admin.apps[0]!;
+      }
+
+      this.logger.log('Firebase Admin initialised — push notifications enabled');
+    } catch (err) {
+      this.logger.warn(
+        `Firebase Admin failed to initialise — push notifications disabled. ` +
+        `Check that FIREBASE_PRIVATE_KEY is the full PEM key from your service account JSON. ` +
+        `Error: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      // Do NOT rethrow — the app should start without FCM if credentials are wrong/missing
+    }
   }
 
   /** Send a push notification to every device registered by a user. */

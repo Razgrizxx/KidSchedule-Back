@@ -81,18 +81,18 @@ export class RequestsService {
     void this.notifyCoParentByEmail(familyId, created.requester.id, {
       requesterName,
       type: dto.type,
-      requestedDate: new Date(dto.requestedDate).toLocaleDateString('es-AR', {
+      requestedDate: new Date(dto.requestedDate).toLocaleDateString('en-US', {
         day: 'numeric', month: 'long', year: 'numeric',
       }),
     }).catch(() => {});
 
     // Push notification to co-parent (fire-and-forget)
-    const reqDateStr = new Date(dto.requestedDate).toLocaleDateString('es-AR', {
+    const reqDateStr = new Date(dto.requestedDate).toLocaleDateString('en-US', {
       day: 'numeric', month: 'short',
     });
     void this.notifications.sendToFamily(familyId, created.requester.id, {
-      title: `${requesterName} envió una solicitud`,
-      body: `Cambio de custodia para el ${reqDateStr}`,
+      title: `${requesterName} sent a custody request`,
+      body: `Custody change for ${reqDateStr}`,
       data: { type: 'REQUEST', familyId, requestId: created.id },
     }).catch(() => {});
 

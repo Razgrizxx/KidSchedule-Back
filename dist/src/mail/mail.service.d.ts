@@ -16,6 +16,13 @@ export declare class MailService {
     private sendViaResend;
     sendWelcomeEmail(userEmail: string, firstName: string): Promise<void>;
     sendPasswordReset(userEmail: string, firstName: string, resetUrl: string): Promise<void>;
+    sendMediatorInvite(opts: {
+        toEmail: string;
+        recipientName: string;
+        inviterName: string;
+        sessionTopic: string;
+        viewUrl: string;
+    }): Promise<void>;
     sendChangeRequestNotification(opts: {
         toEmail: string;
         requesterName: string;

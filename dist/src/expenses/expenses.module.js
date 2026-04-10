@@ -10,6 +10,8 @@ exports.ExpensesModule = void 0;
 const common_1 = require("@nestjs/common");
 const expenses_service_1 = require("./expenses.service");
 const expenses_controller_1 = require("./expenses.controller");
+const recurring_expenses_service_1 = require("./recurring-expenses.service");
+const recurring_expenses_controller_1 = require("./recurring-expenses.controller");
 const family_module_1 = require("../family/family.module");
 let ExpensesModule = class ExpensesModule {
 };
@@ -17,8 +19,8 @@ exports.ExpensesModule = ExpensesModule;
 exports.ExpensesModule = ExpensesModule = __decorate([
     (0, common_1.Module)({
         imports: [family_module_1.FamilyModule],
-        providers: [expenses_service_1.ExpensesService],
-        controllers: [expenses_controller_1.ExpensesController],
+        providers: [expenses_service_1.ExpensesService, recurring_expenses_service_1.RecurringExpensesService],
+        controllers: [expenses_controller_1.ExpensesController, recurring_expenses_controller_1.RecurringExpensesController],
     })
 ], ExpensesModule);
 //# sourceMappingURL=expenses.module.js.map

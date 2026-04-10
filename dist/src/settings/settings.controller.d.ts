@@ -45,6 +45,12 @@ export declare class SettingsController {
         pushNotifications: boolean;
         appearance: import("@prisma/client").$Enums.AppearanceTheme;
     }>;
+    registerFcmToken(user: AuthUser, token: string): Promise<{
+        ok: boolean;
+    }>;
+    removeFcmToken(user: AuthUser, token: string): Promise<{
+        ok: boolean;
+    }>;
     uploadAvatar(user: AuthUser, file: Express.Multer.File): Promise<{
         avatarUrl: string | null;
     }>;

@@ -31,6 +31,7 @@ export declare class JwtStrategy extends JwtStrategy_base {
         outlookRefreshToken: string | null;
         outlookTokenExpiry: Date | null;
         outlookCalendarId: string | null;
+        fcmTokens: string[];
         createdAt: Date;
         updatedAt: Date;
     }>;

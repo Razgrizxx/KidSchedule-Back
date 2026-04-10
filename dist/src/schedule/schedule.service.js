@@ -14,14 +14,17 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const family_service_1 = require("../family/family.service");
 const schedule_generator_service_1 = require("./schedule-generator.service");
+const audit_service_1 = require("../audit/audit.service");
 let ScheduleService = class ScheduleService {
     prisma;
     familyService;
     generator;
-    constructor(prisma, familyService, generator) {
+    audit;
+    constructor(prisma, familyService, generator, audit) {
         this.prisma = prisma;
         this.familyService = familyService;
         this.generator = generator;
+        this.audit = audit;
     }
     async create(familyId, userId, dto) {
         await this.familyService.assertMember(familyId, userId);
@@ -85,6 +88,13 @@ let ScheduleService = class ScheduleService {
                 skipDuplicates: true,
             });
         }
+        void this.audit.log({
+            familyId,
+            actorId: userId,
+            action: 'SCHEDULE_CREATED',
+            childId: dto.childId,
+            newValue: `${dto.pattern} · ${dto.name}`,
+        });
         return { schedule, eventsGenerated: assignments.length };
     }
     async findAll(familyId, userId) {
@@ -135,6 +145,7 @@ exports.ScheduleService = ScheduleService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         family_service_1.FamilyService,
-        schedule_generator_service_1.ScheduleGeneratorService])
+        schedule_generator_service_1.ScheduleGeneratorService,
+        audit_service_1.AuditService])
 ], ScheduleService);
 //# sourceMappingURL=schedule.service.js.map

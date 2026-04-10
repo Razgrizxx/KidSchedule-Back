@@ -17,11 +17,11 @@ export declare class MediatorTokenController {
                 } | null;
             } & {
                 id: string;
-                sessionId: string;
                 createdAt: Date;
                 senderId: string | null;
                 content: string;
                 isAI: boolean;
+                sessionId: string;
             })[];
             proposals: ({
                 proposer: {
@@ -36,11 +36,11 @@ export declare class MediatorTokenController {
                 } | null;
             } & {
                 id: string;
-                sessionId: string;
                 createdAt: Date;
                 status: import("@prisma/client").$Enums.ProposalStatus;
-                proposedBy: string;
+                sessionId: string;
                 summary: string;
+                proposedBy: string;
                 acceptedBy: string | null;
             })[];
         } & {
@@ -48,8 +48,8 @@ export declare class MediatorTokenController {
             createdAt: Date;
             updatedAt: Date;
             familyId: string;
-            topic: string;
             status: import("@prisma/client").$Enums.MediationStatus;
+            topic: string;
         };
     }>;
 }

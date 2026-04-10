@@ -48,6 +48,12 @@ export declare class SettingsService {
         pushNotifications: boolean;
         appearance: import("@prisma/client").$Enums.AppearanceTheme;
     }>;
+    registerFcmToken(userId: string, token: string): Promise<{
+        ok: boolean;
+    }>;
+    removeFcmToken(userId: string, token: string): Promise<{
+        ok: boolean;
+    }>;
     uploadAvatar(userId: string, file: Express.Multer.File): Promise<{
         avatarUrl: string | null;
     }>;

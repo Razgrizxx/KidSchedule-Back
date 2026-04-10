@@ -16,7 +16,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { AuthUser } from '../common/interfaces/auth-user.interface';
+import { AuthUser } from '../common/types/auth-user';
 import { HealthService } from './health.service';
 import {
   CreateHealthRecordDto,

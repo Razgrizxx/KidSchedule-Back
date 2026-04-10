@@ -48,22 +48,22 @@ export class AllExceptionsFilter implements ExceptionFilter {
             ? target.split(',').map((s) => s.trim())
             : [];
         const fieldLabels: Record<string, string> = {
-          email: 'El email',
-          phone: 'El teléfono',
-          name: 'El nombre',
-          username: 'El nombre de usuario',
-          inviteCode: 'El código de invitación',
+          email: 'Email',
+          phone: 'Phone',
+          name: 'Name',
+          username: 'Username',
+          inviteCode: 'Invite code',
         };
         const readable = rawFields
           .map((f) => fieldLabels[f] ?? f)
-          .join(' y ');
+          .join(' and ');
         message = readable
-          ? `${readable} ya está registrado`
-          : 'Este registro ya existe';
+          ? `${readable} is already registered`
+          : 'This record already exists';
       // P2025 — record not found
       } else if (exception.code === 'P2025') {
         status = HttpStatus.NOT_FOUND;
-        message = 'Registro no encontrado';
+        message = 'Record not found';
       } else {
         this.logger.error(`Prisma error ${exception.code}`, exception.message);
         message = 'Error de base de datos';

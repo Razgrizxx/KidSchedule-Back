@@ -62,13 +62,13 @@ export class MomentsService {
     // Push notification to co-parent (fire-and-forget)
     const uploaderName = moment.uploader
       ? `${moment.uploader.firstName} ${moment.uploader.lastName}`
-      : 'Tu co-padre';
+      : 'Your co-parent';
     const childName = moment.child?.firstName ?? '';
     void this.notifications.sendToFamily(familyId, userId, {
-      title: `${uploaderName} compartió un momento`,
+      title: `${uploaderName} shared a moment`,
       body: moment.caption
         ? `${childName}: ${moment.caption}`
-        : `Nueva foto de ${childName}`,
+        : `New photo of ${childName}`,
       data: { type: 'MOMENT', familyId, momentId: moment.id },
     }).catch(() => {});
 

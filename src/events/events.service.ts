@@ -48,11 +48,11 @@ export class EventsService {
     } satisfies CalendarEventUpsertPayload);
 
     // Push notification to co-parent (fire-and-forget)
-    const dateStr = new Date(dto.startAt).toLocaleDateString('es-AR', {
+    const dateStr = new Date(dto.startAt).toLocaleDateString('en-US', {
       day: 'numeric', month: 'short',
     });
     void this.notifications.sendToFamily(familyId, userId, {
-      title: `Nuevo evento: ${event.title}`,
+      title: `New event: ${event.title}`,
       body: `${dateStr} · ${event.type.toLowerCase().replace(/_/g, ' ')}`,
       data: { type: 'EVENT', familyId, eventId: event.id },
     }).catch(() => {});

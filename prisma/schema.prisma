@@ -262,6 +262,10 @@ model User {
   handoffsFrom            HandoffLog[]      @relation("HandoffFrom")
   handoffsTo              HandoffLog[]      @relation("HandoffTo")
   recurringExpenses       RecurringExpense[] @relation("RecurringExpenseCreator")
+  emergencyContacts       EmergencyContact[] @relation("EmergencyContactCreator")
+  uploadedDocuments       FamilyDocument[]   @relation("DocumentUploader")
+  travelNoticesCreated    TravelNotice[]     @relation("TravelNoticeCreator")
+  travelNoticesAcknowledged TravelNotice[]   @relation("TravelNoticeAcknowledger")
 
   @@map("users")
 }
@@ -326,6 +330,9 @@ model Family {
   auditLogs          CustodyAuditLog[]
   handoffLogs        HandoffLog[]
   recurringExpenses  RecurringExpense[]
+  emergencyContacts  EmergencyContact[]
+  documents          FamilyDocument[]
+  travelNotices      TravelNotice[]
 
   @@map("families")
 }
@@ -387,8 +394,12 @@ model Child {
   healthDocuments HealthDocument[]
   medications     Medication[]
   allergies       Allergy[]
-  auditLogs       CustodyAuditLog[]
-  handoffLogs     HandoffLog[]
+  auditLogs          CustodyAuditLog[]
+  handoffLogs        HandoffLog[]
+  emergencyContacts  EmergencyContact[]
+  documents          FamilyDocument[]
+  expenses           Expense[]
+  travelNotices      TravelNotice[]
 
   @@map("children")
 }
@@ -613,8 +624,9 @@ model Expense {
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
-  family    Family  @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  payer     User    @relation(fields: [paidBy], references: [id])
+  family    Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  payer     User     @relation(fields: [paidBy], references: [id])
+  child     Child?   @relation(fields: [childId], references: [id])
   recurring RecurringExpense? @relation(fields: [recurringId], references: [id])
   recurringId String?
 
@@ -1091,4 +1103,108 @@ model Allergy {
   uploader User   @relation("AllergyCreator", fields: [createdBy], references: [id])
 
   @@map("allergies")
+}
+
+// ─────────────────────────────────────────
+//  DOCUMENT VAULT
+// ─────────────────────────────────────────
+
+enum DocumentCategory {
+  ID_DOCUMENT      // DNI / Passport
+  CUSTODY_ORDER    // Custody / court orders
+  SCHOOL_RECORD
+  HEALTH_RECORD
+  INSURANCE
+  BIRTH_CERTIFICATE
+  OTHER
+}
+
+model FamilyDocument {
+  id                 String           @id @default(uuid())
+  familyId           String
+  childId            String?          // optional — can be family-wide
+  category           DocumentCategory @default(OTHER)
+  title              String
+  description        String?
+  fileUrl            String           // Cloudinary secure_url
+  cloudinaryPublicId String
+  mimeType           String?
+  uploadedBy         String
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  family    Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  child     Child? @relation(fields: [childId], references: [id])
+  uploader  User   @relation("DocumentUploader", fields: [uploadedBy], references: [id])
+
+  @@index([familyId, category])
+  @@map("family_documents")
+}
+
+// ─────────────────────────────────────────
+//  TRAVEL NOTICES
+// ─────────────────────────────────────────
+
+model TravelNotice {
+  id              String    @id @default(uuid())
+  familyId        String
+  createdBy       String
+  childId         String?             // optional — can cover all children
+  destination     String
+  departureDate   DateTime  @db.Date
+  returnDate      DateTime  @db.Date
+  contactPhone    String?             // emergency contact during travel
+  contactEmail    String?
+  notes           String?
+  acknowledgedBy  String?             // co-parent userId who acknowledged
+  acknowledgedAt  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  family         Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  creator        User   @relation("TravelNoticeCreator",     fields: [createdBy],      references: [id])
+  acknowledger   User?  @relation("TravelNoticeAcknowledger", fields: [acknowledgedBy], references: [id])
+  child          Child? @relation(fields: [childId], references: [id])
+
+  @@index([familyId, departureDate(sort: Desc)])
+  @@map("travel_notices")
+}
+
+// ─────────────────────────────────────────
+//  EMERGENCY CONTACTS
+// ─────────────────────────────────────────
+
+enum EmergencyContactRole {
+  DOCTOR
+  PEDIATRICIAN
+  DENTIST
+  SCHOOL
+  THERAPIST
+  GRANDPARENT
+  RELATIVE
+  NEIGHBOR
+  OTHER
+}
+
+model EmergencyContact {
+  id           String               @id @default(uuid())
+  familyId     String
+  childId      String               // contact is linked to a specific child
+  role         EmergencyContactRole @default(OTHER)
+  name         String
+  phone        String?
+  email        String?
+  address      String?
+  notes        String?
+  isPrimary    Boolean              @default(false)
+  createdBy    String
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  family    Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  child     Child  @relation(fields: [childId], references: [id], onDelete: Cascade)
+  createdByUser User @relation("EmergencyContactCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+
+  @@index([familyId, childId])
+  @@map("emergency_contacts")
 }

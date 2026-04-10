@@ -33,6 +33,14 @@ const mediation_module_1 = require("./mediation/mediation.module");
 const organizations_module_1 = require("./organizations/organizations.module");
 const stripe_module_1 = require("./stripe/stripe.module");
 const health_module_1 = require("./health/health.module");
+const reports_module_1 = require("./reports/reports.module");
+const notifications_module_1 = require("./notifications/notifications.module");
+const audit_module_1 = require("./audit/audit.module");
+const handoffs_module_1 = require("./handoffs/handoffs.module");
+const dashboard_module_1 = require("./dashboard/dashboard.module");
+const emergency_contacts_module_1 = require("./emergency-contacts/emergency-contacts.module");
+const documents_module_1 = require("./documents/documents.module");
+const travel_module_1 = require("./travel/travel.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -41,6 +49,8 @@ exports.AppModule = AppModule = __decorate([
         imports: [
             config_1.ConfigModule.forRoot({ isGlobal: true }),
             event_emitter_1.EventEmitterModule.forRoot(),
+            notifications_module_1.NotificationsModule,
+            audit_module_1.AuditModule,
             mail_module_1.MailModule,
             prisma_module_1.PrismaModule,
             auth_module_1.AuthModule,
@@ -64,6 +74,12 @@ exports.AppModule = AppModule = __decorate([
             organizations_module_1.OrganizationsModule,
             stripe_module_1.StripeModule,
             health_module_1.HealthModule,
+            reports_module_1.ReportsModule,
+            handoffs_module_1.HandoffsModule,
+            dashboard_module_1.DashboardModule,
+            emergency_contacts_module_1.EmergencyContactsModule,
+            documents_module_1.DocumentsModule,
+            travel_module_1.TravelModule,
         ],
     })
 ], AppModule);

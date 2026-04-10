@@ -39,6 +39,16 @@ let SettingsController = class SettingsController {
     updateUserSettings(user, dto) {
         return this.settingsService.updateUserSettings(user.id, dto);
     }
+    registerFcmToken(user, token) {
+        if (!token)
+            throw new common_1.BadRequestException('token is required');
+        return this.settingsService.registerFcmToken(user.id, token);
+    }
+    removeFcmToken(user, token) {
+        if (!token)
+            throw new common_1.BadRequestException('token is required');
+        return this.settingsService.removeFcmToken(user.id, token);
+    }
     uploadAvatar(user, file) {
         if (!file)
             throw new common_1.BadRequestException('Image file is required');
@@ -80,6 +90,22 @@ __decorate([
         update_user_settings_dto_1.UpdateUserSettingsDto]),
     __metadata("design:returntype", void 0)
 ], SettingsController.prototype, "updateUserSettings", null);
+__decorate([
+    (0, common_1.Post)('users/me/fcm-token'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Body)('token')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String]),
+    __metadata("design:returntype", void 0)
+], SettingsController.prototype, "registerFcmToken", null);
+__decorate([
+    (0, common_1.Delete)('users/me/fcm-token'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Body)('token')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String]),
+    __metadata("design:returntype", void 0)
+], SettingsController.prototype, "removeFcmToken", null);
 __decorate([
     (0, common_1.Post)('users/me/avatar'),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {

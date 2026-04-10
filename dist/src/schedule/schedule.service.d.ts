@@ -1,12 +1,14 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
 import { ScheduleGeneratorService } from './schedule-generator.service';
+import { AuditService } from '../audit/audit.service';
 import { CreateScheduleDto } from './dto/schedule.dto';
 export declare class ScheduleService {
     private prisma;
     private familyService;
     private generator;
-    constructor(prisma: PrismaService, familyService: FamilyService, generator: ScheduleGeneratorService);
+    private audit;
+    constructor(prisma: PrismaService, familyService: FamilyService, generator: ScheduleGeneratorService, audit: AuditService);
     create(familyId: string, userId: string, dto: CreateScheduleDto): Promise<{
         schedule: {
             id: string;
@@ -15,6 +17,7 @@ export declare class ScheduleService {
             name: string;
             familyId: string;
             childId: string;
+            isActive: boolean;
             pattern: import("@prisma/client").$Enums.CustodyPattern;
             startDate: Date;
             durationDays: number;
@@ -22,7 +25,6 @@ export declare class ScheduleService {
             exchangeTime: string | null;
             parent1Id: string | null;
             parent2Id: string | null;
-            isActive: boolean;
         };
         eventsGenerated: number;
     }>;
@@ -45,6 +47,7 @@ export declare class ScheduleService {
         name: string;
         familyId: string;
         childId: string;
+        isActive: boolean;
         pattern: import("@prisma/client").$Enums.CustodyPattern;
         startDate: Date;
         durationDays: number;
@@ -52,7 +55,6 @@ export declare class ScheduleService {
         exchangeTime: string | null;
         parent1Id: string | null;
         parent2Id: string | null;
-        isActive: boolean;
     })[]>;
     getCalendar(familyId: string, userId: string, year: number, month: number): Promise<({
         child: {

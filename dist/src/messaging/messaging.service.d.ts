@@ -1,10 +1,12 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { SendMessageDto } from './dto/message.dto';
 export declare class MessagingService {
     private prisma;
     private familyService;
-    constructor(prisma: PrismaService, familyService: FamilyService);
+    private notifications;
+    constructor(prisma: PrismaService, familyService: FamilyService, notifications: NotificationsService);
     send(familyId: string, senderId: string, dto: SendMessageDto): Promise<{
         sender: {
             id: string;

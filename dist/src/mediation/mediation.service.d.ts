@@ -22,32 +22,32 @@ export declare class MediationService {
         };
     } & {
         id: string;
-        topic: string;
-        status: import("@prisma/client").$Enums.MediationStatus;
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
+        status: import("@prisma/client").$Enums.MediationStatus;
+        topic: string;
     }>;
     getSessions(familyId: string, userId: string): Promise<({
-        proposals: {
-            id: string;
-            status: import("@prisma/client").$Enums.ProposalStatus;
-            createdAt: Date;
-            sessionId: string;
-            proposedBy: string;
-            summary: string;
-            acceptedBy: string | null;
-        }[];
         _count: {
             messages: number;
         };
+        proposals: {
+            id: string;
+            createdAt: Date;
+            status: import("@prisma/client").$Enums.ProposalStatus;
+            sessionId: string;
+            summary: string;
+            proposedBy: string;
+            acceptedBy: string | null;
+        }[];
     } & {
         id: string;
-        topic: string;
-        status: import("@prisma/client").$Enums.MediationStatus;
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
+        status: import("@prisma/client").$Enums.MediationStatus;
+        topic: string;
     })[]>;
     getSession(familyId: string, sessionId: string, userId: string): Promise<{
         messages: ({
@@ -59,10 +59,10 @@ export declare class MediationService {
         } & {
             id: string;
             createdAt: Date;
-            sessionId: string;
             senderId: string | null;
             content: string;
             isAI: boolean;
+            sessionId: string;
         })[];
         proposals: ({
             proposer: {
@@ -77,20 +77,20 @@ export declare class MediationService {
             } | null;
         } & {
             id: string;
-            status: import("@prisma/client").$Enums.ProposalStatus;
             createdAt: Date;
+            status: import("@prisma/client").$Enums.ProposalStatus;
             sessionId: string;
-            proposedBy: string;
             summary: string;
+            proposedBy: string;
             acceptedBy: string | null;
         })[];
     } & {
         id: string;
-        topic: string;
-        status: import("@prisma/client").$Enums.MediationStatus;
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
+        status: import("@prisma/client").$Enums.MediationStatus;
+        topic: string;
     }>;
     sendMessage(familyId: string, sessionId: string, userId: string, dto: SendMessageDto): Promise<{
         sender: {
@@ -101,16 +101,14 @@ export declare class MediationService {
     } & {
         id: string;
         createdAt: Date;
-        sessionId: string;
         senderId: string | null;
         content: string;
         isAI: boolean;
+        sessionId: string;
     }>;
     askAI(familyId: string, sessionId: string, userId: string): Promise<{
         sender: {
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
             email: string;
             phone: string | null;
             icalFeedToken: string | null;
@@ -130,14 +128,17 @@ export declare class MediationService {
             outlookRefreshToken: string | null;
             outlookTokenExpiry: Date | null;
             outlookCalendarId: string | null;
+            fcmTokens: string[];
+            createdAt: Date;
+            updatedAt: Date;
         } | null;
     } & {
         id: string;
         createdAt: Date;
-        sessionId: string;
         senderId: string | null;
         content: string;
         isAI: boolean;
+        sessionId: string;
     }>;
     proposeResolution(familyId: string, sessionId: string, userId: string, dto: ProposeResolutionDto): Promise<{
         proposer: {
@@ -147,29 +148,29 @@ export declare class MediationService {
         };
     } & {
         id: string;
-        status: import("@prisma/client").$Enums.ProposalStatus;
         createdAt: Date;
+        status: import("@prisma/client").$Enums.ProposalStatus;
         sessionId: string;
-        proposedBy: string;
         summary: string;
+        proposedBy: string;
         acceptedBy: string | null;
     }>;
     respondProposal(familyId: string, sessionId: string, proposalId: string, userId: string, dto: RespondProposalDto): Promise<{
         id: string;
-        status: import("@prisma/client").$Enums.ProposalStatus;
         createdAt: Date;
+        status: import("@prisma/client").$Enums.ProposalStatus;
         sessionId: string;
-        proposedBy: string;
         summary: string;
+        proposedBy: string;
         acceptedBy: string | null;
     }>;
     escalate(familyId: string, sessionId: string, userId: string): Promise<{
         id: string;
-        topic: string;
-        status: import("@prisma/client").$Enums.MediationStatus;
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
+        status: import("@prisma/client").$Enums.MediationStatus;
+        topic: string;
     }>;
     getCourtReport(familyId: string, sessionId: string, userId: string): Promise<{
         session: {
@@ -182,10 +183,10 @@ export declare class MediationService {
             } & {
                 id: string;
                 createdAt: Date;
-                sessionId: string;
                 senderId: string | null;
                 content: string;
                 isAI: boolean;
+                sessionId: string;
             })[];
             proposals: ({
                 proposer: {
@@ -200,32 +201,32 @@ export declare class MediationService {
                 } | null;
             } & {
                 id: string;
-                status: import("@prisma/client").$Enums.ProposalStatus;
                 createdAt: Date;
+                status: import("@prisma/client").$Enums.ProposalStatus;
                 sessionId: string;
-                proposedBy: string;
                 summary: string;
+                proposedBy: string;
                 acceptedBy: string | null;
             })[];
         } & {
             id: string;
-            topic: string;
-            status: import("@prisma/client").$Enums.MediationStatus;
             createdAt: Date;
             updatedAt: Date;
             familyId: string;
+            status: import("@prisma/client").$Enums.MediationStatus;
+            topic: string;
         };
         chainMessages: {
             id: string;
             createdAt: Date;
             content: string;
+            contentHash: string;
+            previousHash: string;
+            isSystemMessage: boolean;
             sender: {
                 firstName: string;
                 lastName: string;
             };
-            contentHash: string;
-            previousHash: string;
-            isSystemMessage: boolean;
         }[];
         generatedAt: string;
     }>;
@@ -243,15 +244,15 @@ export declare class MediationService {
             lastName: string;
         };
         id: string;
-        createdAt: Date;
-        name: string;
         email: string;
         role: string;
-        sessionId: string;
-        token: string;
+        createdAt: Date;
+        name: string;
         expiresAt: Date;
-        revokedAt: Date | null;
+        token: string;
         invitedBy: string;
+        sessionId: string;
+        revokedAt: Date | null;
     }>;
     getInvites(familyId: string, sessionId: string, userId: string): Promise<({
         inviter: {
@@ -260,27 +261,27 @@ export declare class MediationService {
         };
     } & {
         id: string;
-        createdAt: Date;
-        name: string;
         email: string;
         role: string;
-        sessionId: string;
-        token: string;
+        createdAt: Date;
+        name: string;
         expiresAt: Date;
-        revokedAt: Date | null;
+        token: string;
         invitedBy: string;
+        sessionId: string;
+        revokedAt: Date | null;
     })[]>;
     revokeInvite(familyId: string, sessionId: string, inviteId: string, userId: string): Promise<{
         id: string;
-        createdAt: Date;
-        name: string;
         email: string;
         role: string;
-        sessionId: string;
-        token: string;
+        createdAt: Date;
+        name: string;
         expiresAt: Date;
-        revokedAt: Date | null;
+        token: string;
         invitedBy: string;
+        sessionId: string;
+        revokedAt: Date | null;
     }>;
     getSessionByToken(token: string): Promise<{
         mediator: {
@@ -298,10 +299,10 @@ export declare class MediationService {
             } & {
                 id: string;
                 createdAt: Date;
-                sessionId: string;
                 senderId: string | null;
                 content: string;
                 isAI: boolean;
+                sessionId: string;
             })[];
             proposals: ({
                 proposer: {
@@ -316,20 +317,20 @@ export declare class MediationService {
                 } | null;
             } & {
                 id: string;
-                status: import("@prisma/client").$Enums.ProposalStatus;
                 createdAt: Date;
+                status: import("@prisma/client").$Enums.ProposalStatus;
                 sessionId: string;
-                proposedBy: string;
                 summary: string;
+                proposedBy: string;
                 acceptedBy: string | null;
             })[];
         } & {
             id: string;
-            topic: string;
-            status: import("@prisma/client").$Enums.MediationStatus;
             createdAt: Date;
             updatedAt: Date;
             familyId: string;
+            status: import("@prisma/client").$Enums.MediationStatus;
+            topic: string;
         };
     }>;
 }
