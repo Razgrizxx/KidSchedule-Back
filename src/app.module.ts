@@ -31,7 +31,6 @@ import { HandoffsModule } from './handoffs/handoffs.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { EmergencyContactsModule } from './emergency-contacts/emergency-contacts.module';
 import { DocumentsModule } from './documents/documents.module';
-import { TravelModule } from './travel/travel.module';
 
 @Module({
   imports: [
@@ -67,7 +66,6 @@ import { TravelModule } from './travel/travel.module';
     DashboardModule,
     EmergencyContactsModule,
     DocumentsModule,
-    TravelModule,
   ],
 })
 export class AppModule {}

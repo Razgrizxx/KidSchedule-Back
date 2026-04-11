@@ -20,15 +20,19 @@ export declare class TravelController {
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
+        status: import("@prisma/client").$Enums.TravelNoticeStatus;
         childId: string | null;
-        notes: string | null;
         createdBy: string;
+        notes: string | null;
         destination: string;
         departureDate: Date;
         returnDate: Date;
         contactPhone: string | null;
         contactEmail: string | null;
         acknowledgedAt: Date | null;
+        rejectedBy: string | null;
+        rejectedAt: Date | null;
+        linkedEventId: string | null;
         acknowledgedBy: string | null;
     }>;
     findAll(familyId: string): Promise<({
@@ -51,18 +55,22 @@ export declare class TravelController {
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
+        status: import("@prisma/client").$Enums.TravelNoticeStatus;
         childId: string | null;
-        notes: string | null;
         createdBy: string;
+        notes: string | null;
         destination: string;
         departureDate: Date;
         returnDate: Date;
         contactPhone: string | null;
         contactEmail: string | null;
         acknowledgedAt: Date | null;
+        rejectedBy: string | null;
+        rejectedAt: Date | null;
+        linkedEventId: string | null;
         acknowledgedBy: string | null;
     })[]>;
-    acknowledge(user: {
+    accept(user: {
         id: string;
     }, familyId: string, id: string): Promise<{
         child: {
@@ -83,15 +91,55 @@ export declare class TravelController {
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
+        status: import("@prisma/client").$Enums.TravelNoticeStatus;
         childId: string | null;
-        notes: string | null;
         createdBy: string;
+        notes: string | null;
         destination: string;
         departureDate: Date;
         returnDate: Date;
         contactPhone: string | null;
         contactEmail: string | null;
         acknowledgedAt: Date | null;
+        rejectedBy: string | null;
+        rejectedAt: Date | null;
+        linkedEventId: string | null;
+        acknowledgedBy: string | null;
+    }>;
+    reject(user: {
+        id: string;
+    }, familyId: string, id: string): Promise<{
+        child: {
+            id: string;
+            firstName: string;
+            color: string;
+        } | null;
+        creator: {
+            id: string;
+            firstName: string;
+        };
+        acknowledger: {
+            id: string;
+            firstName: string;
+        } | null;
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        familyId: string;
+        status: import("@prisma/client").$Enums.TravelNoticeStatus;
+        childId: string | null;
+        createdBy: string;
+        notes: string | null;
+        destination: string;
+        departureDate: Date;
+        returnDate: Date;
+        contactPhone: string | null;
+        contactEmail: string | null;
+        acknowledgedAt: Date | null;
+        rejectedBy: string | null;
+        rejectedAt: Date | null;
+        linkedEventId: string | null;
         acknowledgedBy: string | null;
     }>;
     remove(user: {

@@ -18,8 +18,8 @@ export declare class MediatorTokenController {
             } & {
                 id: string;
                 createdAt: Date;
-                senderId: string | null;
                 content: string;
+                senderId: string | null;
                 isAI: boolean;
                 sessionId: string;
             })[];
@@ -38,8 +38,8 @@ export declare class MediatorTokenController {
                 id: string;
                 createdAt: Date;
                 status: import("@prisma/client").$Enums.ProposalStatus;
-                sessionId: string;
                 summary: string;
+                sessionId: string;
                 proposedBy: string;
                 acceptedBy: string | null;
             })[];

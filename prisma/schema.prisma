@@ -264,9 +264,6 @@ model User {
   recurringExpenses       RecurringExpense[] @relation("RecurringExpenseCreator")
   emergencyContacts       EmergencyContact[] @relation("EmergencyContactCreator")
   uploadedDocuments       FamilyDocument[]   @relation("DocumentUploader")
-  travelNoticesCreated    TravelNotice[]     @relation("TravelNoticeCreator")
-  travelNoticesAcknowledged TravelNotice[]   @relation("TravelNoticeAcknowledger")
-
   @@map("users")
 }
 
@@ -332,8 +329,6 @@ model Family {
   recurringExpenses  RecurringExpense[]
   emergencyContacts  EmergencyContact[]
   documents          FamilyDocument[]
-  travelNotices      TravelNotice[]
-
   @@map("families")
 }
 
@@ -399,8 +394,6 @@ model Child {
   emergencyContacts  EmergencyContact[]
   documents          FamilyDocument[]
   expenses           Expense[]
-  travelNotices      TravelNotice[]
-
   @@map("children")
 }
 
@@ -1139,35 +1132,6 @@ model FamilyDocument {
 
   @@index([familyId, category])
   @@map("family_documents")
-}
-
-// ─────────────────────────────────────────
-//  TRAVEL NOTICES
-// ─────────────────────────────────────────
-
-model TravelNotice {
-  id              String    @id @default(uuid())
-  familyId        String
-  createdBy       String
-  childId         String?             // optional — can cover all children
-  destination     String
-  departureDate   DateTime  @db.Date
-  returnDate      DateTime  @db.Date
-  contactPhone    String?             // emergency contact during travel
-  contactEmail    String?
-  notes           String?
-  acknowledgedBy  String?             // co-parent userId who acknowledged
-  acknowledgedAt  DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  family         Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  creator        User   @relation("TravelNoticeCreator",     fields: [createdBy],      references: [id])
-  acknowledger   User?  @relation("TravelNoticeAcknowledger", fields: [acknowledgedBy], references: [id])
-  child          Child? @relation(fields: [childId], references: [id])
-
-  @@index([familyId, departureDate(sort: Desc)])
-  @@map("travel_notices")
 }
 
 // ─────────────────────────────────────────

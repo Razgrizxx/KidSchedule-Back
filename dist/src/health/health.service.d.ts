@@ -20,9 +20,9 @@ export declare class HealthService {
             familyId: string;
             childId: string;
             type: import("@prisma/client").$Enums.DocumentType;
+            title: string;
             cloudinaryPublicId: string | null;
             uploadedBy: string;
-            title: string;
             recordId: string | null;
             fileUrl: string;
         })[];
@@ -43,10 +43,10 @@ export declare class HealthService {
         familyId: string;
         childId: string;
         createdBy: string;
-        date: Date;
-        type: import("@prisma/client").$Enums.HealthRecordType;
-        title: string;
         notes: string | null;
+        type: import("@prisma/client").$Enums.HealthRecordType;
+        date: Date;
+        title: string;
         doctorName: string | null;
     }>;
     getRecords(familyId: string, userId: string, childId?: string): Promise<({
@@ -62,9 +62,9 @@ export declare class HealthService {
             familyId: string;
             childId: string;
             type: import("@prisma/client").$Enums.DocumentType;
+            title: string;
             cloudinaryPublicId: string | null;
             uploadedBy: string;
-            title: string;
             recordId: string | null;
             fileUrl: string;
         })[];
@@ -85,10 +85,10 @@ export declare class HealthService {
         familyId: string;
         childId: string;
         createdBy: string;
-        date: Date;
-        type: import("@prisma/client").$Enums.HealthRecordType;
-        title: string;
         notes: string | null;
+        type: import("@prisma/client").$Enums.HealthRecordType;
+        date: Date;
+        title: string;
         doctorName: string | null;
     })[]>;
     getRecord(familyId: string, recordId: string, userId: string): Promise<{
@@ -104,9 +104,9 @@ export declare class HealthService {
             familyId: string;
             childId: string;
             type: import("@prisma/client").$Enums.DocumentType;
+            title: string;
             cloudinaryPublicId: string | null;
             uploadedBy: string;
-            title: string;
             recordId: string | null;
             fileUrl: string;
         })[];
@@ -127,10 +127,10 @@ export declare class HealthService {
         familyId: string;
         childId: string;
         createdBy: string;
-        date: Date;
-        type: import("@prisma/client").$Enums.HealthRecordType;
-        title: string;
         notes: string | null;
+        type: import("@prisma/client").$Enums.HealthRecordType;
+        date: Date;
+        title: string;
         doctorName: string | null;
     }>;
     updateRecord(familyId: string, recordId: string, userId: string, dto: UpdateHealthRecordDto): Promise<{
@@ -146,9 +146,9 @@ export declare class HealthService {
             familyId: string;
             childId: string;
             type: import("@prisma/client").$Enums.DocumentType;
+            title: string;
             cloudinaryPublicId: string | null;
             uploadedBy: string;
-            title: string;
             recordId: string | null;
             fileUrl: string;
         })[];
@@ -169,10 +169,10 @@ export declare class HealthService {
         familyId: string;
         childId: string;
         createdBy: string;
-        date: Date;
-        type: import("@prisma/client").$Enums.HealthRecordType;
-        title: string;
         notes: string | null;
+        type: import("@prisma/client").$Enums.HealthRecordType;
+        date: Date;
+        title: string;
         doctorName: string | null;
     }>;
     deleteRecord(familyId: string, recordId: string, userId: string): Promise<{
@@ -195,9 +195,9 @@ export declare class HealthService {
         familyId: string;
         childId: string;
         type: import("@prisma/client").$Enums.DocumentType;
+        title: string;
         cloudinaryPublicId: string | null;
         uploadedBy: string;
-        title: string;
         recordId: string | null;
         fileUrl: string;
     }>;
@@ -223,9 +223,9 @@ export declare class HealthService {
         familyId: string;
         childId: string;
         type: import("@prisma/client").$Enums.DocumentType;
+        title: string;
         cloudinaryPublicId: string | null;
         uploadedBy: string;
-        title: string;
         recordId: string | null;
         fileUrl: string;
     })[]>;
@@ -251,12 +251,12 @@ export declare class HealthService {
         familyId: string;
         childId: string;
         createdBy: string;
-        isActive: boolean;
-        startDate: Date;
         notes: string | null;
-        dosage: string;
+        startDate: Date;
+        isActive: boolean;
         frequency: string;
         endDate: Date | null;
+        dosage: string;
         prescribedBy: string | null;
     }>;
     getMedications(familyId: string, userId: string, childId?: string): Promise<({
@@ -278,12 +278,12 @@ export declare class HealthService {
         familyId: string;
         childId: string;
         createdBy: string;
-        isActive: boolean;
-        startDate: Date;
         notes: string | null;
-        dosage: string;
+        startDate: Date;
+        isActive: boolean;
         frequency: string;
         endDate: Date | null;
+        dosage: string;
         prescribedBy: string | null;
     })[]>;
     updateMedication(familyId: string, medicationId: string, userId: string, dto: UpdateMedicationDto): Promise<{
@@ -305,12 +305,12 @@ export declare class HealthService {
         familyId: string;
         childId: string;
         createdBy: string;
-        isActive: boolean;
-        startDate: Date;
         notes: string | null;
-        dosage: string;
+        startDate: Date;
+        isActive: boolean;
         frequency: string;
         endDate: Date | null;
+        dosage: string;
         prescribedBy: string | null;
     }>;
     deleteMedication(familyId: string, medicationId: string, userId: string): Promise<{
@@ -354,16 +354,16 @@ export declare class HealthService {
     getSummary(familyId: string, userId: string, childId: string): Promise<{
         recentRecords: {
             id: string;
-            date: Date;
             type: import("@prisma/client").$Enums.HealthRecordType;
+            date: Date;
             title: string;
             doctorName: string | null;
         }[];
         activeMedications: {
             id: string;
             name: string;
-            dosage: string;
             frequency: string;
+            dosage: string;
         }[];
         allergies: {
             id: string;

@@ -29,8 +29,11 @@ let TravelController = class TravelController {
     findAll(familyId) {
         return this.service.findAll(familyId);
     }
-    acknowledge(user, familyId, id) {
-        return this.service.acknowledge(familyId, id, user.id);
+    accept(user, familyId, id) {
+        return this.service.accept(familyId, id, user.id);
+    }
+    reject(user, familyId, id) {
+        return this.service.reject(familyId, id, user.id);
     }
     remove(user, familyId, id) {
         return this.service.remove(familyId, id, user.id);
@@ -61,7 +64,16 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String, String]),
     __metadata("design:returntype", void 0)
-], TravelController.prototype, "acknowledge", null);
+], TravelController.prototype, "accept", null);
+__decorate([
+    (0, common_1.Patch)(':id/reject'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('familyId')),
+    __param(2, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String]),
+    __metadata("design:returntype", void 0)
+], TravelController.prototype, "reject", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),

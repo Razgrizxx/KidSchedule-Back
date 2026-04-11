@@ -40,7 +40,6 @@ const handoffs_module_1 = require("./handoffs/handoffs.module");
 const dashboard_module_1 = require("./dashboard/dashboard.module");
 const emergency_contacts_module_1 = require("./emergency-contacts/emergency-contacts.module");
 const documents_module_1 = require("./documents/documents.module");
-const travel_module_1 = require("./travel/travel.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -79,7 +78,6 @@ exports.AppModule = AppModule = __decorate([
             dashboard_module_1.DashboardModule,
             emergency_contacts_module_1.EmergencyContactsModule,
             documents_module_1.DocumentsModule,
-            travel_module_1.TravelModule,
         ],
     })
 ], AppModule);

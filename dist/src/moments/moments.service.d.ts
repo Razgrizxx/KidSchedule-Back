@@ -12,48 +12,48 @@ export declare class MomentsService {
     private notifications;
     constructor(prisma: PrismaService, familyService: FamilyService, cloudinary: CloudinaryService, subService: SubscriptionService, notifications: NotificationsService);
     create(familyId: string, userId: string, dto: CreateMomentDto, file: Express.Multer.File): Promise<{
-        uploader: {
-            id: string;
-            firstName: string;
-            lastName: string;
-        };
         child: {
             id: string;
             firstName: string;
             color: string;
         } | null;
+        uploader: {
+            id: string;
+            firstName: string;
+            lastName: string;
+        };
     } & {
         id: string;
+        createdAt: Date;
+        familyId: string;
+        childId: string | null;
         caption: string | null;
         mediaUrl: string;
         cloudinaryPublicId: string | null;
         takenAt: Date | null;
-        createdAt: Date;
-        familyId: string;
         uploadedBy: string;
-        childId: string | null;
     }>;
     findAll(familyId: string, userId: string): Promise<({
-        uploader: {
-            id: string;
-            firstName: string;
-            lastName: string;
-        };
         child: {
             id: string;
             firstName: string;
             color: string;
         } | null;
+        uploader: {
+            id: string;
+            firstName: string;
+            lastName: string;
+        };
     } & {
         id: string;
+        createdAt: Date;
+        familyId: string;
+        childId: string | null;
         caption: string | null;
         mediaUrl: string;
         cloudinaryPublicId: string | null;
         takenAt: Date | null;
-        createdAt: Date;
-        familyId: string;
         uploadedBy: string;
-        childId: string | null;
     })[]>;
     remove(familyId: string, momentId: string, userId: string): Promise<{
         message: string;

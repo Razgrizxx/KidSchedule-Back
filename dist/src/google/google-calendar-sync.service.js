@@ -17,6 +17,7 @@ const config_1 = require("@nestjs/config");
 const googleapis_1 = require("googleapis");
 const prisma_service_1 = require("../prisma/prisma.service");
 const google_auth_service_1 = require("./google-auth.service");
+const chat_gateway_1 = require("../messaging/chat.gateway");
 const crypto_util_1 = require("./crypto.util");
 const EVENT_TYPE_COLOR = {
     CUSTODY_TIME: '9',
@@ -44,11 +45,13 @@ let GoogleCalendarSyncService = GoogleCalendarSyncService_1 = class GoogleCalend
     prisma;
     config;
     googleAuth;
+    chatGateway;
     logger = new common_1.Logger(GoogleCalendarSyncService_1.name);
-    constructor(prisma, config, googleAuth) {
+    constructor(prisma, config, googleAuth, chatGateway) {
         this.prisma = prisma;
         this.config = config;
         this.googleAuth = googleAuth;
+        this.chatGateway = chatGateway;
     }
     async handleEventUpsert(payload) {
         const { eventId, userId } = payload;
@@ -73,6 +76,12 @@ let GoogleCalendarSyncService = GoogleCalendarSyncService_1 = class GoogleCalend
         }
         catch (err) {
             this.logger.error(`Google Calendar sync failed for event ${eventId}`, err);
+            if (err?.response?.data?.error === 'invalid_grant' || err?.cause?.message === 'invalid_grant') {
+                this.chatGateway.emitToFamily(event.familyId, 'notification', {
+                    type: 'GOOGLE_SYNC_ERROR',
+                    payload: { userId },
+                });
+            }
         }
     }
     async syncAllEvents(familyId, userId, cleanup = false) {
@@ -332,6 +341,7 @@ exports.GoogleCalendarSyncService = GoogleCalendarSyncService = GoogleCalendarSy
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         config_1.ConfigService,
-        google_auth_service_1.GoogleAuthService])
+        google_auth_service_1.GoogleAuthService,
+        chat_gateway_1.ChatGateway])
 ], GoogleCalendarSyncService);
 //# sourceMappingURL=google-calendar-sync.service.js.map

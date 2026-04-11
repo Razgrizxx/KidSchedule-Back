@@ -9,9 +9,9 @@ export declare class FamilyController {
         members: {
             id: string;
             role: import("@prisma/client").$Enums.UserRole;
-            joinedAt: Date;
             familyId: string;
             userId: string;
+            joinedAt: Date;
         }[];
     } & {
         id: string;
@@ -20,17 +20,6 @@ export declare class FamilyController {
         name: string;
     }>;
     findAll(user: AuthUser): Promise<({
-        children: {
-            id: string;
-            firstName: string;
-            lastName: string;
-            avatarUrl: string | null;
-            createdAt: Date;
-            updatedAt: Date;
-            familyId: string;
-            dateOfBirth: Date;
-            color: string;
-        }[];
         members: ({
             user: {
                 id: string;
@@ -41,17 +30,10 @@ export declare class FamilyController {
         } & {
             id: string;
             role: import("@prisma/client").$Enums.UserRole;
-            joinedAt: Date;
             familyId: string;
             userId: string;
+            joinedAt: Date;
         })[];
-    } & {
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        name: string;
-    })[]>;
-    findOne(user: AuthUser, id: string): Promise<({
         children: {
             id: string;
             firstName: string;
@@ -63,6 +45,13 @@ export declare class FamilyController {
             dateOfBirth: Date;
             color: string;
         }[];
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+    })[]>;
+    findOne(user: AuthUser, id: string): Promise<({
         members: ({
             user: {
                 id: string;
@@ -74,10 +63,21 @@ export declare class FamilyController {
         } & {
             id: string;
             role: import("@prisma/client").$Enums.UserRole;
-            joinedAt: Date;
             familyId: string;
             userId: string;
+            joinedAt: Date;
         })[];
+        children: {
+            id: string;
+            firstName: string;
+            lastName: string;
+            avatarUrl: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+            familyId: string;
+            dateOfBirth: Date;
+            color: string;
+        }[];
     } & {
         id: string;
         createdAt: Date;

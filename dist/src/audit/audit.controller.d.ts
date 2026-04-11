@@ -28,13 +28,13 @@ export declare class AuditController {
             createdAt: Date;
             familyId: string;
             childId: string | null;
-            notes: string | null;
-            eventId: string | null;
             action: import("@prisma/client").$Enums.AuditAction;
-            actorId: string;
             affectedDate: Date | null;
             previousValue: string | null;
             newValue: string | null;
+            eventId: string | null;
+            notes: string | null;
+            actorId: string;
             changeRequestId: string | null;
         })[];
         nextCursor: string | null;

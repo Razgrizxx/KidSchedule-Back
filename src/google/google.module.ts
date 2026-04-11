@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { StripeModule } from '../stripe/stripe.module';
 import type { StringValue } from 'ms';
 import { PrismaModule } from '../prisma/prisma.module';
+import { MessagingModule } from '../messaging/messaging.module';
 import { GoogleAuthService } from './google-auth.service';
 import { GoogleCalendarSyncService } from './google-calendar-sync.service';
 import { GoogleController } from './google.controller';
@@ -12,6 +13,7 @@ import { GoogleController } from './google.controller';
   imports: [
     PrismaModule,
     StripeModule,
+    MessagingModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

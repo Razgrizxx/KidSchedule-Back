@@ -5,6 +5,7 @@ import { google } from 'googleapis';
 import { User, Event as PrismaEvent, EventChild, Child, CustodyEvent } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { GoogleAuthService } from './google-auth.service';
+import { ChatGateway } from '../messaging/chat.gateway';
 import { decrypt, encrypt } from './crypto.util';
 
 // ── Event payload emitted by EventsService ────────────────────────────────────
@@ -70,6 +71,7 @@ export class GoogleCalendarSyncService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly googleAuth: GoogleAuthService,
+    private readonly chatGateway: ChatGateway,
   ) {}
 
   // ── Live sync on individual event save ───────────────────────────────────
@@ -96,8 +98,15 @@ export class GoogleCalendarSyncService {
       if (newId && newId !== event.googleEventId) {
         await this.prisma.event.update({ where: { id: eventId }, data: { googleEventId: newId } });
       }
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error(`Google Calendar sync failed for event ${eventId}`, err);
+      // Notify the user via WebSocket if the token is expired/revoked
+      if (err?.response?.data?.error === 'invalid_grant' || err?.cause?.message === 'invalid_grant') {
+        this.chatGateway.emitToFamily(event.familyId, 'notification', {
+          type: 'GOOGLE_SYNC_ERROR',
+          payload: { userId },
+        });
+      }
     }
   }
 

@@ -32,11 +32,11 @@ export declare class HandoffsService {
         childId: string;
         notes: string | null;
         handoffAt: Date;
+        toParentId: string;
         location: string | null;
         confirmedBy: string | null;
         confirmedAt: Date | null;
         fromParentId: string;
-        toParentId: string;
     }>;
     findAll(familyId: string, userId: string, opts: {
         childId?: string;
@@ -70,11 +70,11 @@ export declare class HandoffsService {
             childId: string;
             notes: string | null;
             handoffAt: Date;
+            toParentId: string;
             location: string | null;
             confirmedBy: string | null;
             confirmedAt: Date | null;
             fromParentId: string;
-            toParentId: string;
         })[];
         nextCursor: string | null;
     }>;
@@ -103,11 +103,11 @@ export declare class HandoffsService {
         childId: string;
         notes: string | null;
         handoffAt: Date;
+        toParentId: string;
         location: string | null;
         confirmedBy: string | null;
         confirmedAt: Date | null;
         fromParentId: string;
-        toParentId: string;
     }>;
     remove(familyId: string, handoffId: string, userId: string): Promise<{
         message: string;

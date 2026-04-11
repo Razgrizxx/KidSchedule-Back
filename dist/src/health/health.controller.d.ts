@@ -7,16 +7,16 @@ export declare class HealthController {
     getSummary(user: AuthUser, familyId: string, childId: string): Promise<{
         recentRecords: {
             id: string;
-            date: Date;
             type: import("@prisma/client").$Enums.HealthRecordType;
+            date: Date;
             title: string;
             doctorName: string | null;
         }[];
         activeMedications: {
             id: string;
             name: string;
-            dosage: string;
             frequency: string;
+            dosage: string;
         }[];
         allergies: {
             id: string;
@@ -38,9 +38,9 @@ export declare class HealthController {
             familyId: string;
             childId: string;
             type: import("@prisma/client").$Enums.DocumentType;
+            title: string;
             cloudinaryPublicId: string | null;
             uploadedBy: string;
-            title: string;
             recordId: string | null;
             fileUrl: string;
         })[];
@@ -61,10 +61,10 @@ export declare class HealthController {
         familyId: string;
         childId: string;
         createdBy: string;
-        date: Date;
-        type: import("@prisma/client").$Enums.HealthRecordType;
-        title: string;
         notes: string | null;
+        type: import("@prisma/client").$Enums.HealthRecordType;
+        date: Date;
+        title: string;
         doctorName: string | null;
     }>;
     getRecords(user: AuthUser, familyId: string, childId?: string): Promise<({
@@ -80,9 +80,9 @@ export declare class HealthController {
             familyId: string;
             childId: string;
             type: import("@prisma/client").$Enums.DocumentType;
+            title: string;
             cloudinaryPublicId: string | null;
             uploadedBy: string;
-            title: string;
             recordId: string | null;
             fileUrl: string;
         })[];
@@ -103,10 +103,10 @@ export declare class HealthController {
         familyId: string;
         childId: string;
         createdBy: string;
-        date: Date;
-        type: import("@prisma/client").$Enums.HealthRecordType;
-        title: string;
         notes: string | null;
+        type: import("@prisma/client").$Enums.HealthRecordType;
+        date: Date;
+        title: string;
         doctorName: string | null;
     })[]>;
     getRecord(user: AuthUser, familyId: string, recordId: string): Promise<{
@@ -122,9 +122,9 @@ export declare class HealthController {
             familyId: string;
             childId: string;
             type: import("@prisma/client").$Enums.DocumentType;
+            title: string;
             cloudinaryPublicId: string | null;
             uploadedBy: string;
-            title: string;
             recordId: string | null;
             fileUrl: string;
         })[];
@@ -145,10 +145,10 @@ export declare class HealthController {
         familyId: string;
         childId: string;
         createdBy: string;
-        date: Date;
-        type: import("@prisma/client").$Enums.HealthRecordType;
-        title: string;
         notes: string | null;
+        type: import("@prisma/client").$Enums.HealthRecordType;
+        date: Date;
+        title: string;
         doctorName: string | null;
     }>;
     updateRecord(user: AuthUser, familyId: string, recordId: string, dto: UpdateHealthRecordDto): Promise<{
@@ -164,9 +164,9 @@ export declare class HealthController {
             familyId: string;
             childId: string;
             type: import("@prisma/client").$Enums.DocumentType;
+            title: string;
             cloudinaryPublicId: string | null;
             uploadedBy: string;
-            title: string;
             recordId: string | null;
             fileUrl: string;
         })[];
@@ -187,10 +187,10 @@ export declare class HealthController {
         familyId: string;
         childId: string;
         createdBy: string;
-        date: Date;
-        type: import("@prisma/client").$Enums.HealthRecordType;
-        title: string;
         notes: string | null;
+        type: import("@prisma/client").$Enums.HealthRecordType;
+        date: Date;
+        title: string;
         doctorName: string | null;
     }>;
     deleteRecord(user: AuthUser, familyId: string, recordId: string): Promise<{
@@ -213,9 +213,9 @@ export declare class HealthController {
         familyId: string;
         childId: string;
         type: import("@prisma/client").$Enums.DocumentType;
+        title: string;
         cloudinaryPublicId: string | null;
         uploadedBy: string;
-        title: string;
         recordId: string | null;
         fileUrl: string;
     }>;
@@ -241,9 +241,9 @@ export declare class HealthController {
         familyId: string;
         childId: string;
         type: import("@prisma/client").$Enums.DocumentType;
+        title: string;
         cloudinaryPublicId: string | null;
         uploadedBy: string;
-        title: string;
         recordId: string | null;
         fileUrl: string;
     })[]>;
@@ -269,12 +269,12 @@ export declare class HealthController {
         familyId: string;
         childId: string;
         createdBy: string;
-        isActive: boolean;
-        startDate: Date;
         notes: string | null;
-        dosage: string;
+        startDate: Date;
+        isActive: boolean;
         frequency: string;
         endDate: Date | null;
+        dosage: string;
         prescribedBy: string | null;
     }>;
     getMedications(user: AuthUser, familyId: string, childId?: string): Promise<({
@@ -296,12 +296,12 @@ export declare class HealthController {
         familyId: string;
         childId: string;
         createdBy: string;
-        isActive: boolean;
-        startDate: Date;
         notes: string | null;
-        dosage: string;
+        startDate: Date;
+        isActive: boolean;
         frequency: string;
         endDate: Date | null;
+        dosage: string;
         prescribedBy: string | null;
     })[]>;
     updateMedication(user: AuthUser, familyId: string, medicationId: string, dto: UpdateMedicationDto): Promise<{
@@ -323,12 +323,12 @@ export declare class HealthController {
         familyId: string;
         childId: string;
         createdBy: string;
-        isActive: boolean;
-        startDate: Date;
         notes: string | null;
-        dosage: string;
+        startDate: Date;
+        isActive: boolean;
         frequency: string;
         endDate: Date | null;
+        dosage: string;
         prescribedBy: string | null;
     }>;
     deleteMedication(user: AuthUser, familyId: string, medicationId: string): Promise<{

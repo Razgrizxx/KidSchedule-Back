@@ -12,21 +12,21 @@ export declare class RequestsController {
         };
     } & {
         id: string;
-        type: import("@prisma/client").$Enums.ChangeRequestType;
+        createdAt: Date;
+        updatedAt: Date;
+        familyId: string;
         status: import("@prisma/client").$Enums.ChangeRequestStatus;
+        childId: string | null;
+        requesterId: string;
+        responderId: string | null;
+        type: import("@prisma/client").$Enums.ChangeRequestType;
         originalDate: Date | null;
         requestedDate: Date;
         requestedDateTo: Date | null;
-        childId: string | null;
         reason: string | null;
         counterDate: Date | null;
         counterReason: string | null;
         resolvedAt: Date | null;
-        createdAt: Date;
-        updatedAt: Date;
-        familyId: string;
-        requesterId: string;
-        responderId: string | null;
     }>;
     findAll(user: AuthUser, familyId: string): Promise<({
         requester: {
@@ -41,38 +41,38 @@ export declare class RequestsController {
         } | null;
     } & {
         id: string;
-        type: import("@prisma/client").$Enums.ChangeRequestType;
+        createdAt: Date;
+        updatedAt: Date;
+        familyId: string;
         status: import("@prisma/client").$Enums.ChangeRequestStatus;
+        childId: string | null;
+        requesterId: string;
+        responderId: string | null;
+        type: import("@prisma/client").$Enums.ChangeRequestType;
         originalDate: Date | null;
         requestedDate: Date;
         requestedDateTo: Date | null;
-        childId: string | null;
         reason: string | null;
         counterDate: Date | null;
         counterReason: string | null;
         resolvedAt: Date | null;
-        createdAt: Date;
-        updatedAt: Date;
-        familyId: string;
-        requesterId: string;
-        responderId: string | null;
     })[]>;
     respond(user: AuthUser, familyId: string, requestId: string, dto: RespondChangeRequestDto): Promise<{
         id: string;
-        type: import("@prisma/client").$Enums.ChangeRequestType;
+        createdAt: Date;
+        updatedAt: Date;
+        familyId: string;
         status: import("@prisma/client").$Enums.ChangeRequestStatus;
+        childId: string | null;
+        requesterId: string;
+        responderId: string | null;
+        type: import("@prisma/client").$Enums.ChangeRequestType;
         originalDate: Date | null;
         requestedDate: Date;
         requestedDateTo: Date | null;
-        childId: string | null;
         reason: string | null;
         counterDate: Date | null;
         counterReason: string | null;
         resolvedAt: Date | null;
-        createdAt: Date;
-        updatedAt: Date;
-        familyId: string;
-        requesterId: string;
-        responderId: string | null;
     }>;
 }
