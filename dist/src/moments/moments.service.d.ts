@@ -1,6 +1,7 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateMomentDto } from './dto/moment.dto';
 import { SubscriptionService } from '../stripe/subscription.service';
 export declare class MomentsService {
@@ -8,7 +9,8 @@ export declare class MomentsService {
     private familyService;
     private cloudinary;
     private subService;
-    constructor(prisma: PrismaService, familyService: FamilyService, cloudinary: CloudinaryService, subService: SubscriptionService);
+    private notifications;
+    constructor(prisma: PrismaService, familyService: FamilyService, cloudinary: CloudinaryService, subService: SubscriptionService, notifications: NotificationsService);
     create(familyId: string, userId: string, dto: CreateMomentDto, file: Express.Multer.File): Promise<{
         child: {
             id: string;

@@ -6,7 +6,9 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -15,7 +17,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { mkdirSync } from 'fs';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import { ExpensesService } from './expenses.service';
 import { CreateExpenseDto, UpdateExpenseDto } from './dto/expense.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -79,6 +81,21 @@ export class ExpensesController {
   @Get()
   findAll(@CurrentUser() user: AuthUser, @Param('familyId') familyId: string) {
     return this.expensesService.findAll(familyId, user.id);
+  }
+
+  @Get('export-csv')
+  async exportCsv(
+    @CurrentUser() user: AuthUser,
+    @Param('familyId') familyId: string,
+    @Query('from') from: string | undefined,
+    @Query('to') to: string | undefined,
+    @Res() res: Response,
+  ) {
+    const csv = await this.expensesService.exportCsv(familyId, user.id, from, to);
+    const filename = `expenses-${familyId.slice(0, 8)}-${new Date().toISOString().slice(0, 10)}.csv`;
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send('\uFEFF' + csv); // BOM for Excel UTF-8 compatibility
   }
 
   @Get('balance')

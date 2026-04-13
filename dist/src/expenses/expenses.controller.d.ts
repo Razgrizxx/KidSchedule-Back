@@ -1,4 +1,4 @@
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import { ExpensesService } from './expenses.service';
 import { CreateExpenseDto, UpdateExpenseDto } from './dto/expense.dto';
 import { AuthUser } from '../common/types/auth-user';
@@ -20,13 +20,14 @@ export declare class ExpensesController {
         date: Date;
         description: string;
         category: import("@prisma/client").$Enums.ExpenseCategory;
-        amount: import("@prisma/client/runtime/client").Decimal;
+        amount: import("@prisma/client-runtime-utils").Decimal;
         currency: string;
         receiptUrl: string | null;
-        splitRatio: import("@prisma/client/runtime/client").Decimal;
+        splitRatio: import("@prisma/client-runtime-utils").Decimal;
         isSettled: boolean;
         settledAt: Date | null;
         paidBy: string;
+        recurringId: string | null;
     }>;
     findAll(user: AuthUser, familyId: string): Promise<({
         payer: {
@@ -43,14 +44,16 @@ export declare class ExpensesController {
         date: Date;
         description: string;
         category: import("@prisma/client").$Enums.ExpenseCategory;
-        amount: import("@prisma/client/runtime/client").Decimal;
+        amount: import("@prisma/client-runtime-utils").Decimal;
         currency: string;
         receiptUrl: string | null;
-        splitRatio: import("@prisma/client/runtime/client").Decimal;
+        splitRatio: import("@prisma/client-runtime-utils").Decimal;
         isSettled: boolean;
         settledAt: Date | null;
         paidBy: string;
+        recurringId: string | null;
     })[]>;
+    exportCsv(user: AuthUser, familyId: string, from: string | undefined, to: string | undefined, res: Response): Promise<void>;
     getBalance(user: AuthUser, familyId: string): Promise<{
         members: {
             user: {
@@ -81,13 +84,14 @@ export declare class ExpensesController {
         date: Date;
         description: string;
         category: import("@prisma/client").$Enums.ExpenseCategory;
-        amount: import("@prisma/client/runtime/client").Decimal;
+        amount: import("@prisma/client-runtime-utils").Decimal;
         currency: string;
         receiptUrl: string | null;
-        splitRatio: import("@prisma/client/runtime/client").Decimal;
+        splitRatio: import("@prisma/client-runtime-utils").Decimal;
         isSettled: boolean;
         settledAt: Date | null;
         paidBy: string;
+        recurringId: string | null;
     }>;
     update(user: AuthUser, familyId: string, expenseId: string, dto: UpdateExpenseDto): Promise<{
         id: string;
@@ -98,13 +102,14 @@ export declare class ExpensesController {
         date: Date;
         description: string;
         category: import("@prisma/client").$Enums.ExpenseCategory;
-        amount: import("@prisma/client/runtime/client").Decimal;
+        amount: import("@prisma/client-runtime-utils").Decimal;
         currency: string;
         receiptUrl: string | null;
-        splitRatio: import("@prisma/client/runtime/client").Decimal;
+        splitRatio: import("@prisma/client-runtime-utils").Decimal;
         isSettled: boolean;
         settledAt: Date | null;
         paidBy: string;
+        recurringId: string | null;
     }>;
     settle(user: AuthUser, familyId: string, expenseId: string): Promise<{
         payer: {
@@ -121,13 +126,14 @@ export declare class ExpensesController {
         date: Date;
         description: string;
         category: import("@prisma/client").$Enums.ExpenseCategory;
-        amount: import("@prisma/client/runtime/client").Decimal;
+        amount: import("@prisma/client-runtime-utils").Decimal;
         currency: string;
         receiptUrl: string | null;
-        splitRatio: import("@prisma/client/runtime/client").Decimal;
+        splitRatio: import("@prisma/client-runtime-utils").Decimal;
         isSettled: boolean;
         settledAt: Date | null;
         paidBy: string;
+        recurringId: string | null;
     }>;
     unsettle(user: AuthUser, familyId: string, expenseId: string): Promise<{
         payer: {
@@ -144,13 +150,14 @@ export declare class ExpensesController {
         date: Date;
         description: string;
         category: import("@prisma/client").$Enums.ExpenseCategory;
-        amount: import("@prisma/client/runtime/client").Decimal;
+        amount: import("@prisma/client-runtime-utils").Decimal;
         currency: string;
         receiptUrl: string | null;
-        splitRatio: import("@prisma/client/runtime/client").Decimal;
+        splitRatio: import("@prisma/client-runtime-utils").Decimal;
         isSettled: boolean;
         settledAt: Date | null;
         paidBy: string;
+        recurringId: string | null;
     }>;
     remove(user: AuthUser, familyId: string, expenseId: string): Promise<{
         message: string;

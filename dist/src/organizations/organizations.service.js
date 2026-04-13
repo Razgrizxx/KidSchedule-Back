@@ -62,6 +62,42 @@ let OrganizationsService = class OrganizationsService {
             return;
         throw new common_1.ForbiddenException('You do not have permission to perform this action');
     }
+    async createEntity(userId, dto) {
+        return this.prisma.orgEntity.create({
+            data: { ...dto, createdById: userId },
+        });
+    }
+    async findMyEntities(userId) {
+        const memberships = await this.prisma.orgMembership.findMany({
+            where: { userId, status: 'ACTIVE' },
+            select: { organization: { select: { entityId: true } } },
+        });
+        const entityIds = memberships
+            .map((m) => m.organization.entityId)
+            .filter((id) => !!id);
+        return this.prisma.orgEntity.findMany({
+            where: { OR: [{ createdById: userId }, { id: { in: entityIds } }] },
+            orderBy: { name: 'asc' },
+        });
+    }
+    async updateEntity(entityId, userId, dto) {
+        const entity = await this.prisma.orgEntity.findUnique({ where: { id: entityId } });
+        if (!entity)
+            throw new common_1.NotFoundException('Entity not found');
+        if (entity.createdById !== userId)
+            throw new common_1.ForbiddenException('Only the creator can edit this entity');
+        return this.prisma.orgEntity.update({ where: { id: entityId }, data: dto });
+    }
+    async deleteEntity(entityId, userId) {
+        const entity = await this.prisma.orgEntity.findUnique({ where: { id: entityId } });
+        if (!entity)
+            throw new common_1.NotFoundException('Entity not found');
+        if (entity.createdById !== userId)
+            throw new common_1.ForbiddenException('Only the creator can delete this entity');
+        await this.prisma.organization.updateMany({ where: { entityId }, data: { entityId: null } });
+        await this.prisma.orgEntity.delete({ where: { id: entityId } });
+        return { message: 'Entity deleted' };
+    }
     async create(userId, dto) {
         let inviteCode;
         do {
@@ -75,9 +111,11 @@ let OrganizationsService = class OrganizationsService {
                 adminId: userId,
                 description: dto.description,
                 isPublic: dto.isPublic ?? false,
+                entityId: dto.entityId ?? null,
                 members: { create: { userId, role: 'OWNER', status: 'ACTIVE' } },
             },
             include: {
+                entity: { select: { id: true, name: true, type: true } },
                 members: {
                     include: { user: { select: { id: true, firstName: true, lastName: true, email: true } } },
                 },
@@ -127,7 +165,12 @@ let OrganizationsService = class OrganizationsService {
         const memberships = await this.prisma.orgMembership.findMany({
             where: { userId },
             include: {
-                organization: { include: { _count: { select: { members: true, events: true } } } },
+                organization: {
+                    include: {
+                        entity: { select: { id: true, name: true, type: true } },
+                        _count: { select: { members: true, events: true } },
+                    },
+                },
             },
             orderBy: { joinedAt: 'desc' },
         });

@@ -3,6 +3,8 @@ import { FamilyService } from '../family/family.service';
 import { MessagingService } from '../messaging/messaging.service';
 import { ChatGateway } from '../messaging/chat.gateway';
 import { MailService } from '../mail/mail.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { AuditService } from '../audit/audit.service';
 import { CreateChangeRequestDto, RespondChangeRequestDto } from './dto/change-request.dto';
 export declare class RequestsService {
     private prisma;
@@ -10,7 +12,9 @@ export declare class RequestsService {
     private messaging;
     private chatGateway;
     private mail;
-    constructor(prisma: PrismaService, familyService: FamilyService, messaging: MessagingService, chatGateway: ChatGateway, mail: MailService);
+    private notifications;
+    private audit;
+    constructor(prisma: PrismaService, familyService: FamilyService, messaging: MessagingService, chatGateway: ChatGateway, mail: MailService, notifications: NotificationsService, audit: AuditService);
     create(familyId: string, requesterId: string, dto: CreateChangeRequestDto): Promise<{
         requester: {
             id: string;
@@ -24,6 +28,8 @@ export declare class RequestsService {
         familyId: string;
         status: import("@prisma/client").$Enums.ChangeRequestStatus;
         childId: string | null;
+        requesterId: string;
+        responderId: string | null;
         type: import("@prisma/client").$Enums.ChangeRequestType;
         originalDate: Date | null;
         requestedDate: Date;
@@ -32,8 +38,6 @@ export declare class RequestsService {
         counterDate: Date | null;
         counterReason: string | null;
         resolvedAt: Date | null;
-        requesterId: string;
-        responderId: string | null;
     }>;
     findAll(familyId: string, userId: string): Promise<({
         requester: {
@@ -53,6 +57,8 @@ export declare class RequestsService {
         familyId: string;
         status: import("@prisma/client").$Enums.ChangeRequestStatus;
         childId: string | null;
+        requesterId: string;
+        responderId: string | null;
         type: import("@prisma/client").$Enums.ChangeRequestType;
         originalDate: Date | null;
         requestedDate: Date;
@@ -61,8 +67,6 @@ export declare class RequestsService {
         counterDate: Date | null;
         counterReason: string | null;
         resolvedAt: Date | null;
-        requesterId: string;
-        responderId: string | null;
     })[]>;
     respond(familyId: string, requestId: string, responderId: string, dto: RespondChangeRequestDto): Promise<{
         id: string;
@@ -71,6 +75,8 @@ export declare class RequestsService {
         familyId: string;
         status: import("@prisma/client").$Enums.ChangeRequestStatus;
         childId: string | null;
+        requesterId: string;
+        responderId: string | null;
         type: import("@prisma/client").$Enums.ChangeRequestType;
         originalDate: Date | null;
         requestedDate: Date;
@@ -79,8 +85,6 @@ export declare class RequestsService {
         counterDate: Date | null;
         counterReason: string | null;
         resolvedAt: Date | null;
-        requesterId: string;
-        responderId: string | null;
     }>;
     private notifyCoParentByEmail;
     private applyCalendarOverrides;

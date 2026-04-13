@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -52,6 +53,24 @@ export class SettingsController {
     @Body() dto: UpdateUserSettingsDto,
   ) {
     return this.settingsService.updateUserSettings(user.id, dto);
+  }
+
+  @Post('users/me/fcm-token')
+  registerFcmToken(
+    @CurrentUser() user: AuthUser,
+    @Body('token') token: string,
+  ) {
+    if (!token) throw new BadRequestException('token is required');
+    return this.settingsService.registerFcmToken(user.id, token);
+  }
+
+  @Delete('users/me/fcm-token')
+  removeFcmToken(
+    @CurrentUser() user: AuthUser,
+    @Body('token') token: string,
+  ) {
+    if (!token) throw new BadRequestException('token is required');
+    return this.settingsService.removeFcmToken(user.id, token);
   }
 
   @Post('users/me/avatar')

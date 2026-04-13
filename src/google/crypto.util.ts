@@ -23,7 +23,11 @@ export function encrypt(text: string, secret: string): string {
  * Decrypts a string produced by encrypt().
  */
 export function decrypt(encryptedText: string, secret: string): string {
-  const [ivHex, encHex] = encryptedText.split(':');
+  const colonIndex = encryptedText.indexOf(':');
+  if (colonIndex === -1) throw new Error('Invalid encrypted token format: missing separator');
+  const ivHex = encryptedText.slice(0, colonIndex);
+  const encHex = encryptedText.slice(colonIndex + 1);
+  if (!ivHex || !encHex) throw new Error('Invalid encrypted token format: empty segment');
   const key = deriveKey(secret);
   const iv = Buffer.from(ivHex, 'hex');
   const encrypted = Buffer.from(encHex, 'hex');

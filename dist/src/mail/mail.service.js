@@ -98,32 +98,38 @@ let MailService = MailService_1 = class MailService {
         }
     }
     async sendWelcomeEmail(userEmail, firstName) {
-        await this.sendEmail(userEmail, '¡Bienvenido a KidSchedule!', buildWelcomeEmail({ firstName, appUrl: this.appUrl }));
+        await this.sendEmail(userEmail, 'Welcome to KidSchedule!', buildWelcomeEmail({ firstName, appUrl: this.appUrl }));
     }
     async sendPasswordReset(userEmail, firstName, resetUrl) {
-        await this.sendEmail(userEmail, 'Restablece tu contraseña de KidSchedule', buildPasswordResetEmail({ firstName, resetUrl }));
+        await this.sendEmail(userEmail, 'Reset your KidSchedule password', buildPasswordResetEmail({ firstName, resetUrl }));
+    }
+    async sendMediatorInvite(opts) {
+        await this.sendEmail(opts.toEmail, `${opts.inviterName} invited you as a mediator on KidSchedule`, `<p>Hello ${opts.recipientName},</p>
+       <p><strong>${opts.inviterName}</strong> invited you to participate as a mediator in the session <em>${opts.sessionTopic}</em>.</p>
+       <p><a href="${opts.viewUrl}" style="background:#7c3aed;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;">View session →</a></p>
+       <p style="color:#94a3b8;font-size:12px;">This link is personal. Do not share it with third parties.</p>`);
     }
     async sendChangeRequestNotification(opts) {
-        await this.sendEmail(opts.toEmail, `${opts.requesterName} te envió una solicitud de custodia`, buildChangeRequestEmail({ ...opts, appUrl: this.appUrl }));
+        await this.sendEmail(opts.toEmail, `${opts.requesterName} sent you a custody request`, buildChangeRequestEmail({ ...opts, appUrl: this.appUrl }));
     }
     async sendMediationAlert(opts) {
-        await this.sendEmail(opts.toEmail, `${opts.initiatorName} inició una sesión de mediación`, buildMediationAlertEmail({ ...opts, appUrl: this.appUrl }));
+        await this.sendEmail(opts.toEmail, `${opts.initiatorName} started a mediation session`, buildMediationAlertEmail({ ...opts, appUrl: this.appUrl }));
     }
     async sendCoParentInvitation(opts) {
         const joinUrl = `${this.appUrl}/#/join?token=${opts.token}`;
-        const childrenText = opts.childrenNames.length > 0 ? opts.childrenNames.join(', ') : 'tu/s hijo/s';
-        await this.sendEmail(opts.toEmail, `${opts.inviterName} te invitó a co-gestionar la custodia en KidSchedule`, buildCoParentEmail({ inviterName: opts.inviterName, familyName: opts.familyName, childrenText, joinUrl }));
+        const childrenText = opts.childrenNames.length > 0 ? opts.childrenNames.join(', ') : 'your child(ren)';
+        await this.sendEmail(opts.toEmail, `${opts.inviterName} invited you to co-manage custody on KidSchedule`, buildCoParentEmail({ inviterName: opts.inviterName, familyName: opts.familyName, childrenText, joinUrl }));
     }
     async sendCaregiverInvitation(opts) {
         const accessUrl = `${this.appUrl}/#/caregiver-access?token=${opts.inviteToken}`;
-        const childrenText = opts.childrenNames.length > 0 ? opts.childrenNames.join(', ') : 'un niño';
+        const childrenText = opts.childrenNames.length > 0 ? opts.childrenNames.join(', ') : 'a child';
         const permList = [
-            opts.permissions.canViewCalendar && 'Calendario de custodia',
-            opts.permissions.canViewHealthInfo && 'Información del niño',
-            opts.permissions.canViewEmergencyContacts && 'Contactos de emergencia',
-            opts.permissions.canViewAllergies && 'Alergias y notas médicas',
+            opts.permissions.canViewCalendar && 'Custody calendar',
+            opts.permissions.canViewHealthInfo && 'Child information',
+            opts.permissions.canViewEmergencyContacts && 'Emergency contacts',
+            opts.permissions.canViewAllergies && 'Allergies and medical notes',
         ].filter(Boolean);
-        await this.sendEmail(opts.toEmail, `${opts.inviterName} te otorgó acceso como cuidador en KidSchedule`, buildCaregiverEmail({
+        await this.sendEmail(opts.toEmail, `${opts.inviterName} granted you caregiver access on KidSchedule`, buildCaregiverEmail({
             caregiverName: opts.caregiverName,
             inviterName: opts.inviterName,
             familyName: opts.familyName,
@@ -134,14 +140,14 @@ let MailService = MailService_1 = class MailService {
     }
     async sendJoinRequest(opts) {
         const dashboardUrl = `${this.appUrl}/dashboard/organizations`;
-        await this.sendEmail(opts.adminEmail, `${opts.requesterName} quiere unirse a ${opts.orgName} en KidSchedule`, buildJoinRequestEmail({ ...opts, dashboardUrl }));
+        await this.sendEmail(opts.adminEmail, `${opts.requesterName} wants to join ${opts.orgName} on KidSchedule`, buildJoinRequestEmail({ ...opts, dashboardUrl }));
     }
     async sendMemberApproved(opts) {
         const orgUrl = `${this.appUrl}/dashboard/organizations`;
-        await this.sendEmail(opts.toEmail, `Tu solicitud para unirte a ${opts.orgName} fue aprobada`, buildMemberApprovedEmail({ ...opts, orgUrl }));
+        await this.sendEmail(opts.toEmail, `Your request to join ${opts.orgName} was approved`, buildMemberApprovedEmail({ ...opts, orgUrl }));
     }
     async sendOrgRosterInvite(opts) {
-        await this.sendEmail(opts.toEmail, `Ver el calendario de ${opts.orgName} en KidSchedule`, buildOrgRosterInviteEmail(opts));
+        await this.sendEmail(opts.toEmail, `View the ${opts.orgName} calendar on KidSchedule`, buildOrgRosterInviteEmail(opts));
     }
 };
 exports.MailService = MailService;
@@ -152,7 +158,7 @@ exports.MailService = MailService = MailService_1 = __decorate([
 function layout(opts) {
     const year = new Date().getFullYear();
     return `<!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:#f1f5f9;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;">
@@ -178,8 +184,8 @@ function layout(opts) {
         <!-- Footer -->
         <tr>
           <td style="padding:24px 40px;border-top:1px solid #f1f5f9;text-align:center;background:#f8fafc;">
-            <p style="margin:0 0 6px;color:#94a3b8;font-size:12px;">© ${year} KidSchedule · La agenda familiar que realmente funciona</p>
-            <p style="margin:0;color:#cbd5e1;font-size:11px;">Si no esperabas este email, puedes ignorarlo con seguridad.</p>
+            <p style="margin:0 0 6px;color:#94a3b8;font-size:12px;">© ${year} KidSchedule · The family schedule that actually works</p>
+            <p style="margin:0;color:#cbd5e1;font-size:11px;">If you were not expecting this email, you can safely ignore it.</p>
           </td>
         </tr>
 
@@ -201,23 +207,23 @@ function buildWelcomeEmail(p) {
         headerGradient: 'linear-gradient(135deg,#2dd4bf 0%,#0891b2 100%)',
         headerIcon: '📅',
         headerTitle: 'KidSchedule',
-        headerSubtitle: '¡Ya eres parte de la familia!',
+        headerSubtitle: "You're part of the family now!",
         body: `
-      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">¡Hola, ${p.firstName}!</h2>
+      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">Hello, ${p.firstName}!</h2>
       <p style="margin:0 0 16px;color:#475569;font-size:15px;line-height:1.7;">
-        Tu cuenta en <strong style="color:#0f172a;">KidSchedule</strong> está lista. Ahora podés
-        coordinar la custodia de tus hijos, gestionar gastos compartidos, comunicarte de forma segura
-        con tu co-padre/madre y mucho más.
+        Your <strong style="color:#0f172a;">KidSchedule</strong> account is ready. You can now
+        coordinate your children's custody schedule, manage shared expenses, communicate securely
+        with your co-parent, and much more.
       </p>
       <div style="background:#f0fdfa;border:1px solid #99f6e4;border-radius:12px;padding:20px 24px;margin:0 0 24px;">
-        <p style="margin:0 0 10px;color:#0d9488;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;">¿Por dónde empezar?</p>
+        <p style="margin:0 0 10px;color:#0d9488;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;">Where to start?</p>
         <ul style="margin:0;padding:0 0 0 16px;color:#475569;font-size:14px;line-height:2;">
-          <li>Configurá el calendario de custodia</li>
-          <li>Invitá a tu co-padre/madre</li>
-          <li>Registrá los gastos compartidos</li>
+          <li>Set up the custody calendar</li>
+          <li>Invite your co-parent</li>
+          <li>Log shared expenses</li>
         </ul>
       </div>
-      ${btn('Ir a KidSchedule →', p.appUrl, '#0d9488')}
+      ${btn('Go to KidSchedule →', p.appUrl, '#0d9488')}
     `,
     });
 }
@@ -226,45 +232,45 @@ function buildPasswordResetEmail(p) {
         headerGradient: 'linear-gradient(135deg,#6366f1 0%,#4f46e5 100%)',
         headerIcon: '🔐',
         headerTitle: 'KidSchedule',
-        headerSubtitle: 'Restablecer contraseña',
+        headerSubtitle: 'Reset your password',
         body: `
-      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">Hola, ${p.firstName}</h2>
+      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">Hello, ${p.firstName}</h2>
       <p style="margin:0 0 16px;color:#475569;font-size:15px;line-height:1.7;">
-        Recibimos una solicitud para restablecer la contraseña de tu cuenta en KidSchedule.
-        Hacé clic en el botón de abajo — el enlace expira en <strong>1 hora</strong>.
+        We received a request to reset the password for your KidSchedule account.
+        Click the button below — the link expires in <strong>1 hour</strong>.
       </p>
-      ${btn('Restablecer contraseña →', p.resetUrl, '#4f46e5')}
+      ${btn('Reset password →', p.resetUrl, '#4f46e5')}
       <p style="margin:16px 0 0;color:#94a3b8;font-size:13px;text-align:center;">
-        Si no solicitaste este cambio, ignorá este email. Tu contraseña no se modificará.
+        If you did not request this change, ignore this email. Your password will not be changed.
       </p>
     `,
     });
 }
 function buildChangeRequestEmail(p) {
     const typeLabels = {
-        SWAP: 'un intercambio de día',
-        EXTRA_DAY: 'un día extra',
-        EXTRA_DAYS: 'días extra',
+        SWAP: 'a day swap',
+        EXTRA_DAY: 'an extra day',
+        EXTRA_DAYS: 'extra days',
     };
-    const typeLabel = typeLabels[p.type] ?? 'una solicitud de custodia';
+    const typeLabel = typeLabels[p.type] ?? 'a custody request';
     const dashUrl = `${p.appUrl}/dashboard/requests`;
     return layout({
         headerGradient: 'linear-gradient(135deg,#f59e0b 0%,#d97706 100%)',
         headerIcon: '📋',
         headerTitle: 'KidSchedule',
-        headerSubtitle: 'Nueva solicitud de custodia',
+        headerSubtitle: 'New custody request',
         body: `
-      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">Tenés una nueva solicitud</h2>
+      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">You have a new request</h2>
       <p style="margin:0 0 20px;color:#475569;font-size:15px;line-height:1.7;">
-        <strong style="color:#0f172a;">${p.requesterName}</strong> te envió ${typeLabel}
-        para el <strong style="color:#0f172a;">${p.requestedDate}</strong>.
+        <strong style="color:#0f172a;">${p.requesterName}</strong> sent you ${typeLabel}
+        for <strong style="color:#0f172a;">${p.requestedDate}</strong>.
       </p>
       <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:16px 20px;margin:0 0 24px;">
         <p style="margin:0;color:#92400e;font-size:14px;line-height:1.6;">
-          Revisá la solicitud en la app y respondé para que ambos queden en sintonía.
+          Review the request in the app and respond so you are both on the same page.
         </p>
       </div>
-      ${btn('Ver solicitud →', dashUrl, '#d97706')}
+      ${btn('View request →', dashUrl, '#d97706')}
     `,
     });
 }
@@ -274,20 +280,20 @@ function buildMediationAlertEmail(p) {
         headerGradient: 'linear-gradient(135deg,#8b5cf6 0%,#7c3aed 100%)',
         headerIcon: '🤝',
         headerTitle: 'KidSchedule',
-        headerSubtitle: 'Sesión de mediación',
+        headerSubtitle: 'Mediation session',
         body: `
-      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">Hola, ${p.recipientName}</h2>
+      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">Hello, ${p.recipientName}</h2>
       <p style="margin:0 0 20px;color:#475569;font-size:15px;line-height:1.7;">
-        <strong style="color:#0f172a;">${p.initiatorName}</strong> inició una sesión de mediación
-        con el tema: <strong style="color:#0f172a;">${p.topic}</strong>.
+        <strong style="color:#0f172a;">${p.initiatorName}</strong> started a mediation session
+        on the topic: <strong style="color:#0f172a;">${p.topic}</strong>.
       </p>
       <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:12px;padding:16px 20px;margin:0 0 24px;">
         <p style="margin:0;color:#5b21b6;font-size:14px;line-height:1.6;">
-          La mediación asistida por IA de KidSchedule ayuda a resolver diferencias de forma
-          constructiva y centrada en el bienestar de tus hijos.
+          KidSchedule's AI-assisted mediation helps resolve differences constructively
+          and with your children's wellbeing at the center.
         </p>
       </div>
-      ${btn('Ver sesión de mediación →', mediationUrl, '#7c3aed')}
+      ${btn('View mediation session →', mediationUrl, '#7c3aed')}
     `,
     });
 }
@@ -296,48 +302,48 @@ function buildCoParentEmail(p) {
         headerGradient: 'linear-gradient(135deg,#2dd4bf 0%,#14b8a6 100%)',
         headerIcon: '📅',
         headerTitle: 'KidSchedule',
-        headerSubtitle: 'Invitación de co-padre/madre',
+        headerSubtitle: 'Co-parent invitation',
         body: `
-      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">Tienes una invitación</h2>
+      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">You have an invitation</h2>
       <p style="margin:0 0 20px;color:#475569;font-size:15px;line-height:1.7;">
-        <strong style="color:#0f172a;">${p.inviterName}</strong> te invitó a co-gestionar la custodia
-        de <strong style="color:#0f172a;">${p.childrenText}</strong> en la familia
-        <strong style="color:#0f172a;">${p.familyName}</strong>.
+        <strong style="color:#0f172a;">${p.inviterName}</strong> invited you to co-manage custody
+        of <strong style="color:#0f172a;">${p.childrenText}</strong> in the
+        <strong style="color:#0f172a;">${p.familyName}</strong> family.
       </p>
       <p style="margin:0 0 24px;color:#64748b;font-size:14px;line-height:1.7;">
-        Con KidSchedule podés coordinar el calendario de custodia, gestionar gastos compartidos,
-        comunicarte de forma segura y mucho más — todo en un mismo lugar.
+        With KidSchedule you can coordinate the custody calendar, manage shared expenses,
+        communicate securely, and much more — all in one place.
       </p>
-      ${btn('Unirse a KidSchedule →', p.joinUrl, '#14b8a6')}
-      <p style="margin:16px 0 0;color:#94a3b8;font-size:12px;text-align:center;">El enlace expira en 7 días.</p>
+      ${btn('Join KidSchedule →', p.joinUrl, '#14b8a6')}
+      <p style="margin:16px 0 0;color:#94a3b8;font-size:12px;text-align:center;">The link expires in 7 days.</p>
     `,
     });
 }
 function buildCaregiverEmail(p) {
     const permItems = p.permList.length > 0
         ? p.permList.map((perm) => `<li style="margin:4px 0;color:#475569;font-size:14px;">✓ ${perm}</li>`).join('')
-        : '<li style="margin:4px 0;color:#475569;font-size:14px;">Acceso básico al calendario</li>';
+        : '<li style="margin:4px 0;color:#475569;font-size:14px;">Basic calendar access</li>';
     return layout({
         headerGradient: 'linear-gradient(135deg,#a855f7 0%,#9333ea 100%)',
         headerIcon: '🛡️',
         headerTitle: 'KidSchedule',
-        headerSubtitle: 'Acceso como Cuidador',
+        headerSubtitle: 'Caregiver Access',
         body: `
-      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">Hola, ${p.caregiverName}</h2>
+      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">Hello, ${p.caregiverName}</h2>
       <p style="margin:0 0 20px;color:#475569;font-size:15px;line-height:1.7;">
-        <strong style="color:#0f172a;">${p.inviterName}</strong> te otorgó acceso como cuidador
-        para <strong style="color:#0f172a;">${p.childrenText}</strong> en la familia
-        <strong style="color:#0f172a;">${p.familyName}</strong>.
+        <strong style="color:#0f172a;">${p.inviterName}</strong> granted you caregiver access
+        for <strong style="color:#0f172a;">${p.childrenText}</strong> in the
+        <strong style="color:#0f172a;">${p.familyName}</strong> family.
       </p>
       <div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:12px;padding:20px 24px;margin:0 0 24px;">
-        <p style="margin:0 0 10px;color:#6b21a8;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;">Tu acceso incluye</p>
+        <p style="margin:0 0 10px;color:#6b21a8;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;">Your access includes</p>
         <ul style="margin:0;padding:0 0 0 4px;list-style:none;">${permItems}</ul>
       </div>
       <p style="margin:0 0 24px;color:#64748b;font-size:14px;line-height:1.7;">
-        Tu acceso es <strong>de solo lectura</strong>. No podrás realizar cambios en el calendario
-        ni acceder a información fuera de tus permisos.
+        Your access is <strong>read-only</strong>. You will not be able to make changes to the calendar
+        or access information outside your permissions.
       </p>
-      ${btn('Ver mi acceso →', p.accessUrl, '#9333ea')}
+      ${btn('View my access →', p.accessUrl, '#9333ea')}
     `,
     });
 }
@@ -346,17 +352,17 @@ function buildJoinRequestEmail(p) {
         headerGradient: 'linear-gradient(135deg,#f59e0b 0%,#d97706 100%)',
         headerIcon: '🏫',
         headerTitle: 'KidSchedule',
-        headerSubtitle: 'Solicitud de ingreso',
+        headerSubtitle: 'Join request',
         body: `
-      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">Hola, ${p.adminName}</h2>
+      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">Hello, ${p.adminName}</h2>
       <p style="margin:0 0 20px;color:#475569;font-size:15px;line-height:1.7;">
-        <strong style="color:#0f172a;">${p.requesterName}</strong> ha solicitado unirse a
-        <strong style="color:#0f172a;">${p.orgName}</strong> y está esperando tu aprobación.
+        <strong style="color:#0f172a;">${p.requesterName}</strong> has requested to join
+        <strong style="color:#0f172a;">${p.orgName}</strong> and is waiting for your approval.
       </p>
       <p style="margin:0 0 24px;color:#64748b;font-size:14px;line-height:1.7;">
-        Ingresá al panel de administración para aprobar o rechazar la solicitud.
+        Go to the admin panel to approve or reject the request.
       </p>
-      ${btn('Ver solicitudes pendientes →', p.dashboardUrl, '#d97706')}
+      ${btn('View pending requests →', p.dashboardUrl, '#d97706')}
     `,
     });
 }
@@ -365,14 +371,14 @@ function buildMemberApprovedEmail(p) {
         headerGradient: 'linear-gradient(135deg,#22c55e 0%,#16a34a 100%)',
         headerIcon: '✅',
         headerTitle: 'KidSchedule',
-        headerSubtitle: 'Solicitud aprobada',
+        headerSubtitle: 'Request approved',
         body: `
-      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">Hola, ${p.memberName}</h2>
+      <h2 style="margin:0 0 12px;color:#0f172a;font-size:22px;font-weight:800;">Hello, ${p.memberName}</h2>
       <p style="margin:0 0 24px;color:#475569;font-size:15px;line-height:1.7;">
-        Tu solicitud para unirte a <strong style="color:#0f172a;">${p.orgName}</strong> fue
-        <strong style="color:#16a34a;">aprobada</strong>. Ya tenés acceso completo al grupo.
+        Your request to join <strong style="color:#0f172a;">${p.orgName}</strong> has been
+        <strong style="color:#16a34a;">approved</strong>. You now have full access to the group.
       </p>
-      ${btn('Ver mi grupo →', p.orgUrl, '#16a34a')}
+      ${btn('View my group →', p.orgUrl, '#16a34a')}
     `,
     });
 }
@@ -381,21 +387,21 @@ function buildOrgRosterInviteEmail(p) {
         headerGradient: 'linear-gradient(135deg,#7c3aed,#a855f7)',
         headerIcon: '📅',
         headerTitle: p.orgName,
-        headerSubtitle: `Calendario de ${p.childName}`,
+        headerSubtitle: `${p.childName}'s calendar`,
         body: `
       <p style="margin:0 0 16px;color:#475569;font-size:15px;line-height:1.7;">
-        Hola <strong style="color:#0f172a;">${p.parentName}</strong>,
+        Hello <strong style="color:#0f172a;">${p.parentName}</strong>,
       </p>
       <p style="margin:0 0 16px;color:#475569;font-size:15px;line-height:1.7;">
-        Se te ha dado acceso de solo lectura al calendario de <strong style="color:#0f172a;">${p.orgName}</strong>
-        para que puedas ver los eventos relacionados con <strong style="color:#0f172a;">${p.childName}</strong>.
+        You have been given read-only access to the <strong style="color:#0f172a;">${p.orgName}</strong>
+        calendar so you can view events related to <strong style="color:#0f172a;">${p.childName}</strong>.
       </p>
       <p style="margin:0 0 24px;color:#475569;font-size:15px;line-height:1.7;">
-        No necesitás crear una cuenta — simplemente hacé click en el botón de abajo para ver el calendario.
+        No account needed — simply click the button below to view the calendar.
       </p>
-      ${btn('Ver calendario →', p.portalUrl, '#7c3aed')}
+      ${btn('View calendar →', p.portalUrl, '#7c3aed')}
       <p style="margin:16px 0 0;color:#94a3b8;font-size:12px;line-height:1.6;">
-        Este link es personal. No lo compartas con terceros.
+        This link is personal. Do not share it with third parties.
       </p>
     `,
     });

@@ -34,6 +34,18 @@ let OrganizationsController = class OrganizationsController {
     findMine(user) {
         return this.orgsService.findMine(user.id);
     }
+    findMyEntities(user) {
+        return this.orgsService.findMyEntities(user.id);
+    }
+    createEntity(user, dto) {
+        return this.orgsService.createEntity(user.id, dto);
+    }
+    updateEntity(user, entityId, dto) {
+        return this.orgsService.updateEntity(entityId, user.id, dto);
+    }
+    deleteEntity(user, entityId) {
+        return this.orgsService.deleteEntity(entityId, user.id);
+    }
     findAllMyEvents(user, month) {
         return this.orgsService.findAllMyOrgEvents(user.id, month);
     }
@@ -166,6 +178,38 @@ __decorate([
     __metadata("design:paramtypes", [auth_user_1.AuthUser]),
     __metadata("design:returntype", void 0)
 ], OrganizationsController.prototype, "findMine", null);
+__decorate([
+    (0, common_1.Get)('entities/mine'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser]),
+    __metadata("design:returntype", void 0)
+], OrganizationsController.prototype, "findMyEntities", null);
+__decorate([
+    (0, common_1.Post)('entities'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, organization_dto_1.CreateOrgEntityDto]),
+    __metadata("design:returntype", void 0)
+], OrganizationsController.prototype, "createEntity", null);
+__decorate([
+    (0, common_1.Patch)('entities/:entityId'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('entityId')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, organization_dto_1.CreateOrgEntityDto]),
+    __metadata("design:returntype", void 0)
+], OrganizationsController.prototype, "updateEntity", null);
+__decorate([
+    (0, common_1.Delete)('entities/:entityId'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('entityId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String]),
+    __metadata("design:returntype", void 0)
+], OrganizationsController.prototype, "deleteEntity", null);
 __decorate([
     (0, common_1.Get)('events'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),

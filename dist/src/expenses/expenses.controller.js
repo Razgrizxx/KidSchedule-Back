@@ -44,6 +44,13 @@ let ExpensesController = class ExpensesController {
     findAll(user, familyId) {
         return this.expensesService.findAll(familyId, user.id);
     }
+    async exportCsv(user, familyId, from, to, res) {
+        const csv = await this.expensesService.exportCsv(familyId, user.id, from, to);
+        const filename = `expenses-${familyId.slice(0, 8)}-${new Date().toISOString().slice(0, 10)}.csv`;
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send('\uFEFF' + csv);
+    }
     getBalance(user, familyId) {
         return this.expensesService.getBalance(familyId, user.id);
     }
@@ -114,6 +121,17 @@ __decorate([
     __metadata("design:paramtypes", [auth_user_1.AuthUser, String]),
     __metadata("design:returntype", void 0)
 ], ExpensesController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)('export-csv'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('familyId')),
+    __param(2, (0, common_1.Query)('from')),
+    __param(3, (0, common_1.Query)('to')),
+    __param(4, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String, Object, Object, Object]),
+    __metadata("design:returntype", Promise)
+], ExpensesController.prototype, "exportCsv", null);
 __decorate([
     (0, common_1.Get)('balance'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),

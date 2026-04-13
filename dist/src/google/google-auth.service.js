@@ -64,6 +64,11 @@ let GoogleAuthService = class GoogleAuthService {
                 }),
             },
         });
+        const members = await this.prisma.familyMember.findMany({
+            where: { userId },
+            select: { familyId: true },
+        });
+        return { familyIds: members.map((m) => m.familyId) };
     }
     async disconnect(userId) {
         await this.prisma.user.update({

@@ -1,5 +1,5 @@
 import { MediationService } from './mediation.service';
-import { CreateSessionDto, SendMessageDto, ProposeResolutionDto, RespondProposalDto } from './dto/mediation.dto';
+import { CreateSessionDto, SendMessageDto, ProposeResolutionDto, RespondProposalDto, InviteMediatorDto } from './dto/mediation.dto';
 import { AuthUser } from '../common/types/auth-user';
 export declare class MediationController {
     private mediationService;
@@ -32,8 +32,8 @@ export declare class MediationController {
             id: string;
             createdAt: Date;
             status: import("@prisma/client").$Enums.ProposalStatus;
-            sessionId: string;
             summary: string;
+            sessionId: string;
             proposedBy: string;
             acceptedBy: string | null;
         }[];
@@ -55,8 +55,8 @@ export declare class MediationController {
         } & {
             id: string;
             createdAt: Date;
-            senderId: string | null;
             content: string;
+            senderId: string | null;
             isAI: boolean;
             sessionId: string;
         })[];
@@ -75,8 +75,8 @@ export declare class MediationController {
             id: string;
             createdAt: Date;
             status: import("@prisma/client").$Enums.ProposalStatus;
-            sessionId: string;
             summary: string;
+            sessionId: string;
             proposedBy: string;
             acceptedBy: string | null;
         })[];
@@ -97,8 +97,8 @@ export declare class MediationController {
     } & {
         id: string;
         createdAt: Date;
-        senderId: string | null;
         content: string;
+        senderId: string | null;
         isAI: boolean;
         sessionId: string;
     }>;
@@ -107,6 +107,7 @@ export declare class MediationController {
             id: string;
             email: string;
             phone: string | null;
+            icalFeedToken: string | null;
             firstName: string;
             lastName: string;
             passwordHash: string;
@@ -119,14 +120,19 @@ export declare class MediationController {
             googleAccessToken: string | null;
             googleTokenExpiry: Date | null;
             googleCalendarId: string | null;
+            outlookAccessToken: string | null;
+            outlookRefreshToken: string | null;
+            outlookTokenExpiry: Date | null;
+            outlookCalendarId: string | null;
+            fcmTokens: string[];
             createdAt: Date;
             updatedAt: Date;
         } | null;
     } & {
         id: string;
         createdAt: Date;
-        senderId: string | null;
         content: string;
+        senderId: string | null;
         isAI: boolean;
         sessionId: string;
     }>;
@@ -140,8 +146,8 @@ export declare class MediationController {
         id: string;
         createdAt: Date;
         status: import("@prisma/client").$Enums.ProposalStatus;
-        sessionId: string;
         summary: string;
+        sessionId: string;
         proposedBy: string;
         acceptedBy: string | null;
     }>;
@@ -149,8 +155,8 @@ export declare class MediationController {
         id: string;
         createdAt: Date;
         status: import("@prisma/client").$Enums.ProposalStatus;
-        sessionId: string;
         summary: string;
+        sessionId: string;
         proposedBy: string;
         acceptedBy: string | null;
     }>;
@@ -173,8 +179,8 @@ export declare class MediationController {
             } & {
                 id: string;
                 createdAt: Date;
-                senderId: string | null;
                 content: string;
+                senderId: string | null;
                 isAI: boolean;
                 sessionId: string;
             })[];
@@ -193,8 +199,8 @@ export declare class MediationController {
                 id: string;
                 createdAt: Date;
                 status: import("@prisma/client").$Enums.ProposalStatus;
-                sessionId: string;
                 summary: string;
+                sessionId: string;
                 proposedBy: string;
                 acceptedBy: string | null;
             })[];
@@ -219,5 +225,51 @@ export declare class MediationController {
             };
         }[];
         generatedAt: string;
+    }>;
+    inviteMediator(user: AuthUser, familyId: string, sessionId: string, dto: InviteMediatorDto): Promise<{
+        viewUrl: string;
+        inviter: {
+            firstName: string;
+            lastName: string;
+        };
+        id: string;
+        email: string;
+        role: string;
+        createdAt: Date;
+        name: string;
+        token: string;
+        expiresAt: Date;
+        invitedBy: string;
+        sessionId: string;
+        revokedAt: Date | null;
+    }>;
+    getInvites(user: AuthUser, familyId: string, sessionId: string): Promise<({
+        inviter: {
+            firstName: string;
+            lastName: string;
+        };
+    } & {
+        id: string;
+        email: string;
+        role: string;
+        createdAt: Date;
+        name: string;
+        token: string;
+        expiresAt: Date;
+        invitedBy: string;
+        sessionId: string;
+        revokedAt: Date | null;
+    })[]>;
+    revokeInvite(user: AuthUser, familyId: string, sessionId: string, inviteId: string): Promise<{
+        id: string;
+        email: string;
+        role: string;
+        createdAt: Date;
+        name: string;
+        token: string;
+        expiresAt: Date;
+        invitedBy: string;
+        sessionId: string;
+        revokedAt: Date | null;
     }>;
 }

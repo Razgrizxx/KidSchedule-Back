@@ -53,6 +53,32 @@ let SettingsService = class SettingsService {
             update: dto,
         });
     }
+    async registerFcmToken(userId, token) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { fcmTokens: true },
+        });
+        if (user && !user.fcmTokens.includes(token)) {
+            await this.prisma.user.update({
+                where: { id: userId },
+                data: { fcmTokens: { push: token } },
+            });
+        }
+        return { ok: true };
+    }
+    async removeFcmToken(userId, token) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { fcmTokens: true },
+        });
+        if (user) {
+            await this.prisma.user.update({
+                where: { id: userId },
+                data: { fcmTokens: { set: user.fcmTokens.filter((t) => t !== token) } },
+            });
+        }
+        return { ok: true };
+    }
     async uploadAvatar(userId, file) {
         const user = await this.prisma.user.findUnique({
             where: { id: userId },

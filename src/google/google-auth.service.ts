@@ -50,7 +50,7 @@ export class GoogleAuthService {
 
   // ── Step 3: Exchange code for tokens and persist them ───────────────────
 
-  async handleCallback(code: string, userId: string): Promise<void> {
+  async handleCallback(code: string, userId: string): Promise<{ familyIds: string[] }> {
     const oauth2Client = this.createOAuth2Client();
     const { tokens } = await oauth2Client.getToken(code);
 
@@ -71,6 +71,13 @@ export class GoogleAuthService {
         }),
       },
     });
+
+    const members = await this.prisma.familyMember.findMany({
+      where: { userId },
+      select: { familyId: true },
+    });
+
+    return { familyIds: members.map((m) => m.familyId) };
   }
 
   // ── Disconnect ───────────────────────────────────────────────────────────

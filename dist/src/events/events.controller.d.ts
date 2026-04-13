@@ -27,21 +27,22 @@ export declare class EventsController {
             lastName: string;
         } | null;
     } & {
-        repeat: import("@prisma/client").$Enums.RepeatPattern;
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        repeat: import("@prisma/client").$Enums.RepeatPattern;
         familyId: string;
         visibility: import("@prisma/client").$Enums.EventVisibility;
         createdBy: string;
         caregiverId: string | null;
-        googleEventId: string | null;
+        notes: string | null;
         type: import("@prisma/client").$Enums.EventType;
+        googleEventId: string | null;
+        outlookEventId: string | null;
         title: string;
         startAt: Date;
         endAt: Date;
         allDay: boolean;
-        notes: string | null;
         assignedToId: string | null;
     }>;
     findAll(user: AuthUser, familyId: string, month?: string): Promise<({
@@ -67,21 +68,22 @@ export declare class EventsController {
             lastName: string;
         } | null;
     } & {
-        repeat: import("@prisma/client").$Enums.RepeatPattern;
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        repeat: import("@prisma/client").$Enums.RepeatPattern;
         familyId: string;
         visibility: import("@prisma/client").$Enums.EventVisibility;
         createdBy: string;
         caregiverId: string | null;
-        googleEventId: string | null;
+        notes: string | null;
         type: import("@prisma/client").$Enums.EventType;
+        googleEventId: string | null;
+        outlookEventId: string | null;
         title: string;
         startAt: Date;
         endAt: Date;
         allDay: boolean;
-        notes: string | null;
         assignedToId: string | null;
     })[]>;
     update(user: AuthUser, familyId: string, eventId: string, dto: UpdateEventDto): Promise<{
@@ -103,31 +105,26 @@ export declare class EventsController {
             lastName: string;
         } | null;
     } & {
-        repeat: import("@prisma/client").$Enums.RepeatPattern;
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        repeat: import("@prisma/client").$Enums.RepeatPattern;
         familyId: string;
         visibility: import("@prisma/client").$Enums.EventVisibility;
         createdBy: string;
         caregiverId: string | null;
-        googleEventId: string | null;
+        notes: string | null;
         type: import("@prisma/client").$Enums.EventType;
+        googleEventId: string | null;
+        outlookEventId: string | null;
         title: string;
         startAt: Date;
         endAt: Date;
         allDay: boolean;
-        notes: string | null;
         assignedToId: string | null;
     }>;
-    getHolidays(user: AuthUser, familyId: string, yearStr?: string, country?: string): Promise<{
-        isTransitionDay: boolean;
-        id: string;
-        date: string;
-        name: string;
-        country: "AR" | "US";
-        category: "NATIONAL" | "SCHOOL";
-    }[]>;
+    getHolidays(user: AuthUser, familyId: string, yearStr?: string, country?: string): Promise<import("./holidays.data").HolidayEntry[]>;
+    extractFromImage(user: AuthUser, familyId: string, file: Express.Multer.File): Promise<any[]>;
     bulkCreate(user: AuthUser, familyId: string, dto: BulkImportDto): Promise<{
         created: number;
         skipped: number;

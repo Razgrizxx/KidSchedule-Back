@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const blog_service_1 = require("./blog.service");
 const post_dto_1 = require("./dto/post.dto");
 const jwt_auth_guard_1 = require("../common/guards/jwt-auth.guard");
+const admin_guard_1 = require("../common/guards/admin.guard");
 let BlogController = class BlogController {
     blogService;
     constructor(blogService) {
@@ -31,6 +32,9 @@ let BlogController = class BlogController {
     async findRelated(slug) {
         const post = await this.blogService.findBySlug(slug);
         return this.blogService.findRelated(slug, post.category);
+    }
+    findAllAdmin() {
+        return this.blogService.findAllAdmin();
     }
     create(dto) {
         return this.blogService.create(dto);
@@ -64,8 +68,15 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], BlogController.prototype, "findRelated", null);
 __decorate([
+    (0, common_1.Get)('admin/all'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, admin_guard_1.AdminGuard),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], BlogController.prototype, "findAllAdmin", null);
+__decorate([
     (0, common_1.Post)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, admin_guard_1.AdminGuard),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [post_dto_1.CreatePostDto]),
@@ -73,7 +84,7 @@ __decorate([
 ], BlogController.prototype, "create", null);
 __decorate([
     (0, common_1.Patch)(':slug'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, admin_guard_1.AdminGuard),
     __param(0, (0, common_1.Param)('slug')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -82,7 +93,7 @@ __decorate([
 ], BlogController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':slug'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, admin_guard_1.AdminGuard),
     __param(0, (0, common_1.Param)('slug')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),

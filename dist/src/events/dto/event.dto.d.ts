@@ -19,6 +19,9 @@ export declare class BulkImportItemDto {
     title: string;
     date: string;
     type: string;
+    startTime?: string;
+    endTime?: string;
+    notes?: string;
 }
 export declare class BulkImportDto {
     events: BulkImportItemDto[];

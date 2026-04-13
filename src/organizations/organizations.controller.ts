@@ -18,6 +18,7 @@ import {
   CreateAnnouncementDto,
   CreateCustomRoleDto,
   CreateOrgDto,
+  CreateOrgEntityDto,
   CreateOrgEventDto,
   CreateOrgRosterDto,
   CreateVenueDto,
@@ -53,6 +54,32 @@ export class OrganizationsController {
   @Get('mine')
   findMine(@CurrentUser() user: AuthUser) {
     return this.orgsService.findMine(user.id);
+  }
+
+  // ── Entities ───────────────────────────────────────────────────────────────
+
+  @Get('entities/mine')
+  findMyEntities(@CurrentUser() user: AuthUser) {
+    return this.orgsService.findMyEntities(user.id);
+  }
+
+  @Post('entities')
+  createEntity(@CurrentUser() user: AuthUser, @Body() dto: CreateOrgEntityDto) {
+    return this.orgsService.createEntity(user.id, dto);
+  }
+
+  @Patch('entities/:entityId')
+  updateEntity(
+    @CurrentUser() user: AuthUser,
+    @Param('entityId') entityId: string,
+    @Body() dto: CreateOrgEntityDto,
+  ) {
+    return this.orgsService.updateEntity(entityId, user.id, dto);
+  }
+
+  @Delete('entities/:entityId')
+  deleteEntity(@CurrentUser() user: AuthUser, @Param('entityId') entityId: string) {
+    return this.orgsService.deleteEntity(entityId, user.id);
   }
 
   @Get('events')

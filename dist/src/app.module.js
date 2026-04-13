@@ -26,9 +26,20 @@ const blog_module_1 = require("./blog/blog.module");
 const caregiver_portal_module_1 = require("./caregiver-portal/caregiver-portal.module");
 const events_module_1 = require("./events/events.module");
 const google_module_1 = require("./google/google.module");
+const outlook_module_1 = require("./outlook/outlook.module");
+const ical_module_1 = require("./ical/ical.module");
+const ai_module_1 = require("./ai/ai.module");
 const mediation_module_1 = require("./mediation/mediation.module");
 const organizations_module_1 = require("./organizations/organizations.module");
 const stripe_module_1 = require("./stripe/stripe.module");
+const health_module_1 = require("./health/health.module");
+const reports_module_1 = require("./reports/reports.module");
+const notifications_module_1 = require("./notifications/notifications.module");
+const audit_module_1 = require("./audit/audit.module");
+const handoffs_module_1 = require("./handoffs/handoffs.module");
+const dashboard_module_1 = require("./dashboard/dashboard.module");
+const emergency_contacts_module_1 = require("./emergency-contacts/emergency-contacts.module");
+const documents_module_1 = require("./documents/documents.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -37,6 +48,8 @@ exports.AppModule = AppModule = __decorate([
         imports: [
             config_1.ConfigModule.forRoot({ isGlobal: true }),
             event_emitter_1.EventEmitterModule.forRoot(),
+            notifications_module_1.NotificationsModule,
+            audit_module_1.AuditModule,
             mail_module_1.MailModule,
             prisma_module_1.PrismaModule,
             auth_module_1.AuthModule,
@@ -53,9 +66,18 @@ exports.AppModule = AppModule = __decorate([
             caregiver_portal_module_1.CaregiverPortalModule,
             events_module_1.EventsModule,
             google_module_1.GoogleModule,
+            outlook_module_1.OutlookModule,
+            ical_module_1.IcalModule,
+            ai_module_1.AiModule,
             mediation_module_1.MediationModule,
             organizations_module_1.OrganizationsModule,
             stripe_module_1.StripeModule,
+            health_module_1.HealthModule,
+            reports_module_1.ReportsModule,
+            handoffs_module_1.HandoffsModule,
+            dashboard_module_1.DashboardModule,
+            emergency_contacts_module_1.EmergencyContactsModule,
+            documents_module_1.DocumentsModule,
         ],
     })
 ], AppModule);

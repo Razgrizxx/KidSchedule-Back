@@ -10,8 +10,6 @@ export declare class SettingsController {
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
-        timezone: string;
-        transitionDay: string;
         transitionTime: string;
         weekStartsOn: string;
     }>;
@@ -20,8 +18,6 @@ export declare class SettingsController {
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
-        timezone: string;
-        transitionDay: string;
         transitionTime: string;
         weekStartsOn: string;
     }>;
@@ -44,6 +40,12 @@ export declare class SettingsController {
         emailNotifications: boolean;
         pushNotifications: boolean;
         appearance: import("@prisma/client").$Enums.AppearanceTheme;
+    }>;
+    registerFcmToken(user: AuthUser, token: string): Promise<{
+        ok: boolean;
+    }>;
+    removeFcmToken(user: AuthUser, token: string): Promise<{
+        ok: boolean;
     }>;
     uploadAvatar(user: AuthUser, file: Express.Multer.File): Promise<{
         avatarUrl: string | null;

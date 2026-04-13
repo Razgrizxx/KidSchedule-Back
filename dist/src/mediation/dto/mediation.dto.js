@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RespondProposalDto = exports.ProposeResolutionDto = exports.SendMessageDto = exports.CreateSessionDto = void 0;
+exports.InviteMediatorDto = exports.RespondProposalDto = exports.ProposeResolutionDto = exports.SendMessageDto = exports.CreateSessionDto = void 0;
 const class_validator_1 = require("class-validator");
 class CreateSessionDto {
     topic;
@@ -47,4 +47,24 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], RespondProposalDto.prototype, "action", void 0);
+class InviteMediatorDto {
+    email;
+    name;
+    role;
+}
+exports.InviteMediatorDto = InviteMediatorDto;
+__decorate([
+    (0, class_validator_1.IsEmail)(),
+    __metadata("design:type", String)
+], InviteMediatorDto.prototype, "email", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], InviteMediatorDto.prototype, "name", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], InviteMediatorDto.prototype, "role", void 0);
 //# sourceMappingURL=mediation.dto.js.map

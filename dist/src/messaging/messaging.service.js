@@ -14,12 +14,15 @@ const common_1 = require("@nestjs/common");
 const crypto_1 = require("crypto");
 const prisma_service_1 = require("../prisma/prisma.service");
 const family_service_1 = require("../family/family.service");
+const notifications_service_1 = require("../notifications/notifications.service");
 let MessagingService = class MessagingService {
     prisma;
     familyService;
-    constructor(prisma, familyService) {
+    notifications;
+    constructor(prisma, familyService, notifications) {
         this.prisma = prisma;
         this.familyService = familyService;
+        this.notifications = notifications;
     }
     async send(familyId, senderId, dto) {
         await this.familyService.assertMember(familyId, senderId);
@@ -33,7 +36,7 @@ let MessagingService = class MessagingService {
         const contentHash = (0, crypto_1.createHash)('sha256')
             .update(`${dto.content}${timestamp}${previousHash}`)
             .digest('hex');
-        return this.prisma.message.create({
+        const message = await this.prisma.message.create({
             data: {
                 familyId,
                 senderId,
@@ -53,6 +56,18 @@ let MessagingService = class MessagingService {
                 },
             },
         });
+        const senderName = message.sender
+            ? `${message.sender.firstName} ${message.sender.lastName}`
+            : 'Nuevo mensaje';
+        const preview = dto.content.length > 80
+            ? dto.content.slice(0, 80) + '…'
+            : dto.content;
+        void this.notifications.sendToFamily(familyId, senderId, {
+            title: senderName,
+            body: preview,
+            data: { type: 'MESSAGE', familyId },
+        }).catch(() => { });
+        return message;
     }
     async findAll(familyId, userId, cursor, take = 50) {
         await this.familyService.assertMember(familyId, userId);
@@ -140,6 +155,7 @@ exports.MessagingService = MessagingService;
 exports.MessagingService = MessagingService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        family_service_1.FamilyService])
+        family_service_1.FamilyService,
+        notifications_service_1.NotificationsService])
 ], MessagingService);
 //# sourceMappingURL=messaging.service.js.map

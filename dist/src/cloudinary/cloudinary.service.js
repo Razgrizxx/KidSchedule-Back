@@ -22,9 +22,9 @@ let CloudinaryService = class CloudinaryService {
             api_secret: config.getOrThrow('CLOUDINARY_API_SECRET'),
         });
     }
-    upload(file, folder) {
+    upload(file, folder, resourceType = 'image') {
         return new Promise((resolve, reject) => {
-            const stream = cloudinary_1.v2.uploader.upload_stream({ folder, resource_type: 'image' }, (err, result) => {
+            const stream = cloudinary_1.v2.uploader.upload_stream({ folder, resource_type: resourceType }, (err, result) => {
                 if (err || !result)
                     return reject(err ?? new Error('Upload failed'));
                 resolve(result);

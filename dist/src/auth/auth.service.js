@@ -86,7 +86,7 @@ let AuthService = class AuthService {
                 },
             },
         });
-        void this.mail.sendWelcomeEmail(user.email, user.firstName);
+        void this.mail.sendWelcomeEmail(user.email, user.firstName).catch(() => { });
         return this.signToken(user);
     }
     async login(dto) {

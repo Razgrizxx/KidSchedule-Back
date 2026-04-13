@@ -49,6 +49,18 @@ enum ChangeRequestStatus {
   COUNTER_PROPOSED
 }
 
+enum AuditAction {
+  SCHEDULE_CREATED
+  EVENT_CREATED
+  EVENT_UPDATED
+  EVENT_DELETED
+  REQUEST_CREATED
+  REQUEST_ACCEPTED
+  REQUEST_DECLINED
+  REQUEST_COUNTER
+  CUSTODY_OVERRIDE
+}
+
 enum ChangeRequestType {
   ONE_TIME
   PERMANENT
@@ -64,6 +76,14 @@ enum ProposalStatus {
   PENDING
   ACCEPTED
   REJECTED
+}
+
+enum RecurringFrequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
 }
 
 enum ExpenseCategory {
@@ -152,6 +172,30 @@ enum BillingType {
   FAMILY
 }
 
+enum HealthRecordType {
+  VISIT
+  VACCINATION
+  LAB_RESULT
+  SPECIALIST
+  EMERGENCY
+  OTHER
+}
+
+enum DocumentType {
+  PRESCRIPTION
+  LAB_ORDER
+  LAB_RESULT
+  VACCINATION_CARD
+  IMAGING
+  OTHER
+}
+
+enum AllergySeverity {
+  MILD
+  MODERATE
+  SEVERE
+}
+
 // ─────────────────────────────────────────
 //  USER & AUTH
 // ─────────────────────────────────────────
@@ -173,6 +217,15 @@ model User {
   googleAccessToken    String?
   googleTokenExpiry    DateTime?
   googleCalendarId     String?  // ID of the dedicated "KidSchedule" calendar
+  // Outlook Calendar integration (tokens stored AES-256 encrypted)
+  outlookAccessToken   String?
+  outlookRefreshToken  String?
+  outlookTokenExpiry   DateTime?
+  outlookCalendarId    String?  // ID of the dedicated "KidSchedule" Outlook calendar
+  // iCal subscription feed
+  icalFeedToken        String?  @unique  // secret token for the Apple/iCal webcal feed URL
+  // FCM push notification tokens (one per device/browser)
+  fcmTokens            String[]
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
@@ -196,10 +249,21 @@ model User {
   orgMembershipsApproved OrgMembership[] @relation("OrgMemberApprover")
   orgEventsCreated   OrgEvent[]          @relation("OrgEventCreator")
   orgRosterLinks     OrgRoster[]         @relation("OrgRosterLinkedUser")
+  createdOrgEntities OrgEntity[]         @relation("CreatedOrgEntities")
   orgRsvps           OrgRsvp[]
   orgAnnouncements   Announcement[]      @relation("OrgAnnouncements")
   subscription       Subscription?
-
+  healthRecordsCreated    HealthRecord[]   @relation("HealthRecordCreator")
+  healthDocumentsUploaded HealthDocument[] @relation("HealthDocumentUploader")
+  medicationsCreated      Medication[]     @relation("MedicationCreator")
+  allergiesCreated        Allergy[]        @relation("AllergyCreator")
+  mediatorInvitesSent     MediatorInvite[] @relation("MediatorInvites")
+  auditLogs               CustodyAuditLog[] @relation("AuditLogActor")
+  handoffsFrom            HandoffLog[]      @relation("HandoffFrom")
+  handoffsTo              HandoffLog[]      @relation("HandoffTo")
+  recurringExpenses       RecurringExpense[] @relation("RecurringExpenseCreator")
+  emergencyContacts       EmergencyContact[] @relation("EmergencyContactCreator")
+  uploadedDocuments       FamilyDocument[]   @relation("DocumentUploader")
   @@map("users")
 }
 
@@ -256,7 +320,15 @@ model Family {
   settings       FamilySettings?
   events             Event[]
   mediationSessions  MediationSession[]
-
+  healthRecords      HealthRecord[]
+  healthDocuments    HealthDocument[]
+  medications        Medication[]
+  allergies          Allergy[]
+  auditLogs          CustodyAuditLog[]
+  handoffLogs        HandoffLog[]
+  recurringExpenses  RecurringExpense[]
+  emergencyContacts  EmergencyContact[]
+  documents          FamilyDocument[]
   @@map("families")
 }
 
@@ -313,7 +385,15 @@ model Child {
   moments       Moment[]
   eventChildren EventChild[]
   orgRosters    OrgRoster[]
-
+  healthRecords   HealthRecord[]
+  healthDocuments HealthDocument[]
+  medications     Medication[]
+  allergies       Allergy[]
+  auditLogs          CustodyAuditLog[]
+  handoffLogs        HandoffLog[]
+  emergencyContacts  EmergencyContact[]
+  documents          FamilyDocument[]
+  expenses           Expense[]
   @@map("children")
 }
 
@@ -398,8 +478,9 @@ model CustodyEvent {
   date          DateTime @db.Date
   custodianId   String
   isOverride    Boolean  @default(false)
-  googleEventId String?  // Google Calendar event ID (stored on the first day of each synced block)
-  createdAt     DateTime @default(now())
+  googleEventId  String?  // Google Calendar event ID (stored on the first day of each synced block)
+  outlookEventId String?  // Outlook Calendar event ID
+  createdAt      DateTime @default(now())
 
   schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
   child    Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
@@ -455,8 +536,64 @@ model ChangeRequest {
   family    Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
   requester User   @relation("RequesterChangeRequests", fields: [requesterId], references: [id])
   responder User?  @relation("ResponderChangeRequests", fields: [responderId], references: [id])
+  auditLogs CustodyAuditLog[]
 
   @@map("change_requests")
+}
+
+// ─────────────────────────────────────────
+//  AUDIT LOG
+// ─────────────────────────────────────────
+
+model CustodyAuditLog {
+  id              String      @id @default(uuid())
+  familyId        String
+  actorId         String
+  action          AuditAction
+  childId         String?
+  affectedDate    DateTime?   @db.Date
+  previousValue   String?     // Human-readable label of the before state
+  newValue        String?     // Human-readable label of the after state
+  changeRequestId String?
+  eventId         String?
+  notes           String?
+  createdAt       DateTime    @default(now())
+
+  family        Family         @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  actor         User           @relation("AuditLogActor", fields: [actorId], references: [id])
+  child         Child?         @relation(fields: [childId], references: [id])
+  changeRequest ChangeRequest? @relation(fields: [changeRequestId], references: [id])
+
+  @@index([familyId, createdAt(sort: Desc)])
+  @@index([familyId, childId])
+  @@map("custody_audit_logs")
+}
+
+// ─────────────────────────────────────────
+//  HANDOFF LOG
+// ─────────────────────────────────────────
+
+model HandoffLog {
+  id           String   @id @default(uuid())
+  familyId     String
+  childId      String
+  handoffAt    DateTime                   // exact timestamp of the handoff
+  fromParentId String                     // who handed over
+  toParentId   String                     // who received
+  location     String?                    // optional place description
+  notes        String?                    // optional free-text notes
+  confirmedBy  String?                    // toParentId if the receiving parent confirmed
+  confirmedAt  DateTime?
+  createdAt    DateTime @default(now())
+
+  family     Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  child      Child  @relation(fields: [childId], references: [id], onDelete: Cascade)
+  fromParent User   @relation("HandoffFrom", fields: [fromParentId], references: [id])
+  toParent   User   @relation("HandoffTo",   fields: [toParentId],   references: [id])
+
+  @@index([familyId, handoffAt(sort: Desc)])
+  @@index([familyId, childId])
+  @@map("handoff_logs")
 }
 
 // ─────────────────────────────────────────
@@ -480,10 +617,39 @@ model Expense {
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
-  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  payer  User   @relation(fields: [paidBy], references: [id])
+  family    Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  payer     User     @relation(fields: [paidBy], references: [id])
+  child     Child?   @relation(fields: [childId], references: [id])
+  recurring RecurringExpense? @relation(fields: [recurringId], references: [id])
+  recurringId String?
 
   @@map("expenses")
+}
+
+model RecurringExpense {
+  id          String             @id @default(uuid())
+  familyId    String
+  createdBy   String
+  childId     String?
+  category    ExpenseCategory    @default(OTHER)
+  amount      Decimal            @db.Decimal(10, 2)
+  currency    String             @default("USD")
+  description String
+  splitRatio  Decimal            @default(0.5) @db.Decimal(3, 2)
+  frequency   RecurringFrequency
+  startDate   DateTime           @db.Date        // first occurrence
+  endDate     DateTime?          @db.Date        // optional end
+  isActive    Boolean            @default(true)
+  lastGeneratedAt DateTime?                      // last time instances were created
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  family    Family    @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  creator   User      @relation("RecurringExpenseCreator", fields: [createdBy], references: [id])
+  instances Expense[]
+
+  @@index([familyId, isActive])
+  @@map("recurring_expenses")
 }
 
 // ─────────────────────────────────────────
@@ -515,8 +681,6 @@ model Moment {
 model FamilySettings {
   id             String   @id @default(uuid())
   familyId       String   @unique
-  timezone       String   @default("America/New_York")
-  transitionDay  String   @default("MONDAY")
   transitionTime String   @default("18:00")
   weekStartsOn   String   @default("MONDAY")
   createdAt      DateTime @default(now())
@@ -582,9 +746,10 @@ model Event {
   notes         String?
   assignedToId  String?
   caregiverId   String?        // Optional caregiver responsible for this event
-  googleEventId String?        // Google Calendar event ID for bi-directional sync
-  createdAt     DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  googleEventId  String?  // Google Calendar event ID for bi-directional sync
+  outlookEventId String?  // Outlook Calendar event ID
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   family     Family       @relation(fields: [familyId], references: [id], onDelete: Cascade)
   creator    User         @relation("CreatedEvents", fields: [createdBy], references: [id])
@@ -611,18 +776,35 @@ model EventChild {
 //  ORGANIZATIONS (Teams & Schools)
 // ─────────────────────────────────────────
 
-model Organization {
-  id         String    @id @default(uuid())
-  name       String
-  type       OrgType
-  inviteCode String    @unique
-  adminId    String
-  isPublic   Boolean   @default(false)
+model OrgEntity {
+  id          String   @id @default(uuid())
+  name        String
+  type        OrgType
   description String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User         @relation("CreatedOrgEntities", fields: [createdById], references: [id])
+  groups    Organization[]
+
+  @@map("org_entities")
+}
+
+model Organization {
+  id          String    @id @default(uuid())
+  name        String
+  type        OrgType
+  inviteCode  String    @unique
+  adminId     String
+  isPublic    Boolean   @default(false)
+  description String?
+  entityId    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   admin         User            @relation("OrgAdmin", fields: [adminId], references: [id])
+  entity        OrgEntity?      @relation(fields: [entityId], references: [id], onDelete: SetNull)
   members       OrgMembership[]
   events        OrgEvent[]
   venues        Venue[]
@@ -776,6 +958,7 @@ model MediationSession {
   family    Family               @relation(fields: [familyId], references: [id], onDelete: Cascade)
   messages  MediationMessage[]
   proposals ResolutionProposal[]
+  mediatorInvites MediatorInvite[]
 
   @@map("mediation_sessions")
 }
@@ -808,4 +991,182 @@ model ResolutionProposal {
   accepter User?            @relation("AcceptedResolutions", fields: [acceptedBy], references: [id])
 
   @@map("resolution_proposals")
+}
+
+model MediatorInvite {
+  id          String    @id @default(uuid())
+  sessionId   String
+  invitedBy   String
+  email       String
+  name        String
+  role        String    @default("Mediador")   // e.g. "Abogado", "Terapeuta"
+  token       String    @unique
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  session   MediationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  inviter   User             @relation("MediatorInvites", fields: [invitedBy], references: [id])
+
+  @@map("mediator_invites")
+}
+
+// ─────────────────────────────────────────
+//  HEALTH
+// ─────────────────────────────────────────
+
+model HealthRecord {
+  id          String           @id @default(uuid())
+  familyId    String
+  childId     String
+  type        HealthRecordType
+  title       String
+  date        DateTime
+  doctorName  String?
+  notes       String?
+  createdBy   String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  family    Family         @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  child     Child          @relation(fields: [childId], references: [id], onDelete: Cascade)
+  uploader  User           @relation("HealthRecordCreator", fields: [createdBy], references: [id])
+  documents HealthDocument[]
+
+  @@map("health_records")
+}
+
+model HealthDocument {
+  id                 String       @id @default(uuid())
+  familyId           String
+  childId            String
+  recordId           String?
+  type               DocumentType
+  title              String
+  fileUrl            String
+  cloudinaryPublicId String?
+  uploadedBy         String
+  createdAt          DateTime     @default(now())
+
+  family   Family        @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  child    Child         @relation(fields: [childId], references: [id], onDelete: Cascade)
+  uploader User          @relation("HealthDocumentUploader", fields: [uploadedBy], references: [id])
+  record   HealthRecord? @relation(fields: [recordId], references: [id], onDelete: SetNull)
+
+  @@map("health_documents")
+}
+
+model Medication {
+  id           String    @id @default(uuid())
+  familyId     String
+  childId      String
+  name         String
+  dosage       String
+  frequency    String
+  startDate    DateTime
+  endDate      DateTime?
+  prescribedBy String?
+  notes        String?
+  isActive     Boolean   @default(true)
+  createdBy    String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  family   Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  child    Child  @relation(fields: [childId], references: [id], onDelete: Cascade)
+  uploader User   @relation("MedicationCreator", fields: [createdBy], references: [id])
+
+  @@map("medications")
+}
+
+model Allergy {
+  id        String          @id @default(uuid())
+  familyId  String
+  childId   String
+  name      String
+  severity  AllergySeverity
+  notes     String?
+  createdBy String
+  createdAt DateTime        @default(now())
+
+  family   Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  child    Child  @relation(fields: [childId], references: [id], onDelete: Cascade)
+  uploader User   @relation("AllergyCreator", fields: [createdBy], references: [id])
+
+  @@map("allergies")
+}
+
+// ─────────────────────────────────────────
+//  DOCUMENT VAULT
+// ─────────────────────────────────────────
+
+enum DocumentCategory {
+  ID_DOCUMENT      // DNI / Passport
+  CUSTODY_ORDER    // Custody / court orders
+  SCHOOL_RECORD
+  HEALTH_RECORD
+  INSURANCE
+  BIRTH_CERTIFICATE
+  OTHER
+}
+
+model FamilyDocument {
+  id                 String           @id @default(uuid())
+  familyId           String
+  childId            String?          // optional — can be family-wide
+  category           DocumentCategory @default(OTHER)
+  title              String
+  description        String?
+  fileUrl            String           // Cloudinary secure_url
+  cloudinaryPublicId String
+  mimeType           String?
+  uploadedBy         String
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  family    Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  child     Child? @relation(fields: [childId], references: [id])
+  uploader  User   @relation("DocumentUploader", fields: [uploadedBy], references: [id])
+
+  @@index([familyId, category])
+  @@map("family_documents")
+}
+
+// ─────────────────────────────────────────
+//  EMERGENCY CONTACTS
+// ─────────────────────────────────────────
+
+enum EmergencyContactRole {
+  DOCTOR
+  PEDIATRICIAN
+  DENTIST
+  SCHOOL
+  THERAPIST
+  GRANDPARENT
+  RELATIVE
+  NEIGHBOR
+  OTHER
+}
+
+model EmergencyContact {
+  id           String               @id @default(uuid())
+  familyId     String
+  childId      String               // contact is linked to a specific child
+  role         EmergencyContactRole @default(OTHER)
+  name         String
+  phone        String?
+  email        String?
+  address      String?
+  notes        String?
+  isPrimary    Boolean              @default(false)
+  createdBy    String
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  family    Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  child     Child  @relation(fields: [childId], references: [id], onDelete: Cascade)
+  createdByUser User @relation("EmergencyContactCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+
+  @@index([familyId, childId])
+  @@map("emergency_contacts")
 }

@@ -10,6 +10,7 @@ exports.MediationModule = void 0;
 const common_1 = require("@nestjs/common");
 const mediation_service_1 = require("./mediation.service");
 const mediation_controller_1 = require("./mediation.controller");
+const mediator_token_controller_1 = require("./mediator-token.controller");
 const family_module_1 = require("../family/family.module");
 const claude_module_1 = require("../claude/claude.module");
 const messaging_module_1 = require("../messaging/messaging.module");
@@ -21,7 +22,7 @@ exports.MediationModule = MediationModule = __decorate([
     (0, common_1.Module)({
         imports: [family_module_1.FamilyModule, claude_module_1.ClaudeModule, messaging_module_1.MessagingModule, stripe_module_1.StripeModule],
         providers: [mediation_service_1.MediationService],
-        controllers: [mediation_controller_1.MediationController],
+        controllers: [mediation_controller_1.MediationController, mediator_token_controller_1.MediatorTokenController],
     })
 ], MediationModule);
 //# sourceMappingURL=mediation.module.js.map

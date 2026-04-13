@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { createHash } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { SendMessageDto } from './dto/message.dto';
 
 @Injectable()
@@ -9,6 +10,7 @@ export class MessagingService {
   constructor(
     private prisma: PrismaService,
     private familyService: FamilyService,
+    private notifications: NotificationsService,
   ) {}
 
   async send(familyId: string, senderId: string, dto: SendMessageDto) {
@@ -27,7 +29,7 @@ export class MessagingService {
       .update(`${dto.content}${timestamp}${previousHash}`)
       .digest('hex');
 
-    return this.prisma.message.create({
+    const message = await this.prisma.message.create({
       data: {
         familyId,
         senderId,
@@ -47,6 +49,21 @@ export class MessagingService {
         },
       },
     });
+
+    // Push notification to the other family members (fire-and-forget)
+    const senderName = message.sender
+      ? `${message.sender.firstName} ${message.sender.lastName}`
+      : 'Nuevo mensaje';
+    const preview = dto.content.length > 80
+      ? dto.content.slice(0, 80) + '…'
+      : dto.content;
+    void this.notifications.sendToFamily(familyId, senderId, {
+      title: senderName,
+      body: preview,
+      data: { type: 'MESSAGE', familyId },
+    }).catch(() => {});
+
+    return message;
   }
 
   async findAll(familyId: string, userId: string, cursor?: string, take = 50) {

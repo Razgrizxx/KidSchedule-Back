@@ -13,10 +13,14 @@ export class CloudinaryService {
     });
   }
 
-  upload(file: Express.Multer.File, folder: string): Promise<UploadApiResponse> {
+  upload(
+    file: Express.Multer.File,
+    folder: string,
+    resourceType: 'image' | 'raw' | 'auto' = 'image',
+  ): Promise<UploadApiResponse> {
     return new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
-        { folder, resource_type: 'image' },
+        { folder, resource_type: resourceType },
         (err, result) => {
           if (err || !result) return reject(err ?? new Error('Upload failed'));
           resolve(result);

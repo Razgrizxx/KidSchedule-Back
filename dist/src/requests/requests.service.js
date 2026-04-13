@@ -16,18 +16,24 @@ const family_service_1 = require("../family/family.service");
 const messaging_service_1 = require("../messaging/messaging.service");
 const chat_gateway_1 = require("../messaging/chat.gateway");
 const mail_service_1 = require("../mail/mail.service");
+const notifications_service_1 = require("../notifications/notifications.service");
+const audit_service_1 = require("../audit/audit.service");
 let RequestsService = class RequestsService {
     prisma;
     familyService;
     messaging;
     chatGateway;
     mail;
-    constructor(prisma, familyService, messaging, chatGateway, mail) {
+    notifications;
+    audit;
+    constructor(prisma, familyService, messaging, chatGateway, mail, notifications, audit) {
         this.prisma = prisma;
         this.familyService = familyService;
         this.messaging = messaging;
         this.chatGateway = chatGateway;
         this.mail = mail;
+        this.notifications = notifications;
+        this.audit = audit;
     }
     async create(familyId, requesterId, dto) {
         await this.familyService.assertMember(familyId, requesterId);
@@ -60,13 +66,30 @@ let RequestsService = class RequestsService {
                 })()
                 : `System: ${requesterName} has requested an extra day on ${reqFmt}.`;
         await this.messaging.sendSystemMessage(familyId, msg);
+        void this.audit.log({
+            familyId,
+            actorId: requesterId,
+            action: 'REQUEST_CREATED',
+            childId: dto.childId ?? undefined,
+            affectedDate: new Date(dto.requestedDate),
+            changeRequestId: created.id,
+            notes: dto.reason ?? undefined,
+        });
         void this.notifyCoParentByEmail(familyId, created.requester.id, {
             requesterName,
             type: dto.type,
-            requestedDate: new Date(dto.requestedDate).toLocaleDateString('es-AR', {
+            requestedDate: new Date(dto.requestedDate).toLocaleDateString('en-US', {
                 day: 'numeric', month: 'long', year: 'numeric',
             }),
+        }).catch(() => { });
+        const reqDateStr = new Date(dto.requestedDate).toLocaleDateString('en-US', {
+            day: 'numeric', month: 'short',
         });
+        void this.notifications.sendToFamily(familyId, created.requester.id, {
+            title: `${requesterName} sent a custody request`,
+            body: `Custody change for ${reqDateStr}`,
+            data: { type: 'REQUEST', familyId, requestId: created.id },
+        }).catch(() => { });
         return created;
     }
     async findAll(familyId, userId) {
@@ -115,6 +138,21 @@ let RequestsService = class RequestsService {
             type: 'REQUEST_UPDATED',
             payload: { requestId, status: dto.action },
         });
+        const auditAction = dto.action === 'ACCEPTED' ? 'REQUEST_ACCEPTED' :
+            dto.action === 'DECLINED' ? 'REQUEST_DECLINED' :
+                dto.action === 'COUNTER_PROPOSED' ? 'REQUEST_COUNTER' :
+                    null;
+        if (auditAction) {
+            void this.audit.log({
+                familyId,
+                actorId: responderId,
+                action: auditAction,
+                childId: request.childId ?? undefined,
+                affectedDate: request.requestedDate,
+                changeRequestId: requestId,
+                notes: dto.counterReason ?? undefined,
+            });
+        }
         return updated;
     }
     async notifyCoParentByEmail(familyId, requesterId, opts) {
@@ -154,6 +192,10 @@ let RequestsService = class RequestsService {
             ...(request.originalDate ? [[request.originalDate, responderId]] : []),
         ];
         for (const [date, custodianId] of overrides) {
+            const existing = await this.prisma.custodyEvent.findUnique({
+                where: { scheduleId_date: { scheduleId: schedule.id, date } },
+                include: { child: { select: { firstName: true } } },
+            });
             await this.prisma.custodyEvent.upsert({
                 where: { scheduleId_date: { scheduleId: schedule.id, date } },
                 update: { custodianId, isOverride: true },
@@ -165,6 +207,16 @@ let RequestsService = class RequestsService {
                     custodianId,
                     isOverride: true,
                 },
+            });
+            void this.audit.log({
+                familyId: request.familyId,
+                actorId: responderId,
+                action: 'CUSTODY_OVERRIDE',
+                childId: schedule.childId,
+                affectedDate: date,
+                previousValue: existing?.custodianId ?? undefined,
+                newValue: custodianId,
+                changeRequestId: undefined,
             });
         }
     }
@@ -201,6 +253,8 @@ exports.RequestsService = RequestsService = __decorate([
         family_service_1.FamilyService,
         messaging_service_1.MessagingService,
         chat_gateway_1.ChatGateway,
-        mail_service_1.MailService])
+        mail_service_1.MailService,
+        notifications_service_1.NotificationsService,
+        audit_service_1.AuditService])
 ], RequestsService);
 //# sourceMappingURL=requests.service.js.map

@@ -8,21 +8,32 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EventsService = void 0;
 const common_1 = require("@nestjs/common");
 const event_emitter_1 = require("@nestjs/event-emitter");
+const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const prisma_service_1 = require("../prisma/prisma.service");
 const family_service_1 = require("../family/family.service");
+const notifications_service_1 = require("../notifications/notifications.service");
+const audit_service_1 = require("../audit/audit.service");
 const holidays_data_1 = require("./holidays.data");
 let EventsService = class EventsService {
     prisma;
     familyService;
     eventEmitter;
-    constructor(prisma, familyService, eventEmitter) {
+    notifications;
+    audit;
+    anthropic = new sdk_1.default();
+    constructor(prisma, familyService, eventEmitter, notifications, audit) {
         this.prisma = prisma;
         this.familyService = familyService;
         this.eventEmitter = eventEmitter;
+        this.notifications = notifications;
+        this.audit = audit;
     }
     async create(familyId, userId, dto) {
         await this.familyService.assertMember(familyId, userId);
@@ -47,6 +58,22 @@ let EventsService = class EventsService {
         this.eventEmitter.emit('calendar.event.upsert', {
             eventId: event.id,
             userId,
+        });
+        const dateStr = new Date(dto.startAt).toLocaleDateString('en-US', {
+            day: 'numeric', month: 'short',
+        });
+        void this.notifications.sendToFamily(familyId, userId, {
+            title: `New event: ${event.title}`,
+            body: `${dateStr} · ${event.type.toLowerCase().replace(/_/g, ' ')}`,
+            data: { type: 'EVENT', familyId, eventId: event.id },
+        }).catch(() => { });
+        void this.audit.log({
+            familyId,
+            actorId: userId,
+            action: 'EVENT_CREATED',
+            affectedDate: event.startAt,
+            eventId: event.id,
+            newValue: event.title,
         });
         return event;
     }
@@ -96,32 +123,48 @@ let EventsService = class EventsService {
             eventId: event.id,
             userId,
         });
+        void this.audit.log({
+            familyId,
+            actorId: userId,
+            action: 'EVENT_UPDATED',
+            affectedDate: event.startAt,
+            eventId: event.id,
+            newValue: event.title,
+        });
         return event;
     }
     async getHolidays(familyId, userId, year, country) {
         await this.familyService.assertMember(familyId, userId);
-        const settings = await this.prisma.familySettings.findUnique({ where: { familyId } });
-        const transitionDay = settings?.transitionDay ?? 'MONDAY';
-        const DAY_MAP = {
-            SUNDAY: 0, MONDAY: 1, TUESDAY: 2, WEDNESDAY: 3, THURSDAY: 4, FRIDAY: 5, SATURDAY: 6,
-        };
-        const transitionDayNum = DAY_MAP[transitionDay] ?? 1;
         const all = (0, holidays_data_1.getHolidaysForYear)(year);
         const filtered = country ? all.filter((h) => h.country === country) : all;
-        return filtered.map((h) => ({
-            ...h,
-            isTransitionDay: new Date(h.date + 'T12:00:00Z').getDay() === transitionDayNum,
-        }));
+        return filtered;
     }
     async bulkCreate(familyId, userId, dto) {
         await this.familyService.assertMember(familyId, userId);
         let created = 0;
         let skipped = 0;
+        const timeRegex = /^\d{2}:\d{2}$/;
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
         for (const item of dto.events) {
-            const startAt = new Date(item.date + 'T00:00:00.000Z');
-            const endAt = new Date(item.date + 'T23:59:59.000Z');
+            if (!dateRegex.test(item.date)) {
+                skipped++;
+                continue;
+            }
+            const hasTime = !!item.startTime && timeRegex.test(item.startTime);
+            const startAt = hasTime
+                ? new Date(`${item.date}T${item.startTime}:00.000Z`)
+                : new Date(item.date + 'T00:00:00.000Z');
+            const endAt = hasTime
+                ? new Date(`${item.date}T${(item.endTime && timeRegex.test(item.endTime) ? item.endTime : item.startTime)}:00.000Z`)
+                : new Date(item.date + 'T23:59:59.000Z');
+            if (isNaN(startAt.getTime()) || isNaN(endAt.getTime())) {
+                skipped++;
+                continue;
+            }
+            const dayStart = new Date(item.date + 'T00:00:00.000Z');
+            const dayEnd = new Date(item.date + 'T23:59:59.000Z');
             const existing = await this.prisma.event.findFirst({
-                where: { familyId, title: item.title, startAt: { gte: startAt, lte: endAt } },
+                where: { familyId, title: item.title, startAt: { gte: dayStart, lte: dayEnd } },
             });
             if (existing) {
                 skipped++;
@@ -136,8 +179,9 @@ let EventsService = class EventsService {
                     visibility: dto.visibility,
                     startAt,
                     endAt,
-                    allDay: true,
+                    allDay: !hasTime,
                     repeat: 'NONE',
+                    notes: item.notes ?? undefined,
                     ...(dto.childIds.length > 0 && {
                         children: { create: dto.childIds.map((childId) => ({ childId })) },
                     }),
@@ -147,9 +191,71 @@ let EventsService = class EventsService {
         }
         return { created, skipped };
     }
+    async extractFromImage(familyId, userId, file) {
+        await this.familyService.assertMember(familyId, userId);
+        const base64 = file.buffer.toString('base64');
+        const mediaType = file.mimetype;
+        const response = await this.anthropic.messages.create({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 2048,
+            messages: [
+                {
+                    role: 'user',
+                    content: [
+                        {
+                            type: 'image',
+                            source: { type: 'base64', media_type: mediaType, data: base64 },
+                        },
+                        {
+                            type: 'text',
+                            text: `Extract all events and scheduled activities from this schedule image.
+Return ONLY a raw JSON array — no markdown, no code blocks, no explanation.
+Each object must have:
+  "title": string
+  "date": "YYYY-MM-DD"
+  "startTime": "HH:MM" or null
+  "endTime": "HH:MM" or null
+  "type": one of SCHOOL | ACTIVITY | MEDICAL | VACATION | OTHER
+  "notes": string or null
+If the year is not shown, assume ${new Date().getFullYear()}.
+Return [] if no events are found.`,
+                        },
+                    ],
+                },
+            ],
+        });
+        const raw = response.content[0].text.trim();
+        const clean = raw.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
+        try {
+            const events = JSON.parse(clean);
+            return Array.isArray(events) ? events : [];
+        }
+        catch {
+            return [];
+        }
+    }
     async remove(familyId, eventId, userId) {
         await this.familyService.assertMember(familyId, userId);
+        const event = await this.prisma.event.findUnique({
+            where: { id: eventId },
+            select: { title: true, startAt: true, googleEventId: true, outlookEventId: true },
+        });
         await this.prisma.event.delete({ where: { id: eventId, familyId } });
+        this.eventEmitter.emit('calendar.event.deleted', {
+            eventId,
+            userId,
+            familyId,
+            googleEventId: event?.googleEventId ?? null,
+            outlookEventId: event?.outlookEventId ?? null,
+        });
+        void this.audit.log({
+            familyId,
+            actorId: userId,
+            action: 'EVENT_DELETED',
+            affectedDate: event?.startAt,
+            eventId,
+            previousValue: event?.title,
+        });
         return { message: 'Event deleted' };
     }
 };
@@ -158,6 +264,8 @@ exports.EventsService = EventsService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         family_service_1.FamilyService,
-        event_emitter_1.EventEmitter2])
+        event_emitter_1.EventEmitter2,
+        notifications_service_1.NotificationsService,
+        audit_service_1.AuditService])
 ], EventsService);
 //# sourceMappingURL=events.service.js.map

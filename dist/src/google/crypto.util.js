@@ -16,7 +16,13 @@ function encrypt(text, secret) {
     return `${iv.toString('hex')}:${encrypted.toString('hex')}`;
 }
 function decrypt(encryptedText, secret) {
-    const [ivHex, encHex] = encryptedText.split(':');
+    const colonIndex = encryptedText.indexOf(':');
+    if (colonIndex === -1)
+        throw new Error('Invalid encrypted token format: missing separator');
+    const ivHex = encryptedText.slice(0, colonIndex);
+    const encHex = encryptedText.slice(colonIndex + 1);
+    if (!ivHex || !encHex)
+        throw new Error('Invalid encrypted token format: empty segment');
     const key = deriveKey(secret);
     const iv = Buffer.from(ivHex, 'hex');
     const encrypted = Buffer.from(encHex, 'hex');

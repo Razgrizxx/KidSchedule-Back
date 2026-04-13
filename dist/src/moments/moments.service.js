@@ -14,17 +14,20 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const family_service_1 = require("../family/family.service");
 const cloudinary_service_1 = require("../cloudinary/cloudinary.service");
+const notifications_service_1 = require("../notifications/notifications.service");
 const subscription_service_1 = require("../stripe/subscription.service");
 let MomentsService = class MomentsService {
     prisma;
     familyService;
     cloudinary;
     subService;
-    constructor(prisma, familyService, cloudinary, subService) {
+    notifications;
+    constructor(prisma, familyService, cloudinary, subService, notifications) {
         this.prisma = prisma;
         this.familyService = familyService;
         this.cloudinary = cloudinary;
         this.subService = subService;
+        this.notifications = notifications;
     }
     async create(familyId, userId, dto, file) {
         await this.familyService.assertMember(familyId, userId);
@@ -36,7 +39,7 @@ let MomentsService = class MomentsService {
             }
         }
         const result = await this.cloudinary.upload(file, `kidschedule/moments/${familyId}`);
-        return this.prisma.moment.create({
+        const moment = await this.prisma.moment.create({
             data: {
                 familyId,
                 uploadedBy: userId,
@@ -50,6 +53,18 @@ let MomentsService = class MomentsService {
                 child: { select: { id: true, firstName: true, color: true } },
             },
         });
+        const uploaderName = moment.uploader
+            ? `${moment.uploader.firstName} ${moment.uploader.lastName}`
+            : 'Your co-parent';
+        const childName = moment.child?.firstName ?? '';
+        void this.notifications.sendToFamily(familyId, userId, {
+            title: `${uploaderName} shared a moment`,
+            body: moment.caption
+                ? `${childName}: ${moment.caption}`
+                : `New photo of ${childName}`,
+            data: { type: 'MOMENT', familyId, momentId: moment.id },
+        }).catch(() => { });
+        return moment;
     }
     async findAll(familyId, userId) {
         await this.familyService.assertMember(familyId, userId);
@@ -84,6 +99,7 @@ exports.MomentsService = MomentsService = __decorate([
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         family_service_1.FamilyService,
         cloudinary_service_1.CloudinaryService,
-        subscription_service_1.SubscriptionService])
+        subscription_service_1.SubscriptionService,
+        notifications_service_1.NotificationsService])
 ], MomentsService);
 //# sourceMappingURL=moments.service.js.map

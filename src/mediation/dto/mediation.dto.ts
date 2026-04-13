@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreateSessionDto {
   @IsString()
@@ -22,4 +22,17 @@ export class RespondProposalDto {
   @IsString()
   @IsNotEmpty()
   action: 'ACCEPTED' | 'REJECTED';
+}
+
+export class InviteMediatorDto {
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsOptional()
+  @IsString()
+  role?: string;
 }

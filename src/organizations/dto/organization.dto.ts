@@ -13,6 +13,20 @@ import {
 } from 'class-validator';
 import { OrgRole, OrgType, RsvpStatus } from '@prisma/client';
 
+export class CreateOrgEntityDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(80)
+  name: string;
+
+  @IsEnum(OrgType)
+  type: OrgType;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+}
+
 export class CreateOrgDto {
   @IsString()
   @IsNotEmpty()
@@ -29,6 +43,10 @@ export class CreateOrgDto {
   @IsBoolean()
   @IsOptional()
   isPublic?: boolean;
+
+  @IsString()
+  @IsOptional()
+  entityId?: string;
 }
 
 export class JoinOrgDto {

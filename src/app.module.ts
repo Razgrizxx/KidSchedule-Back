@@ -17,14 +17,27 @@ import { BlogModule } from './blog/blog.module';
 import { CaregiverPortalModule } from './caregiver-portal/caregiver-portal.module';
 import { EventsModule } from './events/events.module';
 import { GoogleModule } from './google/google.module';
+import { OutlookModule } from './outlook/outlook.module';
+import { IcalModule } from './ical/ical.module';
+import { AiModule } from './ai/ai.module';
 import { MediationModule } from './mediation/mediation.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { StripeModule } from './stripe/stripe.module';
+import { HealthModule } from './health/health.module';
+import { ReportsModule } from './reports/reports.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { AuditModule } from './audit/audit.module';
+import { HandoffsModule } from './handoffs/handoffs.module';
+import { DashboardModule } from './dashboard/dashboard.module';
+import { EmergencyContactsModule } from './emergency-contacts/emergency-contacts.module';
+import { DocumentsModule } from './documents/documents.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     EventEmitterModule.forRoot(),
+    NotificationsModule,
+    AuditModule,
     MailModule,
     PrismaModule,
     AuthModule,
@@ -41,9 +54,18 @@ import { StripeModule } from './stripe/stripe.module';
     CaregiverPortalModule,
     EventsModule,
     GoogleModule,
+    OutlookModule,
+    IcalModule,
+    AiModule,
     MediationModule,
     OrganizationsModule,
     StripeModule,
+    HealthModule,
+    ReportsModule,
+    HandoffsModule,
+    DashboardModule,
+    EmergencyContactsModule,
+    DocumentsModule,
   ],
 })
 export class AppModule {}

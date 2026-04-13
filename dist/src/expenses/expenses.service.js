@@ -138,6 +138,38 @@ let ExpensesService = class ExpensesService {
             },
         };
     }
+    async exportCsv(familyId, _userId, from, to) {
+        const expenses = await this.prisma.expense.findMany({
+            where: {
+                familyId,
+                ...(from && { date: { gte: new Date(from) } }),
+                ...(to && { date: { lte: new Date(to + 'T23:59:59Z') } }),
+            },
+            include: {
+                payer: { select: { firstName: true, lastName: true } },
+                child: { select: { firstName: true, lastName: true } },
+            },
+            orderBy: { date: 'asc' },
+        });
+        const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+        const header = [
+            'Date', 'Description', 'Category', 'Amount', 'Currency',
+            'Paid By', 'Child', 'Split Ratio (%)', 'Status', 'Settled At',
+        ].map(esc).join(',');
+        const rows = expenses.map((e) => [
+            esc(new Date(e.date).toLocaleDateString('en-CA')),
+            esc(e.description),
+            esc(e.category),
+            esc(Number(e.amount).toFixed(2)),
+            esc(e.currency),
+            esc(`${e.payer.firstName} ${e.payer.lastName}`),
+            esc(e.child ? `${e.child.firstName} ${e.child.lastName}` : ''),
+            esc((Number(e.splitRatio) * 100).toFixed(0)),
+            esc(e.isSettled ? 'Settled' : 'Pending'),
+            esc(e.settledAt ? new Date(e.settledAt).toLocaleDateString('en-CA') : ''),
+        ].join(','));
+        return [header, ...rows].join('\r\n');
+    }
 };
 exports.ExpensesService = ExpensesService;
 exports.ExpensesService = ExpensesService = __decorate([
