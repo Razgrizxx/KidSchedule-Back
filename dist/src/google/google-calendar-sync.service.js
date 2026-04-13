@@ -84,6 +84,50 @@ let GoogleCalendarSyncService = GoogleCalendarSyncService_1 = class GoogleCalend
             }
         }
     }
+    async handleEventDeleted(payload) {
+        const { userId, familyId, googleEventId } = payload;
+        if (!googleEventId)
+            return;
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user?.googleRefreshToken)
+            return;
+        try {
+            const oauth2Client = await this.getRefreshedClient(user);
+            const calendar = googleapis_1.google.calendar({ version: 'v3', auth: oauth2Client });
+            const calendarId = user.googleCalendarId;
+            if (!calendarId)
+                return;
+            await calendar.events.delete({ calendarId, eventId: googleEventId }).catch((err) => {
+                if (err?.code !== 404 && err?.status !== 404)
+                    throw err;
+            });
+        }
+        catch (err) {
+            this.logger.error(`Google Calendar delete failed for event ${payload.eventId}`, err);
+            if (err?.response?.data?.error === 'invalid_grant' || err?.cause?.message === 'invalid_grant') {
+                this.chatGateway.emitToFamily(familyId, 'notification', {
+                    type: 'GOOGLE_SYNC_ERROR',
+                    payload: { userId },
+                });
+            }
+        }
+    }
+    async handleCustodyBlocksUpdated(payload) {
+        const { familyId, userId } = payload;
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user?.googleRefreshToken)
+            return;
+        try {
+            const oauth2Client = await this.getRefreshedClient(user);
+            const calendar = googleapis_1.google.calendar({ version: 'v3', auth: oauth2Client });
+            const calendarId = await this.getOrCreateKidScheduleCalendar(calendar, user);
+            const childColorMap = await this.buildChildColorMap(familyId);
+            await this.syncCustodyBlocks(familyId, userId, calendar, calendarId, childColorMap, false);
+        }
+        catch (err) {
+            this.logger.error(`Custody blocks sync failed for family ${familyId}`, err);
+        }
+    }
     async syncAllEvents(familyId, userId, cleanup = false) {
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user?.googleRefreshToken)
@@ -95,7 +139,7 @@ let GoogleCalendarSyncService = GoogleCalendarSyncService_1 = class GoogleCalend
         this.logger.log(`Export started — calendarId: ${calendarId}, cleanup: ${cleanup}, childColorMap: ${JSON.stringify(childColorMap)}`);
         const [synced, custodySynced] = await Promise.all([
             this.syncRegularEvents(familyId, calendar, calendarId, cleanup),
-            this.syncCustodyBlocks(familyId, calendar, calendarId, childColorMap, cleanup),
+            this.syncCustodyBlocks(familyId, userId, calendar, calendarId, childColorMap, cleanup),
         ]);
         this.logger.log(`Export done — regular: ${synced}, custody blocks: ${custodySynced}`);
         return { synced, custodySynced };
@@ -172,11 +216,16 @@ let GoogleCalendarSyncService = GoogleCalendarSyncService_1 = class GoogleCalend
         }
         return synced;
     }
-    async syncCustodyBlocks(familyId, calendar, calendarId, childColorMap, cleanup) {
+    async syncCustodyBlocks(familyId, userId, calendar, calendarId, childColorMap, cleanup) {
         const sixMonthsFromNow = new Date();
         sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
         const custodyEvents = await this.prisma.custodyEvent.findMany({
-            where: { familyId, date: { gte: new Date(), lte: sixMonthsFromNow } },
+            where: {
+                familyId,
+                custodianId: userId,
+                date: { gte: new Date(), lte: sixMonthsFromNow },
+                schedule: { isActive: true },
+            },
             include: { child: true },
             orderBy: [{ childId: 'asc' }, { date: 'asc' }],
         });
@@ -337,6 +386,18 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], GoogleCalendarSyncService.prototype, "handleEventUpsert", null);
+__decorate([
+    (0, event_emitter_1.OnEvent)('calendar.event.deleted', { async: true }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], GoogleCalendarSyncService.prototype, "handleEventDeleted", null);
+__decorate([
+    (0, event_emitter_1.OnEvent)('custody.blocks.updated', { async: true }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], GoogleCalendarSyncService.prototype, "handleCustodyBlocksUpdated", null);
 exports.GoogleCalendarSyncService = GoogleCalendarSyncService = GoogleCalendarSyncService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,

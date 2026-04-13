@@ -3,11 +3,17 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
 import { ScheduleGeneratorService } from './schedule-generator.service';
 import { AuditService } from '../audit/audit.service';
 import { CreateScheduleDto } from './dto/schedule.dto';
+
+export interface CustodyBlocksUpdatedPayload {
+  familyId: string;
+  userId: string;
+}
 
 @Injectable()
 export class ScheduleService {
@@ -16,6 +22,7 @@ export class ScheduleService {
     private familyService: FamilyService,
     private generator: ScheduleGeneratorService,
     private audit: AuditService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async create(familyId: string, userId: string, dto: CreateScheduleDto) {
@@ -35,30 +42,26 @@ export class ScheduleService {
       where: { familyId },
     });
 
-    const WEEKDAY: Record<string, number> = {
-      SUNDAY: 0,
-      MONDAY: 1,
-      TUESDAY: 2,
-      WEDNESDAY: 3,
-      THURSDAY: 4,
-      FRIDAY: 5,
-      SATURDAY: 6,
-    };
-
-    const exchangeDay =
-      dto.exchangeDay ??
-      (familySettings?.transitionDay != null
-        ? (WEEKDAY[familySettings.transitionDay] ?? undefined)
-        : undefined);
+    const exchangeDay = dto.exchangeDay ?? undefined;
 
     const exchangeTime =
       dto.exchangeTime ?? familySettings?.transitionTime ?? undefined;
 
-    // Deactivate existing schedules for this child
-    await this.prisma.schedule.updateMany({
+    // Deactivate existing schedules for this child and delete their custody events
+    const previousSchedules = await this.prisma.schedule.findMany({
       where: { childId: dto.childId, familyId, isActive: true },
-      data: { isActive: false },
+      select: { id: true },
     });
+    if (previousSchedules.length > 0) {
+      const ids = previousSchedules.map((s) => s.id);
+      await this.prisma.custodyEvent.deleteMany({
+        where: { scheduleId: { in: ids } },
+      });
+      await this.prisma.schedule.updateMany({
+        where: { id: { in: ids } },
+        data: { isActive: false },
+      });
+    }
 
     const durationDays = dto.durationDays ?? 365;
 
@@ -102,6 +105,11 @@ export class ScheduleService {
       });
     }
 
+    this.eventEmitter.emit('custody.blocks.updated', {
+      familyId,
+      userId,
+    } satisfies CustodyBlocksUpdatedPayload);
+
     void this.audit.log({
       familyId,
       actorId:  userId,
@@ -137,6 +145,7 @@ export class ScheduleService {
       where: {
         familyId,
         date: { gte: from, lte: to },
+        schedule: { isActive: true },
       },
       include: {
         child: { select: { id: true, firstName: true, color: true } },
@@ -145,6 +154,39 @@ export class ScheduleService {
     });
 
     return events;
+  }
+
+  /**
+   * For each child in the family, keep only the most-recently-created active schedule
+   * and deactivate (+ delete events of) any older duplicates.
+   */
+  async deduplicateActiveSchedules(familyId: string, userId: string) {
+    await this.familyService.assertMember(familyId, userId);
+
+    const children = await this.prisma.child.findMany({
+      where: { familyId },
+      select: { id: true },
+    });
+
+    let cleaned = 0;
+
+    for (const child of children) {
+      const active = await this.prisma.schedule.findMany({
+        where: { familyId, childId: child.id, isActive: true },
+        orderBy: { createdAt: 'desc' },
+        select: { id: true },
+      });
+
+      if (active.length <= 1) continue;
+
+      // Keep the first (most recent), deactivate the rest
+      const staleIds = active.slice(1).map((s) => s.id);
+      await this.prisma.custodyEvent.deleteMany({ where: { scheduleId: { in: staleIds } } });
+      await this.prisma.schedule.updateMany({ where: { id: { in: staleIds } }, data: { isActive: false } });
+      cleaned += staleIds.length;
+    }
+
+    return { cleaned };
   }
 
   async overrideDay(

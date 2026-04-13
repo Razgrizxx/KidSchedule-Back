@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
+import type { CustodyBlocksUpdatedPayload } from '../schedule/schedule.service';
 import { ConfigService } from '@nestjs/config';
 import { google } from 'googleapis';
 import { User, Event as PrismaEvent, EventChild, Child, CustodyEvent } from '@prisma/client';
@@ -13,6 +14,14 @@ import { decrypt, encrypt } from './crypto.util';
 export interface CalendarEventUpsertPayload {
   eventId: string;
   userId: string;
+}
+
+export interface CalendarEventDeletePayload {
+  eventId: string;
+  userId: string;
+  familyId: string;
+  googleEventId: string | null;
+  outlookEventId: string | null;
 }
 
 // ── Google Calendar color IDs for event types ─────────────────────────────────
@@ -110,6 +119,55 @@ export class GoogleCalendarSyncService {
     }
   }
 
+  // ── Live delete sync ─────────────────────────────────────────────────────
+
+  @OnEvent('calendar.event.deleted', { async: true })
+  async handleEventDeleted(payload: CalendarEventDeletePayload): Promise<void> {
+    const { userId, familyId, googleEventId } = payload;
+    if (!googleEventId) return;
+
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.googleRefreshToken) return;
+
+    try {
+      const oauth2Client = await this.getRefreshedClient(user);
+      const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+      const calendarId = user.googleCalendarId;
+      if (!calendarId) return;
+
+      await calendar.events.delete({ calendarId, eventId: googleEventId }).catch((err) => {
+        if (err?.code !== 404 && err?.status !== 404) throw err;
+      });
+    } catch (err: any) {
+      this.logger.error(`Google Calendar delete failed for event ${payload.eventId}`, err);
+      if (err?.response?.data?.error === 'invalid_grant' || err?.cause?.message === 'invalid_grant') {
+        this.chatGateway.emitToFamily(familyId, 'notification', {
+          type: 'GOOGLE_SYNC_ERROR',
+          payload: { userId },
+        });
+      }
+    }
+  }
+
+  // ── Re-sync custody blocks when a schedule is created/updated ────────────
+
+  @OnEvent('custody.blocks.updated', { async: true })
+  async handleCustodyBlocksUpdated(payload: CustodyBlocksUpdatedPayload): Promise<void> {
+    const { familyId, userId } = payload;
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.googleRefreshToken) return;
+
+    try {
+      const oauth2Client = await this.getRefreshedClient(user);
+      const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+      const calendarId = await this.getOrCreateKidScheduleCalendar(calendar, user);
+      const childColorMap = await this.buildChildColorMap(familyId);
+      await this.syncCustodyBlocks(familyId, userId, calendar, calendarId, childColorMap, false);
+    } catch (err) {
+      this.logger.error(`Custody blocks sync failed for family ${familyId}`, err);
+    }
+  }
+
   // ── Full export: regular events + custody blocks ──────────────────────────
 
   async syncAllEvents(
@@ -129,7 +187,7 @@ export class GoogleCalendarSyncService {
 
     const [synced, custodySynced] = await Promise.all([
       this.syncRegularEvents(familyId, calendar, calendarId, cleanup),
-      this.syncCustodyBlocks(familyId, calendar, calendarId, childColorMap, cleanup),
+      this.syncCustodyBlocks(familyId, userId, calendar, calendarId, childColorMap, cleanup),
     ]);
 
     this.logger.log(`Export done — regular: ${synced}, custody blocks: ${custodySynced}`);
@@ -248,6 +306,7 @@ export class GoogleCalendarSyncService {
 
   private async syncCustodyBlocks(
     familyId: string,
+    userId: string,
     calendar: GCalendar,
     calendarId: string,
     childColorMap: Record<string, string>,
@@ -257,7 +316,12 @@ export class GoogleCalendarSyncService {
     sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
 
     const custodyEvents = await this.prisma.custodyEvent.findMany({
-      where: { familyId, date: { gte: new Date(), lte: sixMonthsFromNow } },
+      where: {
+        familyId,
+        custodianId: userId,
+        date: { gte: new Date(), lte: sixMonthsFromNow },
+        schedule: { isActive: true },
+      },
       include: { child: true },
       orderBy: [{ childId: 'asc' }, { date: 'asc' }],
     });

@@ -69,6 +69,9 @@ export declare class ScheduleController {
         googleEventId: string | null;
         outlookEventId: string | null;
     })[]>;
+    deduplicateActiveSchedules(user: AuthUser, familyId: string): Promise<{
+        cleaned: number;
+    }>;
     overrideDay(user: AuthUser, familyId: string, scheduleId: string, body: {
         date: string;
         custodianId: string;

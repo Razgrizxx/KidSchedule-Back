@@ -60,6 +60,41 @@ let OutlookCalendarSyncService = OutlookCalendarSyncService_1 = class OutlookCal
             this.logger.error(`Outlook Calendar sync failed for event ${eventId}`, err);
         }
     }
+    async handleEventDeleted(payload) {
+        const { userId, outlookEventId } = payload;
+        if (!outlookEventId)
+            return;
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user?.outlookRefreshToken || !user.outlookCalendarId)
+            return;
+        try {
+            const accessToken = await this.outlookAuth.getValidAccessToken(userId);
+            const res = await fetch(`${GRAPH}/me/calendars/${user.outlookCalendarId}/events/${outlookEventId}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${accessToken}` },
+            });
+            if (!res.ok && res.status !== 404) {
+                throw new Error(`Outlook DELETE failed: ${res.status}`);
+            }
+        }
+        catch (err) {
+            this.logger.error(`Outlook Calendar delete failed for event ${payload.eventId}`, err);
+        }
+    }
+    async handleCustodyBlocksUpdated(payload) {
+        const { familyId, userId } = payload;
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user?.outlookRefreshToken)
+            return;
+        try {
+            const accessToken = await this.outlookAuth.getValidAccessToken(userId);
+            const calendarId = await this.getOrCreateKidScheduleCalendar(accessToken, user);
+            await this.syncCustodyBlocks(familyId, userId, accessToken, calendarId, false);
+        }
+        catch (err) {
+            this.logger.error(`Outlook custody blocks sync failed for family ${familyId}`, err);
+        }
+    }
     async syncAllEvents(familyId, userId, cleanup = false) {
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user?.outlookRefreshToken)
@@ -68,7 +103,7 @@ let OutlookCalendarSyncService = OutlookCalendarSyncService_1 = class OutlookCal
         const calendarId = await this.getOrCreateKidScheduleCalendar(accessToken, user);
         const [synced, custodySynced] = await Promise.all([
             this.syncRegularEvents(familyId, accessToken, calendarId, cleanup),
-            this.syncCustodyBlocks(familyId, accessToken, calendarId, cleanup),
+            this.syncCustodyBlocks(familyId, userId, accessToken, calendarId, cleanup),
         ]);
         this.logger.log(`Outlook export done — regular: ${synced}, custody blocks: ${custodySynced}`);
         return { synced, custodySynced };
@@ -80,6 +115,16 @@ let OutlookCalendarSyncService = OutlookCalendarSyncService_1 = class OutlookCal
             });
             if (res.ok)
                 return user.outlookCalendarId;
+        }
+        const existing = await this.findCalendarByName(accessToken, CALENDAR_NAME);
+        if (existing) {
+            await this.prisma.user.update({
+                where: { id: user.id },
+                data: { outlookCalendarId: existing },
+            });
+            user.outlookCalendarId = existing;
+            this.logger.log(`Reusing existing KidSchedule Outlook calendar: ${existing}`);
+            return existing;
         }
         const res = await fetch(`${GRAPH}/me/calendars`, {
             method: 'POST',
@@ -97,6 +142,15 @@ let OutlookCalendarSyncService = OutlookCalendarSyncService_1 = class OutlookCal
         this.logger.log(`Created KidSchedule Outlook calendar: ${calendar.id}`);
         return calendar.id;
     }
+    async findCalendarByName(accessToken, name) {
+        const res = await fetch(`${GRAPH}/me/calendars?$select=id,name`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (!res.ok)
+            return null;
+        const data = (await res.json());
+        return data.value.find((c) => c.name === name)?.id ?? null;
+    }
     async syncRegularEvents(familyId, accessToken, calendarId, cleanup) {
         const events = await this.prisma.event.findMany({
             where: { familyId, startAt: { gte: new Date() } },
@@ -111,60 +165,59 @@ let OutlookCalendarSyncService = OutlookCalendarSyncService_1 = class OutlookCal
             events.forEach((e) => (e.outlookEventId = null));
         }
         let synced = 0;
-        const BATCH = 5;
-        for (let i = 0; i < events.length; i += BATCH) {
-            await Promise.all(events.slice(i, i + BATCH).map(async (event) => {
-                try {
-                    const outlookEvent = this.mapToOutlookEvent(event);
-                    const newId = await this.upsertOutlookEvent(accessToken, calendarId, event.outlookEventId, outlookEvent);
-                    if (newId && newId !== event.outlookEventId) {
-                        await this.prisma.event.update({ where: { id: event.id }, data: { outlookEventId: newId } });
-                    }
-                    synced++;
+        for (const event of events) {
+            try {
+                const outlookEvent = this.mapToOutlookEvent(event);
+                const newId = await this.upsertOutlookEvent(accessToken, calendarId, event.outlookEventId, outlookEvent);
+                if (newId && newId !== event.outlookEventId) {
+                    await this.prisma.event.update({ where: { id: event.id }, data: { outlookEventId: newId } });
                 }
-                catch (err) {
-                    this.logger.warn(`Skipped event ${event.id}: ${err}`);
-                }
-            }));
+                synced++;
+            }
+            catch (err) {
+                this.logger.warn(`Skipped event ${event.id}: ${err}`);
+            }
         }
         return synced;
     }
-    async syncCustodyBlocks(familyId, accessToken, calendarId, cleanup) {
+    async syncCustodyBlocks(familyId, userId, accessToken, calendarId, cleanup) {
         const sixMonthsFromNow = new Date();
         sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
         const custodyEvents = await this.prisma.custodyEvent.findMany({
-            where: { familyId, date: { gte: new Date(), lte: sixMonthsFromNow } },
+            where: {
+                familyId,
+                custodianId: userId,
+                date: { gte: new Date(), lte: sixMonthsFromNow },
+                schedule: { isActive: true },
+            },
             include: { child: true },
             orderBy: [{ childId: 'asc' }, { date: 'asc' }],
         });
         if (cleanup) {
             await this.deleteOutlookEventsBatch(accessToken, calendarId, custodyEvents.filter((e) => e.outlookEventId).map((e) => e.outlookEventId));
             await this.prisma.custodyEvent.updateMany({
-                where: { familyId, outlookEventId: { not: null } },
+                where: { familyId, custodianId: userId, outlookEventId: { not: null } },
                 data: { outlookEventId: null },
             });
             custodyEvents.forEach((e) => (e.outlookEventId = null));
         }
         const blocks = this.groupCustodyBlocks(custodyEvents);
         let synced = 0;
-        const BATCH = 5;
-        for (let i = 0; i < blocks.length; i += BATCH) {
-            await Promise.all(blocks.slice(i, i + BATCH).map(async (block) => {
-                try {
-                    const outlookEvent = this.mapCustodyBlockToOutlookEvent(block);
-                    const newId = await this.upsertOutlookEvent(accessToken, calendarId, block.outlookEventId, outlookEvent);
-                    if (newId && newId !== block.outlookEventId) {
-                        await this.prisma.custodyEvent.update({
-                            where: { id: block.anchorId },
-                            data: { outlookEventId: newId },
-                        });
-                    }
-                    synced++;
+        for (const block of blocks) {
+            try {
+                const outlookEvent = this.mapCustodyBlockToOutlookEvent(block);
+                const newId = await this.upsertOutlookEvent(accessToken, calendarId, block.outlookEventId, outlookEvent);
+                if (newId && newId !== block.outlookEventId) {
+                    await this.prisma.custodyEvent.update({
+                        where: { id: block.anchorId },
+                        data: { outlookEventId: newId },
+                    });
                 }
-                catch (err) {
-                    this.logger.warn(`Skipped custody block ${block.anchorId}: ${err}`);
-                }
-            }));
+                synced++;
+            }
+            catch (err) {
+                this.logger.warn(`Skipped custody block ${block.anchorId}: ${err}`);
+            }
         }
         return synced;
     }
@@ -194,25 +247,32 @@ let OutlookCalendarSyncService = OutlookCalendarSyncService_1 = class OutlookCal
         }
         return blocks;
     }
+    async graphFetch(url, init, retries = 3) {
+        for (let attempt = 0; attempt <= retries; attempt++) {
+            const res = await fetch(url, init);
+            if (res.status !== 429)
+                return res;
+            const retryAfter = parseInt(res.headers.get('Retry-After') ?? '5', 10);
+            const delay = (isNaN(retryAfter) ? 5 : retryAfter) * 1000;
+            this.logger.warn(`Graph 429 — waiting ${delay}ms before retry ${attempt + 1}/${retries}`);
+            await new Promise((r) => setTimeout(r, delay));
+        }
+        throw new Error('Outlook rate limit: too many retries');
+    }
     async upsertOutlookEvent(accessToken, calendarId, existingId, body) {
+        const headers = { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' };
         if (existingId) {
-            const res = await fetch(`${GRAPH}/me/calendars/${calendarId}/events/${existingId}`, {
-                method: 'PATCH',
-                headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
-            });
+            const res = await this.graphFetch(`${GRAPH}/me/calendars/${calendarId}/events/${existingId}`, { method: 'PATCH', headers, body: JSON.stringify(body) });
             if (res.ok)
                 return existingId;
             if (res.status !== 404)
                 throw new Error(`Outlook PATCH failed: ${res.status}`);
         }
-        const res = await fetch(`${GRAPH}/me/calendars/${calendarId}/events`, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-        });
-        if (!res.ok)
-            throw new Error(`Outlook INSERT failed: ${res.status}`);
+        const res = await this.graphFetch(`${GRAPH}/me/calendars/${calendarId}/events`, { method: 'POST', headers, body: JSON.stringify(body) });
+        if (!res.ok) {
+            const text = await res.text().catch(() => '');
+            throw new Error(`Outlook INSERT failed: ${res.status} ${text}`);
+        }
         const data = (await res.json());
         return data.id;
     }
@@ -236,13 +296,16 @@ let OutlookCalendarSyncService = OutlookCalendarSyncService_1 = class OutlookCal
             .join('\n');
         const category = EVENT_TYPE_CATEGORY[event.type] ?? 'Gray Category';
         if (event.allDay) {
-            const endDate = new Date(event.endAt.getTime() + 86_400_000);
+            const startMidnight = event.startAt.toISOString().slice(0, 10) + 'T00:00:00.000';
+            const endDay = new Date(event.endAt);
+            endDay.setUTCDate(endDay.getUTCDate() + 1);
+            const endMidnight = endDay.toISOString().slice(0, 10) + 'T00:00:00.000';
             return {
                 subject: event.title,
                 body: { contentType: 'text', content: notes },
                 isAllDay: true,
-                start: { dateTime: this.toOutlookDate(event.startAt), timeZone: 'UTC' },
-                end: { dateTime: this.toOutlookDate(endDate), timeZone: 'UTC' },
+                start: { dateTime: startMidnight, timeZone: 'UTC' },
+                end: { dateTime: endMidnight, timeZone: 'UTC' },
                 categories: [category],
             };
         }
@@ -277,6 +340,18 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], OutlookCalendarSyncService.prototype, "handleEventUpsert", null);
+__decorate([
+    (0, event_emitter_1.OnEvent)('calendar.event.deleted', { async: true }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], OutlookCalendarSyncService.prototype, "handleEventDeleted", null);
+__decorate([
+    (0, event_emitter_1.OnEvent)('custody.blocks.updated', { async: true }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], OutlookCalendarSyncService.prototype, "handleCustodyBlocksUpdated", null);
 exports.OutlookCalendarSyncService = OutlookCalendarSyncService = OutlookCalendarSyncService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,

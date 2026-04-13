@@ -681,8 +681,6 @@ model Moment {
 model FamilySettings {
   id             String   @id @default(uuid())
   familyId       String   @unique
-  timezone       String   @default("America/New_York")
-  transitionDay  String   @default("MONDAY")
   transitionTime String   @default("18:00")
   weekStartsOn   String   @default("MONDAY")
   createdAt      DateTime @default(now())

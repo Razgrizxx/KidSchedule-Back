@@ -33,6 +33,9 @@ let ScheduleController = class ScheduleController {
     getCalendar(user, familyId, year, month) {
         return this.scheduleService.getCalendar(familyId, user.id, year, month);
     }
+    deduplicateActiveSchedules(user, familyId) {
+        return this.scheduleService.deduplicateActiveSchedules(familyId, user.id);
+    }
     overrideDay(user, familyId, scheduleId, body) {
         return this.scheduleService.overrideDay(familyId, scheduleId, body.date, body.custodianId, user.id);
     }
@@ -65,6 +68,14 @@ __decorate([
     __metadata("design:paramtypes", [auth_user_1.AuthUser, String, Number, Number]),
     __metadata("design:returntype", void 0)
 ], ScheduleController.prototype, "getCalendar", null);
+__decorate([
+    (0, common_1.Post)('deduplicate'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('familyId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_user_1.AuthUser, String]),
+    __metadata("design:returntype", void 0)
+], ScheduleController.prototype, "deduplicateActiveSchedules", null);
 __decorate([
     (0, common_1.Post)(':scheduleId/override'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),

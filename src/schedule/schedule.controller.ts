@@ -43,6 +43,14 @@ export class ScheduleController {
     return this.scheduleService.getCalendar(familyId, user.id, year, month);
   }
 
+  @Post('deduplicate')
+  deduplicateActiveSchedules(
+    @CurrentUser() user: AuthUser,
+    @Param('familyId') familyId: string,
+  ) {
+    return this.scheduleService.deduplicateActiveSchedules(familyId, user.id);
+  }
+
   @Post(':scheduleId/override')
   overrideDay(
     @CurrentUser() user: AuthUser,

@@ -10,8 +10,6 @@ export declare class SettingsController {
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
-        timezone: string;
-        transitionDay: string;
         transitionTime: string;
         weekStartsOn: string;
     }>;
@@ -20,8 +18,6 @@ export declare class SettingsController {
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
-        timezone: string;
-        transitionDay: string;
         transitionTime: string;
         weekStartsOn: string;
     }>;

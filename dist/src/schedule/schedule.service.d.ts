@@ -1,14 +1,20 @@
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
 import { ScheduleGeneratorService } from './schedule-generator.service';
 import { AuditService } from '../audit/audit.service';
 import { CreateScheduleDto } from './dto/schedule.dto';
+export interface CustodyBlocksUpdatedPayload {
+    familyId: string;
+    userId: string;
+}
 export declare class ScheduleService {
     private prisma;
     private familyService;
     private generator;
     private audit;
-    constructor(prisma: PrismaService, familyService: FamilyService, generator: ScheduleGeneratorService, audit: AuditService);
+    private eventEmitter;
+    constructor(prisma: PrismaService, familyService: FamilyService, generator: ScheduleGeneratorService, audit: AuditService, eventEmitter: EventEmitter2);
     create(familyId: string, userId: string, dto: CreateScheduleDto): Promise<{
         schedule: {
             id: string;
@@ -74,6 +80,9 @@ export declare class ScheduleService {
         googleEventId: string | null;
         outlookEventId: string | null;
     })[]>;
+    deduplicateActiveSchedules(familyId: string, userId: string): Promise<{
+        cleaned: number;
+    }>;
     overrideDay(familyId: string, scheduleId: string, date: string, custodianId: string, userId: string): Promise<{
         id: string;
         createdAt: Date;

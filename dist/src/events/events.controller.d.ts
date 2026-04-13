@@ -123,14 +123,7 @@ export declare class EventsController {
         allDay: boolean;
         assignedToId: string | null;
     }>;
-    getHolidays(user: AuthUser, familyId: string, yearStr?: string, country?: string): Promise<{
-        isTransitionDay: boolean;
-        id: string;
-        date: string;
-        name: string;
-        country: "AR" | "US";
-        category: "NATIONAL" | "SCHOOL";
-    }[]>;
+    getHolidays(user: AuthUser, familyId: string, yearStr?: string, country?: string): Promise<import("./holidays.data").HolidayEntry[]>;
     extractFromImage(user: AuthUser, familyId: string, file: Express.Multer.File): Promise<any[]>;
     bulkCreate(user: AuthUser, familyId: string, dto: BulkImportDto): Promise<{
         created: number;

@@ -13,8 +13,6 @@ export declare class SettingsService {
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
-        timezone: string;
-        transitionDay: string;
         transitionTime: string;
         weekStartsOn: string;
     }>;
@@ -23,8 +21,6 @@ export declare class SettingsService {
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
-        timezone: string;
-        transitionDay: string;
         transitionTime: string;
         weekStartsOn: string;
     }>;

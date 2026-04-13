@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ScheduleService = void 0;
 const common_1 = require("@nestjs/common");
+const event_emitter_1 = require("@nestjs/event-emitter");
 const prisma_service_1 = require("../prisma/prisma.service");
 const family_service_1 = require("../family/family.service");
 const schedule_generator_service_1 = require("./schedule-generator.service");
@@ -20,11 +21,13 @@ let ScheduleService = class ScheduleService {
     familyService;
     generator;
     audit;
-    constructor(prisma, familyService, generator, audit) {
+    eventEmitter;
+    constructor(prisma, familyService, generator, audit, eventEmitter) {
         this.prisma = prisma;
         this.familyService = familyService;
         this.generator = generator;
         this.audit = audit;
+        this.eventEmitter = eventEmitter;
     }
     async create(familyId, userId, dto) {
         await this.familyService.assertMember(familyId, userId);
@@ -40,24 +43,22 @@ let ScheduleService = class ScheduleService {
         const familySettings = await this.prisma.familySettings.findUnique({
             where: { familyId },
         });
-        const WEEKDAY = {
-            SUNDAY: 0,
-            MONDAY: 1,
-            TUESDAY: 2,
-            WEDNESDAY: 3,
-            THURSDAY: 4,
-            FRIDAY: 5,
-            SATURDAY: 6,
-        };
-        const exchangeDay = dto.exchangeDay ??
-            (familySettings?.transitionDay != null
-                ? (WEEKDAY[familySettings.transitionDay] ?? undefined)
-                : undefined);
+        const exchangeDay = dto.exchangeDay ?? undefined;
         const exchangeTime = dto.exchangeTime ?? familySettings?.transitionTime ?? undefined;
-        await this.prisma.schedule.updateMany({
+        const previousSchedules = await this.prisma.schedule.findMany({
             where: { childId: dto.childId, familyId, isActive: true },
-            data: { isActive: false },
+            select: { id: true },
         });
+        if (previousSchedules.length > 0) {
+            const ids = previousSchedules.map((s) => s.id);
+            await this.prisma.custodyEvent.deleteMany({
+                where: { scheduleId: { in: ids } },
+            });
+            await this.prisma.schedule.updateMany({
+                where: { id: { in: ids } },
+                data: { isActive: false },
+            });
+        }
         const durationDays = dto.durationDays ?? 365;
         const schedule = await this.prisma.schedule.create({
             data: {
@@ -88,6 +89,10 @@ let ScheduleService = class ScheduleService {
                 skipDuplicates: true,
             });
         }
+        this.eventEmitter.emit('custody.blocks.updated', {
+            familyId,
+            userId,
+        });
         void this.audit.log({
             familyId,
             actorId: userId,
@@ -113,6 +118,7 @@ let ScheduleService = class ScheduleService {
             where: {
                 familyId,
                 date: { gte: from, lte: to },
+                schedule: { isActive: true },
             },
             include: {
                 child: { select: { id: true, firstName: true, color: true } },
@@ -120,6 +126,28 @@ let ScheduleService = class ScheduleService {
             orderBy: { date: 'asc' },
         });
         return events;
+    }
+    async deduplicateActiveSchedules(familyId, userId) {
+        await this.familyService.assertMember(familyId, userId);
+        const children = await this.prisma.child.findMany({
+            where: { familyId },
+            select: { id: true },
+        });
+        let cleaned = 0;
+        for (const child of children) {
+            const active = await this.prisma.schedule.findMany({
+                where: { familyId, childId: child.id, isActive: true },
+                orderBy: { createdAt: 'desc' },
+                select: { id: true },
+            });
+            if (active.length <= 1)
+                continue;
+            const staleIds = active.slice(1).map((s) => s.id);
+            await this.prisma.custodyEvent.deleteMany({ where: { scheduleId: { in: staleIds } } });
+            await this.prisma.schedule.updateMany({ where: { id: { in: staleIds } }, data: { isActive: false } });
+            cleaned += staleIds.length;
+        }
+        return { cleaned };
     }
     async overrideDay(familyId, scheduleId, date, custodianId, userId) {
         await this.familyService.assertMember(familyId, userId);
@@ -146,6 +174,7 @@ exports.ScheduleService = ScheduleService = __decorate([
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         family_service_1.FamilyService,
         schedule_generator_service_1.ScheduleGeneratorService,
-        audit_service_1.AuditService])
+        audit_service_1.AuditService,
+        event_emitter_1.EventEmitter2])
 ], ScheduleService);
 //# sourceMappingURL=schedule.service.js.map

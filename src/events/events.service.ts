@@ -8,7 +8,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { AuditService } from '../audit/audit.service';
 import { BulkImportDto, CreateEventDto, UpdateEventDto } from './dto/event.dto';
 import { getHolidaysForYear } from './holidays.data';
-import type { CalendarEventUpsertPayload } from '../google/google-calendar-sync.service';
+import type { CalendarEventUpsertPayload, CalendarEventDeletePayload } from '../google/google-calendar-sync.service';
 
 @Injectable()
 export class EventsService {
@@ -136,21 +136,10 @@ export class EventsService {
   async getHolidays(familyId: string, userId: string, year: number, country?: string) {
     await this.familyService.assertMember(familyId, userId);
 
-    const settings = await this.prisma.familySettings.findUnique({ where: { familyId } });
-    const transitionDay = settings?.transitionDay ?? 'MONDAY';
-    const DAY_MAP: Record<string, number> = {
-      SUNDAY: 0, MONDAY: 1, TUESDAY: 2, WEDNESDAY: 3, THURSDAY: 4, FRIDAY: 5, SATURDAY: 6,
-    };
-    const transitionDayNum = DAY_MAP[transitionDay] ?? 1;
-
     const all = getHolidaysForYear(year);
     const filtered = country ? all.filter((h) => h.country === country) : all;
 
-    return filtered.map((h) => ({
-      ...h,
-      // Parse date at noon UTC to avoid timezone off-by-one
-      isTransitionDay: new Date(h.date + 'T12:00:00Z').getDay() === transitionDayNum,
-    }));
+    return filtered;
   }
 
   async bulkCreate(familyId: string, userId: string, dto: BulkImportDto) {
@@ -255,9 +244,18 @@ Return [] if no events are found.`,
     await this.familyService.assertMember(familyId, userId);
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
-      select: { title: true, startAt: true },
+      select: { title: true, startAt: true, googleEventId: true, outlookEventId: true },
     });
     await this.prisma.event.delete({ where: { id: eventId, familyId } });
+
+    // Notify calendar sync services to delete the mirrored event
+    this.eventEmitter.emit('calendar.event.deleted', {
+      eventId,
+      userId,
+      familyId,
+      googleEventId:  event?.googleEventId  ?? null,
+      outlookEventId: event?.outlookEventId ?? null,
+    } satisfies CalendarEventDeletePayload);
 
     void this.audit.log({
       familyId,

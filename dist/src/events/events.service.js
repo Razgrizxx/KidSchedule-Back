@@ -135,18 +135,9 @@ let EventsService = class EventsService {
     }
     async getHolidays(familyId, userId, year, country) {
         await this.familyService.assertMember(familyId, userId);
-        const settings = await this.prisma.familySettings.findUnique({ where: { familyId } });
-        const transitionDay = settings?.transitionDay ?? 'MONDAY';
-        const DAY_MAP = {
-            SUNDAY: 0, MONDAY: 1, TUESDAY: 2, WEDNESDAY: 3, THURSDAY: 4, FRIDAY: 5, SATURDAY: 6,
-        };
-        const transitionDayNum = DAY_MAP[transitionDay] ?? 1;
         const all = (0, holidays_data_1.getHolidaysForYear)(year);
         const filtered = country ? all.filter((h) => h.country === country) : all;
-        return filtered.map((h) => ({
-            ...h,
-            isTransitionDay: new Date(h.date + 'T12:00:00Z').getDay() === transitionDayNum,
-        }));
+        return filtered;
     }
     async bulkCreate(familyId, userId, dto) {
         await this.familyService.assertMember(familyId, userId);
@@ -247,9 +238,16 @@ Return [] if no events are found.`,
         await this.familyService.assertMember(familyId, userId);
         const event = await this.prisma.event.findUnique({
             where: { id: eventId },
-            select: { title: true, startAt: true },
+            select: { title: true, startAt: true, googleEventId: true, outlookEventId: true },
         });
         await this.prisma.event.delete({ where: { id: eventId, familyId } });
+        this.eventEmitter.emit('calendar.event.deleted', {
+            eventId,
+            userId,
+            familyId,
+            googleEventId: event?.googleEventId ?? null,
+            outlookEventId: event?.outlookEventId ?? null,
+        });
         void this.audit.log({
             familyId,
             actorId: userId,

@@ -22,11 +22,12 @@ export class DashboardService {
       nextHandoff,
       familyMembers,
     ] = await Promise.all([
-      // Custody events for today
+      // Custody events for today (active schedules only)
       this.prisma.custodyEvent.findMany({
         where: {
           familyId,
           date: { gte: todayStart, lte: todayEnd },
+          schedule: { isActive: true },
         },
         include: {
           child: { select: { id: true, firstName: true, color: true } },

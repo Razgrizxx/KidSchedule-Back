@@ -131,14 +131,7 @@ export declare class EventsService {
         allDay: boolean;
         assignedToId: string | null;
     }>;
-    getHolidays(familyId: string, userId: string, year: number, country?: string): Promise<{
-        isTransitionDay: boolean;
-        id: string;
-        date: string;
-        name: string;
-        country: "AR" | "US";
-        category: "NATIONAL" | "SCHOOL";
-    }[]>;
+    getHolidays(familyId: string, userId: string, year: number, country?: string): Promise<import("./holidays.data").HolidayEntry[]>;
     bulkCreate(familyId: string, userId: string, dto: BulkImportDto): Promise<{
         created: number;
         skipped: number;

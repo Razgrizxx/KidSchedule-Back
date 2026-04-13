@@ -54,9 +54,17 @@ export class GoogleController {
 
     try {
       const userId = this.googleAuth.verifyState(state);
-      await this.googleAuth.handleCallback(code, userId);
+      this.logger.log(`Google callback — userId: ${userId}`);
+      const { familyIds } = await this.googleAuth.handleCallback(code, userId);
+      this.logger.log(`Google callback — familyIds: ${familyIds.join(', ')}`);
+      for (const familyId of familyIds) {
+        void this.googleSync.syncAllEvents(familyId, userId).catch((err) =>
+          this.logger.error(`Initial Google sync failed for family ${familyId}`, err),
+        );
+      }
       return res.redirect(`${redirectBase}?google=connected`);
-    } catch {
+    } catch (err) {
+      this.logger.error('Google callback error', err);
       return res.redirect(`${redirectBase}?google=error`);
     }
   }

@@ -28,6 +28,7 @@ let DashboardService = class DashboardService {
                 where: {
                     familyId,
                     date: { gte: todayStart, lte: todayEnd },
+                    schedule: { isActive: true },
                 },
                 include: {
                     child: { select: { id: true, firstName: true, color: true } },

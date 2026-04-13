@@ -10,7 +10,9 @@ export declare class GoogleAuthService {
     createOAuth2Client(): Auth.OAuth2Client;
     getAuthUrl(userId: string): string;
     verifyState(state: string): string;
-    handleCallback(code: string, userId: string): Promise<void>;
+    handleCallback(code: string, userId: string): Promise<{
+        familyIds: string[];
+    }>;
     disconnect(userId: string): Promise<{
         message: string;
     }>;
