@@ -1,14 +1,33 @@
 import {
+  Body,
   Controller,
+  Get,
   Post,
   UploadedFile,
   UseInterceptors,
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { IsEmail, IsNotEmpty, IsString, MaxLength } from 'class-validator';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
+import { TestMailService } from './test-mail.service';
+
+class SendTestEmailDto {
+  @IsEmail()
+  to: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(120)
+  subject: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(2000)
+  body: string;
+}
 
 // In production the VPS mounts uploads at /home/christian/uploads,
 // locally we use ./uploads relative to the project root (CWD).
@@ -34,6 +53,22 @@ const diskStorageConfig = diskStorage({
 
 @Controller('test')
 export class TestController {
+  constructor(private readonly mail: TestMailService) {}
+
+  // ── SMTP verify ────────────────────────────────────────────────────────────
+  @Get('email/verify')
+  verifySmtp() {
+    return this.mail.verify();
+  }
+
+  // ── Send test email ────────────────────────────────────────────────────────
+  @Post('email')
+  async sendEmail(@Body() dto: SendTestEmailDto) {
+    const result = await this.mail.sendTest(dto.to, dto.subject, dto.body);
+    return { ok: true, ...result };
+  }
+
+  // ── Upload ─────────────────────────────────────────────────────────────────
   @Post('upload')
   @UseInterceptors(
     FileInterceptor('file', {

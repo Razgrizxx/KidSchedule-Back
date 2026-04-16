@@ -15,9 +15,32 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TestController = void 0;
 const common_1 = require("@nestjs/common");
 const platform_express_1 = require("@nestjs/platform-express");
+const class_validator_1 = require("class-validator");
 const multer_1 = require("multer");
 const path_1 = require("path");
 const fs_1 = require("fs");
+const test_mail_service_1 = require("./test-mail.service");
+class SendTestEmailDto {
+    to;
+    subject;
+    body;
+}
+__decorate([
+    (0, class_validator_1.IsEmail)(),
+    __metadata("design:type", String)
+], SendTestEmailDto.prototype, "to", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.MaxLength)(120),
+    __metadata("design:type", String)
+], SendTestEmailDto.prototype, "subject", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.MaxLength)(2000),
+    __metadata("design:type", String)
+], SendTestEmailDto.prototype, "body", void 0);
 function getUploadRoot() {
     return process.env.NODE_ENV === 'production'
         ? '/home/christian/uploads'
@@ -38,6 +61,17 @@ const diskStorageConfig = (0, multer_1.diskStorage)({
     },
 });
 let TestController = class TestController {
+    mail;
+    constructor(mail) {
+        this.mail = mail;
+    }
+    verifySmtp() {
+        return this.mail.verify();
+    }
+    async sendEmail(dto) {
+        const result = await this.mail.sendTest(dto.to, dto.subject, dto.body);
+        return { ok: true, ...result };
+    }
     upload(file) {
         if (!file)
             throw new common_1.BadRequestException('No file received');
@@ -55,6 +89,19 @@ let TestController = class TestController {
     }
 };
 exports.TestController = TestController;
+__decorate([
+    (0, common_1.Get)('email/verify'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], TestController.prototype, "verifySmtp", null);
+__decorate([
+    (0, common_1.Post)('email'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [SendTestEmailDto]),
+    __metadata("design:returntype", Promise)
+], TestController.prototype, "sendEmail", null);
 __decorate([
     (0, common_1.Post)('upload'),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {
@@ -82,6 +129,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], TestController.prototype, "upload", null);
 exports.TestController = TestController = __decorate([
-    (0, common_1.Controller)('test')
+    (0, common_1.Controller)('test'),
+    __metadata("design:paramtypes", [test_mail_service_1.TestMailService])
 ], TestController);
 //# sourceMappingURL=test.controller.js.map
