@@ -10,7 +10,7 @@ export declare class EventsService {
     private eventEmitter;
     private notifications;
     private audit;
-    private readonly anthropic;
+    private readonly openai;
     constructor(prisma: PrismaService, familyService: FamilyService, eventEmitter: EventEmitter2, notifications: NotificationsService, audit: AuditService);
     create(familyId: string, userId: string, dto: CreateEventDto): Promise<{
         children: ({

@@ -38,7 +38,8 @@
       "Bash(node -e \"const r=require\\('./test-results.json'\\); r.testResults.forEach\\(suite=>{ suite.testResults.forEach\\(t=>console.log\\(\\(t.status==='passed'?'pass':'FAIL'\\)+' | '+t.fullName\\)\\) }\\); require\\('fs'\\).unlinkSync\\('./test-results.json'\\)\")",
       "Bash(node -e \"const r=require\\('./test-results.json'\\); const s=r.testResults[0]; console.log\\(typeof s, JSON.stringify\\(Object.keys\\(s||{}\\)\\)\\)\")",
       "Bash(rm test-results.json)",
-      "Bash(node -e \"const r=require\\('./test-results.json'\\); r.testResults.forEach\\(s=>s.assertionResults.forEach\\(t=>console.log\\(\\(t.status==='passed'?'pass':'FAIL'\\)+' | '+t.fullName\\)\\)\\)\")"
+      "Bash(node -e \"const r=require\\('./test-results.json'\\); r.testResults.forEach\\(s=>s.assertionResults.forEach\\(t=>console.log\\(\\(t.status==='passed'?'pass':'FAIL'\\)+' | '+t.fullName\\)\\)\\)\")",
+      "Bash(node -e \"require\\('/d/downloads/Projects/kidSchedule/node_modules/@types/multer/index.d.ts'\\)\")"
     ]
   }
 }
