@@ -59,8 +59,8 @@ export declare class MediationService {
         } & {
             id: string;
             createdAt: Date;
-            content: string;
             senderId: string | null;
+            content: string;
             isAI: boolean;
             sessionId: string;
         })[];
@@ -101,8 +101,8 @@ export declare class MediationService {
     } & {
         id: string;
         createdAt: Date;
-        content: string;
         senderId: string | null;
+        content: string;
         isAI: boolean;
         sessionId: string;
     }>;
@@ -135,8 +135,8 @@ export declare class MediationService {
     } & {
         id: string;
         createdAt: Date;
-        content: string;
         senderId: string | null;
+        content: string;
         isAI: boolean;
         sessionId: string;
     }>;
@@ -183,8 +183,8 @@ export declare class MediationService {
             } & {
                 id: string;
                 createdAt: Date;
-                content: string;
                 senderId: string | null;
+                content: string;
                 isAI: boolean;
                 sessionId: string;
             })[];
@@ -217,16 +217,16 @@ export declare class MediationService {
             topic: string;
         };
         chainMessages: {
+            sender: {
+                firstName: string;
+                lastName: string;
+            };
             id: string;
             createdAt: Date;
             content: string;
             contentHash: string;
             previousHash: string;
             isSystemMessage: boolean;
-            sender: {
-                firstName: string;
-                lastName: string;
-            };
         }[];
         generatedAt: string;
     }>;
@@ -243,12 +243,12 @@ export declare class MediationService {
             firstName: string;
             lastName: string;
         };
+        name: string;
+        token: string;
         id: string;
         email: string;
         role: string;
         createdAt: Date;
-        name: string;
-        token: string;
         expiresAt: Date;
         invitedBy: string;
         sessionId: string;
@@ -260,24 +260,24 @@ export declare class MediationService {
             lastName: string;
         };
     } & {
+        name: string;
+        token: string;
         id: string;
         email: string;
         role: string;
         createdAt: Date;
-        name: string;
-        token: string;
         expiresAt: Date;
         invitedBy: string;
         sessionId: string;
         revokedAt: Date | null;
     })[]>;
     revokeInvite(familyId: string, sessionId: string, inviteId: string, userId: string): Promise<{
+        name: string;
+        token: string;
         id: string;
         email: string;
         role: string;
         createdAt: Date;
-        name: string;
-        token: string;
         expiresAt: Date;
         invitedBy: string;
         sessionId: string;
@@ -299,8 +299,8 @@ export declare class MediationService {
             } & {
                 id: string;
                 createdAt: Date;
-                content: string;
                 senderId: string | null;
+                content: string;
                 isAI: boolean;
                 sessionId: string;
             })[];

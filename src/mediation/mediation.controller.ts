@@ -8,6 +8,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { MediationService } from './mediation.service';
 import {
   CreateSessionDto,
@@ -72,6 +73,7 @@ export class MediationController {
     return this.mediationService.sendMessage(familyId, sessionId, user.id, dto);
   }
 
+  @Throttle({ ai: { ttl: 60_000, limit: 10 } })
   @UseGuards(SubscriptionGuard)
   @RequireFeature('ai_mediation')
   @Post(':sessionId/ask-ai')

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
-import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { LocalStorageService } from '../storage/storage.service';
 import { UpdateFamilySettingsDto } from './dto/update-family-settings.dto';
 import { UpdateUserSettingsDto } from './dto/update-user-settings.dto';
 
@@ -10,7 +10,7 @@ export class SettingsService {
   constructor(
     private prisma: PrismaService,
     private familyService: FamilyService,
-    private cloudinary: CloudinaryService,
+    private storage: LocalStorageService,
   ) {}
 
   async getFamilySettings(familyId: string, userId: string) {
@@ -86,12 +86,12 @@ export class SettingsService {
       where: { id: userId },
       select: { avatarUrl: true },
     });
-    if (user?.avatarUrl) {
-      const match = user.avatarUrl.match(/kidschedule\/avatars\/[^/.]+/);
-      if (match) await this.cloudinary.delete(match[0]).catch(() => null);
+    if (user?.avatarUrl?.startsWith('/uploads/')) {
+      const publicId = user.avatarUrl.replace(/^\/uploads\//, '');
+      await this.storage.delete(publicId).catch(() => null);
     }
 
-    const result = await this.cloudinary.upload(file, `kidschedule/avatars`);
+    const result = await this.storage.upload(file, `kidschedule/avatars`);
     const updated = await this.prisma.user.update({
       where: { id: userId },
       data: { avatarUrl: result.secure_url },

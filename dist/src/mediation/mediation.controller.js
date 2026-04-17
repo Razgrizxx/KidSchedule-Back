@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MediationController = void 0;
 const common_1 = require("@nestjs/common");
+const throttler_1 = require("@nestjs/throttler");
 const mediation_service_1 = require("./mediation.service");
 const mediation_dto_1 = require("./dto/mediation.dto");
 const jwt_auth_guard_1 = require("../common/guards/jwt-auth.guard");
@@ -113,6 +114,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], MediationController.prototype, "sendMessage", null);
 __decorate([
+    (0, throttler_1.Throttle)({ ai: { ttl: 60_000, limit: 10 } }),
     (0, common_1.UseGuards)(subscription_guard_1.SubscriptionGuard),
     (0, subscription_guard_1.RequireFeature)('ai_mediation'),
     (0, common_1.Post)(':sessionId/ask-ai'),

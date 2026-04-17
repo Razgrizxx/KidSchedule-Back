@@ -1,10 +1,10 @@
 import { PrismaService } from '../prisma/prisma.service';
-import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { LocalStorageService } from '../storage/storage.service';
 import { DocumentCategory } from '@prisma/client';
 export declare class DocumentsService {
     private prisma;
-    private cloudinary;
-    constructor(prisma: PrismaService, cloudinary: CloudinaryService);
+    private storage;
+    constructor(prisma: PrismaService, storage: LocalStorageService);
     upload(familyId: string, userId: string, file: Express.Multer.File, body: {
         title: string;
         category: DocumentCategory;
@@ -17,17 +17,17 @@ export declare class DocumentsService {
         };
     } & {
         id: string;
+        category: import("@prisma/client").$Enums.DocumentCategory;
+        title: string;
+        description: string | null;
+        fileUrl: string;
+        cloudinaryPublicId: string;
+        mimeType: string | null;
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
         childId: string | null;
-        title: string;
-        description: string | null;
-        category: import("@prisma/client").$Enums.DocumentCategory;
-        cloudinaryPublicId: string;
         uploadedBy: string;
-        fileUrl: string;
-        mimeType: string | null;
     }>;
     findAll(familyId: string, childId?: string, category?: DocumentCategory): Promise<({
         child: {
@@ -41,17 +41,17 @@ export declare class DocumentsService {
         };
     } & {
         id: string;
+        category: import("@prisma/client").$Enums.DocumentCategory;
+        title: string;
+        description: string | null;
+        fileUrl: string;
+        cloudinaryPublicId: string;
+        mimeType: string | null;
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
         childId: string | null;
-        title: string;
-        description: string | null;
-        category: import("@prisma/client").$Enums.DocumentCategory;
-        cloudinaryPublicId: string;
         uploadedBy: string;
-        fileUrl: string;
-        mimeType: string | null;
     })[]>;
     remove(familyId: string, id: string, userId: string): Promise<void>;
 }

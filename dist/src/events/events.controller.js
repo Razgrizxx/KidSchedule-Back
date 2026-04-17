@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.EventsController = void 0;
 const common_1 = require("@nestjs/common");
 const platform_express_1 = require("@nestjs/platform-express");
+const throttler_1 = require("@nestjs/throttler");
 const events_service_1 = require("./events.service");
 const event_dto_1 = require("./dto/event.dto");
 const jwt_auth_guard_1 = require("../common/guards/jwt-auth.guard");
@@ -88,6 +89,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], EventsController.prototype, "getHolidays", null);
 __decorate([
+    (0, throttler_1.Throttle)({ ai: { ttl: 60_000, limit: 5 } }),
     (0, common_1.Post)('extract-from-image'),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('image')),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),

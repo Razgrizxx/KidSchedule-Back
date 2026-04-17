@@ -29,11 +29,11 @@ export declare class HandoffsController {
         childId: string;
         notes: string | null;
         handoffAt: Date;
-        toParentId: string;
         location: string | null;
         confirmedBy: string | null;
         confirmedAt: Date | null;
         fromParentId: string;
+        toParentId: string;
     }>;
     findAll(familyId: string, user: AuthUser, childId?: string, from?: string, to?: string, take?: string, cursor?: string): Promise<{
         handoffs: ({
@@ -61,11 +61,11 @@ export declare class HandoffsController {
             childId: string;
             notes: string | null;
             handoffAt: Date;
-            toParentId: string;
             location: string | null;
             confirmedBy: string | null;
             confirmedAt: Date | null;
             fromParentId: string;
+            toParentId: string;
         })[];
         nextCursor: string | null;
     }>;
@@ -94,11 +94,11 @@ export declare class HandoffsController {
         childId: string;
         notes: string | null;
         handoffAt: Date;
-        toParentId: string;
         location: string | null;
         confirmedBy: string | null;
         confirmedAt: Date | null;
         fromParentId: string;
+        toParentId: string;
     }>;
     remove(familyId: string, handoffId: string, user: AuthUser): Promise<{
         message: string;

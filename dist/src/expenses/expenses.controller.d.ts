@@ -12,12 +12,12 @@ export declare class ExpensesController {
         settled: number;
     }>;
     create(user: AuthUser, familyId: string, dto: CreateExpenseDto): Promise<{
+        date: Date;
         id: string;
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
         childId: string | null;
-        date: Date;
         description: string;
         category: import("@prisma/client").$Enums.ExpenseCategory;
         amount: import("@prisma/client-runtime-utils").Decimal;
@@ -36,12 +36,12 @@ export declare class ExpensesController {
             lastName: string;
         };
     } & {
+        date: Date;
         id: string;
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
         childId: string | null;
-        date: Date;
         description: string;
         category: import("@prisma/client").$Enums.ExpenseCategory;
         amount: import("@prisma/client-runtime-utils").Decimal;
@@ -76,12 +76,12 @@ export declare class ExpensesController {
             lastName: string;
         };
     } & {
+        date: Date;
         id: string;
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
         childId: string | null;
-        date: Date;
         description: string;
         category: import("@prisma/client").$Enums.ExpenseCategory;
         amount: import("@prisma/client-runtime-utils").Decimal;
@@ -94,12 +94,12 @@ export declare class ExpensesController {
         recurringId: string | null;
     }>;
     update(user: AuthUser, familyId: string, expenseId: string, dto: UpdateExpenseDto): Promise<{
+        date: Date;
         id: string;
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
         childId: string | null;
-        date: Date;
         description: string;
         category: import("@prisma/client").$Enums.ExpenseCategory;
         amount: import("@prisma/client-runtime-utils").Decimal;
@@ -118,12 +118,12 @@ export declare class ExpensesController {
             lastName: string;
         };
     } & {
+        date: Date;
         id: string;
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
         childId: string | null;
-        date: Date;
         description: string;
         category: import("@prisma/client").$Enums.ExpenseCategory;
         amount: import("@prisma/client-runtime-utils").Decimal;
@@ -142,12 +142,12 @@ export declare class ExpensesController {
             lastName: string;
         };
     } & {
+        date: Date;
         id: string;
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
         childId: string | null;
-        date: Date;
         description: string;
         category: import("@prisma/client").$Enums.ExpenseCategory;
         amount: import("@prisma/client-runtime-utils").Decimal;

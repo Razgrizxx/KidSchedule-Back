@@ -3,10 +3,10 @@ import { SettingsController } from './settings.controller';
 import { SettingsService } from './settings.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { FamilyModule } from '../family/family.module';
-import { CloudinaryModule } from '../cloudinary/cloudinary.module';
+
 
 @Module({
-  imports: [PrismaModule, FamilyModule, CloudinaryModule],
+  imports: [PrismaModule, FamilyModule],
   controllers: [SettingsController],
   providers: [SettingsService],
   exports: [SettingsService],

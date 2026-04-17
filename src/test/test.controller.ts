@@ -12,6 +12,7 @@ import { IsEmail, IsNotEmpty, IsString, MaxLength } from 'class-validator';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
+import { Throttle } from '@nestjs/throttler';
 import { TestMailService } from './test-mail.service';
 
 class SendTestEmailDto {
@@ -62,6 +63,7 @@ export class TestController {
   }
 
   // ── Send test email ────────────────────────────────────────────────────────
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   @Post('email')
   async sendEmail(@Body() dto: SendTestEmailDto) {
     const result = await this.mail.sendTest(dto.to, dto.subject, dto.body);

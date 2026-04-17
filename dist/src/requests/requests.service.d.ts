@@ -28,8 +28,6 @@ export declare class RequestsService {
         familyId: string;
         status: import("@prisma/client").$Enums.ChangeRequestStatus;
         childId: string | null;
-        requesterId: string;
-        responderId: string | null;
         type: import("@prisma/client").$Enums.ChangeRequestType;
         originalDate: Date | null;
         requestedDate: Date;
@@ -38,6 +36,8 @@ export declare class RequestsService {
         counterDate: Date | null;
         counterReason: string | null;
         resolvedAt: Date | null;
+        requesterId: string;
+        responderId: string | null;
     }>;
     findAll(familyId: string, userId: string): Promise<({
         requester: {
@@ -57,8 +57,6 @@ export declare class RequestsService {
         familyId: string;
         status: import("@prisma/client").$Enums.ChangeRequestStatus;
         childId: string | null;
-        requesterId: string;
-        responderId: string | null;
         type: import("@prisma/client").$Enums.ChangeRequestType;
         originalDate: Date | null;
         requestedDate: Date;
@@ -67,6 +65,8 @@ export declare class RequestsService {
         counterDate: Date | null;
         counterReason: string | null;
         resolvedAt: Date | null;
+        requesterId: string;
+        responderId: string | null;
     })[]>;
     respond(familyId: string, requestId: string, responderId: string, dto: RespondChangeRequestDto): Promise<{
         id: string;
@@ -75,8 +75,6 @@ export declare class RequestsService {
         familyId: string;
         status: import("@prisma/client").$Enums.ChangeRequestStatus;
         childId: string | null;
-        requesterId: string;
-        responderId: string | null;
         type: import("@prisma/client").$Enums.ChangeRequestType;
         originalDate: Date | null;
         requestedDate: Date;
@@ -85,6 +83,8 @@ export declare class RequestsService {
         counterDate: Date | null;
         counterReason: string | null;
         resolvedAt: Date | null;
+        requesterId: string;
+        responderId: string | null;
     }>;
     private notifyCoParentByEmail;
     private applyCalendarOverrides;

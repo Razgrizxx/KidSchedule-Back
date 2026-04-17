@@ -19,6 +19,7 @@ const class_validator_1 = require("class-validator");
 const multer_1 = require("multer");
 const path_1 = require("path");
 const fs_1 = require("fs");
+const throttler_1 = require("@nestjs/throttler");
 const test_mail_service_1 = require("./test-mail.service");
 class SendTestEmailDto {
     to;
@@ -96,6 +97,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], TestController.prototype, "verifySmtp", null);
 __decorate([
+    (0, throttler_1.Throttle)({ default: { ttl: 60_000, limit: 5 } }),
     (0, common_1.Post)('email'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),

@@ -19,11 +19,11 @@ export declare class MessagingService {
         createdAt: Date;
         familyId: string;
         status: import("@prisma/client").$Enums.MessageStatus;
-        content: string;
-        attachmentUrl: string | null;
         senderId: string;
+        content: string;
         contentHash: string;
         previousHash: string;
+        attachmentUrl: string | null;
         isSystemMessage: boolean;
     }>;
     findAll(familyId: string, userId: string, cursor?: string, take?: number): Promise<{
@@ -39,11 +39,11 @@ export declare class MessagingService {
             createdAt: Date;
             familyId: string;
             status: import("@prisma/client").$Enums.MessageStatus;
-            content: string;
-            attachmentUrl: string | null;
             senderId: string;
+            content: string;
             contentHash: string;
             previousHash: string;
+            attachmentUrl: string | null;
             isSystemMessage: boolean;
         })[];
         nextCursor: string | null;
@@ -58,11 +58,11 @@ export declare class MessagingService {
         createdAt: Date;
         familyId: string;
         status: import("@prisma/client").$Enums.MessageStatus;
-        content: string;
-        attachmentUrl: string | null;
         senderId: string;
+        content: string;
         contentHash: string;
         previousHash: string;
+        attachmentUrl: string | null;
         isSystemMessage: boolean;
     } | undefined>;
     markRead(familyId: string, userId: string): Promise<{

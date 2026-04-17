@@ -55,8 +55,8 @@ export declare class MediationController {
         } & {
             id: string;
             createdAt: Date;
-            content: string;
             senderId: string | null;
+            content: string;
             isAI: boolean;
             sessionId: string;
         })[];
@@ -97,8 +97,8 @@ export declare class MediationController {
     } & {
         id: string;
         createdAt: Date;
-        content: string;
         senderId: string | null;
+        content: string;
         isAI: boolean;
         sessionId: string;
     }>;
@@ -131,8 +131,8 @@ export declare class MediationController {
     } & {
         id: string;
         createdAt: Date;
-        content: string;
         senderId: string | null;
+        content: string;
         isAI: boolean;
         sessionId: string;
     }>;
@@ -179,8 +179,8 @@ export declare class MediationController {
             } & {
                 id: string;
                 createdAt: Date;
-                content: string;
                 senderId: string | null;
+                content: string;
                 isAI: boolean;
                 sessionId: string;
             })[];
@@ -213,16 +213,16 @@ export declare class MediationController {
             topic: string;
         };
         chainMessages: {
+            sender: {
+                firstName: string;
+                lastName: string;
+            };
             id: string;
             createdAt: Date;
             content: string;
             contentHash: string;
             previousHash: string;
             isSystemMessage: boolean;
-            sender: {
-                firstName: string;
-                lastName: string;
-            };
         }[];
         generatedAt: string;
     }>;
@@ -232,12 +232,12 @@ export declare class MediationController {
             firstName: string;
             lastName: string;
         };
+        name: string;
+        token: string;
         id: string;
         email: string;
         role: string;
         createdAt: Date;
-        name: string;
-        token: string;
         expiresAt: Date;
         invitedBy: string;
         sessionId: string;
@@ -249,24 +249,24 @@ export declare class MediationController {
             lastName: string;
         };
     } & {
+        name: string;
+        token: string;
         id: string;
         email: string;
         role: string;
         createdAt: Date;
-        name: string;
-        token: string;
         expiresAt: Date;
         invitedBy: string;
         sessionId: string;
         revokedAt: Date | null;
     })[]>;
     revokeInvite(user: AuthUser, familyId: string, sessionId: string, inviteId: string): Promise<{
+        name: string;
+        token: string;
         id: string;
         email: string;
         role: string;
         createdAt: Date;
-        name: string;
-        token: string;
         expiresAt: Date;
         invitedBy: string;
         sessionId: string;

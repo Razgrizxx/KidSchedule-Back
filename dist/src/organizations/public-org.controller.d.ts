@@ -10,28 +10,28 @@ export declare class PublicOrgController {
         };
         events: ({
             venue: {
+                name: string;
                 id: string;
                 createdAt: Date;
-                name: string;
                 notes: string | null;
+                organizationId: string;
                 address: string | null;
                 mapUrl: string | null;
-                organizationId: string;
             } | null;
         } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            notes: string | null;
             type: import("@prisma/client").$Enums.EventType;
             title: string;
             startAt: Date;
             endAt: Date;
             allDay: boolean;
-            venueId: string | null;
-            maxCapacity: number | null;
+            notes: string | null;
             organizationId: string;
             createdById: string;
+            maxCapacity: number | null;
+            venueId: string | null;
         })[];
     }>;
     getPortal(token: string): Promise<{
@@ -43,28 +43,28 @@ export declare class PublicOrgController {
         };
         events: ({
             venue: {
+                name: string;
                 id: string;
                 createdAt: Date;
-                name: string;
                 notes: string | null;
+                organizationId: string;
                 address: string | null;
                 mapUrl: string | null;
-                organizationId: string;
             } | null;
         } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            notes: string | null;
             type: import("@prisma/client").$Enums.EventType;
             title: string;
             startAt: Date;
             endAt: Date;
             allDay: boolean;
-            venueId: string | null;
-            maxCapacity: number | null;
+            notes: string | null;
             organizationId: string;
             createdById: string;
+            maxCapacity: number | null;
+            venueId: string | null;
         })[];
     }>;
 }

@@ -13,15 +13,15 @@ exports.SettingsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const family_service_1 = require("../family/family.service");
-const cloudinary_service_1 = require("../cloudinary/cloudinary.service");
+const storage_service_1 = require("../storage/storage.service");
 let SettingsService = class SettingsService {
     prisma;
     familyService;
-    cloudinary;
-    constructor(prisma, familyService, cloudinary) {
+    storage;
+    constructor(prisma, familyService, storage) {
         this.prisma = prisma;
         this.familyService = familyService;
-        this.cloudinary = cloudinary;
+        this.storage = storage;
     }
     async getFamilySettings(familyId, userId) {
         await this.familyService.assertMember(familyId, userId);
@@ -84,12 +84,11 @@ let SettingsService = class SettingsService {
             where: { id: userId },
             select: { avatarUrl: true },
         });
-        if (user?.avatarUrl) {
-            const match = user.avatarUrl.match(/kidschedule\/avatars\/[^/.]+/);
-            if (match)
-                await this.cloudinary.delete(match[0]).catch(() => null);
+        if (user?.avatarUrl?.startsWith('/uploads/')) {
+            const publicId = user.avatarUrl.replace(/^\/uploads\//, '');
+            await this.storage.delete(publicId).catch(() => null);
         }
-        const result = await this.cloudinary.upload(file, `kidschedule/avatars`);
+        const result = await this.storage.upload(file, `kidschedule/avatars`);
         const updated = await this.prisma.user.update({
             where: { id: userId },
             data: { avatarUrl: result.secure_url },
@@ -103,6 +102,6 @@ exports.SettingsService = SettingsService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         family_service_1.FamilyService,
-        cloudinary_service_1.CloudinaryService])
+        storage_service_1.LocalStorageService])
 ], SettingsService);
 //# sourceMappingURL=settings.service.js.map

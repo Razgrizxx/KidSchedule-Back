@@ -13,7 +13,7 @@ exports.HealthService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const family_service_1 = require("../family/family.service");
-const cloudinary_service_1 = require("../cloudinary/cloudinary.service");
+const storage_service_1 = require("../storage/storage.service");
 const RECORD_INCLUDE = {
     child: { select: { id: true, firstName: true, color: true } },
     uploader: { select: { id: true, firstName: true, lastName: true } },
@@ -25,11 +25,11 @@ const RECORD_INCLUDE = {
 let HealthService = class HealthService {
     prisma;
     familyService;
-    cloudinary;
-    constructor(prisma, familyService, cloudinary) {
+    storage;
+    constructor(prisma, familyService, storage) {
         this.prisma = prisma;
         this.familyService = familyService;
-        this.cloudinary = cloudinary;
+        this.storage = storage;
     }
     async createRecord(familyId, userId, dto) {
         await this.familyService.assertMember(familyId, userId);
@@ -89,7 +89,7 @@ let HealthService = class HealthService {
             throw new common_1.NotFoundException('Record not found');
         for (const doc of record.documents) {
             if (doc.cloudinaryPublicId) {
-                await this.cloudinary.delete(doc.cloudinaryPublicId).catch(() => { });
+                await this.storage.delete(doc.cloudinaryPublicId).catch(() => { });
             }
         }
         await this.prisma.healthRecord.delete({ where: { id: recordId } });
@@ -102,7 +102,7 @@ let HealthService = class HealthService {
             if (!record)
                 throw new common_1.NotFoundException('Record not found');
         }
-        const result = await this.cloudinary.upload(file, `kidschedule/health/${familyId}`);
+        const result = await this.storage.upload(file, `kidschedule/health/${familyId}`);
         return this.prisma.healthDocument.create({
             data: {
                 familyId,
@@ -140,7 +140,7 @@ let HealthService = class HealthService {
         if (doc.uploadedBy !== userId)
             throw new common_1.ForbiddenException('Only uploader can delete');
         if (doc.cloudinaryPublicId) {
-            await this.cloudinary.delete(doc.cloudinaryPublicId).catch(() => { });
+            await this.storage.delete(doc.cloudinaryPublicId).catch(() => { });
         }
         await this.prisma.healthDocument.delete({ where: { id: documentId } });
         return { message: 'Document deleted' };
@@ -263,6 +263,6 @@ exports.HealthService = HealthService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         family_service_1.FamilyService,
-        cloudinary_service_1.CloudinaryService])
+        storage_service_1.LocalStorageService])
 ], HealthService);
 //# sourceMappingURL=health.service.js.map

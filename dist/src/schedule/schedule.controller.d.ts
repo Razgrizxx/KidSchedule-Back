@@ -6,10 +6,10 @@ export declare class ScheduleController {
     constructor(scheduleService: ScheduleService);
     create(user: AuthUser, familyId: string, dto: CreateScheduleDto): Promise<{
         schedule: {
+            name: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            name: string;
             familyId: string;
             childId: string;
             pattern: import("@prisma/client").$Enums.CustodyPattern;
@@ -36,10 +36,10 @@ export declare class ScheduleController {
             color: string;
         };
     } & {
+        name: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         familyId: string;
         childId: string;
         pattern: import("@prisma/client").$Enums.CustodyPattern;
@@ -58,12 +58,12 @@ export declare class ScheduleController {
             color: string;
         };
     } & {
+        date: Date;
         id: string;
         createdAt: Date;
         familyId: string;
         childId: string;
         scheduleId: string;
-        date: Date;
         custodianId: string;
         isOverride: boolean;
         googleEventId: string | null;
@@ -76,12 +76,12 @@ export declare class ScheduleController {
         date: string;
         custodianId: string;
     }): Promise<{
+        date: Date;
         id: string;
         createdAt: Date;
         familyId: string;
         childId: string;
         scheduleId: string;
-        date: Date;
         custodianId: string;
         isOverride: boolean;
         googleEventId: string | null;

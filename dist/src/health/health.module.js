@@ -11,13 +11,12 @@ const common_1 = require("@nestjs/common");
 const health_service_1 = require("./health.service");
 const health_controller_1 = require("./health.controller");
 const family_module_1 = require("../family/family.module");
-const cloudinary_module_1 = require("../cloudinary/cloudinary.module");
 let HealthModule = class HealthModule {
 };
 exports.HealthModule = HealthModule;
 exports.HealthModule = HealthModule = __decorate([
     (0, common_1.Module)({
-        imports: [family_module_1.FamilyModule, cloudinary_module_1.CloudinaryModule],
+        imports: [family_module_1.FamilyModule],
         providers: [health_service_1.HealthService],
         controllers: [health_controller_1.HealthController],
     })

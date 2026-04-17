@@ -17,8 +17,6 @@ export declare class RequestsController {
         familyId: string;
         status: import("@prisma/client").$Enums.ChangeRequestStatus;
         childId: string | null;
-        requesterId: string;
-        responderId: string | null;
         type: import("@prisma/client").$Enums.ChangeRequestType;
         originalDate: Date | null;
         requestedDate: Date;
@@ -27,6 +25,8 @@ export declare class RequestsController {
         counterDate: Date | null;
         counterReason: string | null;
         resolvedAt: Date | null;
+        requesterId: string;
+        responderId: string | null;
     }>;
     findAll(user: AuthUser, familyId: string): Promise<({
         requester: {
@@ -46,8 +46,6 @@ export declare class RequestsController {
         familyId: string;
         status: import("@prisma/client").$Enums.ChangeRequestStatus;
         childId: string | null;
-        requesterId: string;
-        responderId: string | null;
         type: import("@prisma/client").$Enums.ChangeRequestType;
         originalDate: Date | null;
         requestedDate: Date;
@@ -56,6 +54,8 @@ export declare class RequestsController {
         counterDate: Date | null;
         counterReason: string | null;
         resolvedAt: Date | null;
+        requesterId: string;
+        responderId: string | null;
     })[]>;
     respond(user: AuthUser, familyId: string, requestId: string, dto: RespondChangeRequestDto): Promise<{
         id: string;
@@ -64,8 +64,6 @@ export declare class RequestsController {
         familyId: string;
         status: import("@prisma/client").$Enums.ChangeRequestStatus;
         childId: string | null;
-        requesterId: string;
-        responderId: string | null;
         type: import("@prisma/client").$Enums.ChangeRequestType;
         originalDate: Date | null;
         requestedDate: Date;
@@ -74,5 +72,7 @@ export declare class RequestsController {
         counterDate: Date | null;
         counterReason: string | null;
         resolvedAt: Date | null;
+        requesterId: string;
+        responderId: string | null;
     }>;
 }

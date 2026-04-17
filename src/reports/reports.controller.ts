@@ -1,9 +1,11 @@
 import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ReportsService } from './reports.service';
 import { GenerateReportDto } from './dto/report.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
+@Throttle({ ai: { ttl: 60_000, limit: 3 } })
 @UseGuards(JwtAuthGuard)
 @Controller('families/:familyId/reports')
 export class ReportsController {

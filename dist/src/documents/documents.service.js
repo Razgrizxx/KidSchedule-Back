@@ -12,16 +12,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DocumentsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
-const cloudinary_service_1 = require("../cloudinary/cloudinary.service");
+const storage_service_1 = require("../storage/storage.service");
 let DocumentsService = class DocumentsService {
     prisma;
-    cloudinary;
-    constructor(prisma, cloudinary) {
+    storage;
+    constructor(prisma, storage) {
         this.prisma = prisma;
-        this.cloudinary = cloudinary;
+        this.storage = storage;
     }
     async upload(familyId, userId, file, body) {
-        const result = await this.cloudinary.upload(file, `kidschedule/families/${familyId}/documents`, 'raw');
+        const result = await this.storage.upload(file, `kidschedule/families/${familyId}/documents`, 'raw');
         return this.prisma.familyDocument.create({
             data: {
                 familyId,
@@ -57,7 +57,7 @@ let DocumentsService = class DocumentsService {
             throw new common_1.NotFoundException('Document not found');
         if (doc.uploadedBy !== userId)
             throw new common_1.ForbiddenException('Only the uploader can delete');
-        await this.cloudinary.delete(doc.cloudinaryPublicId);
+        await this.storage.delete(doc.cloudinaryPublicId);
         await this.prisma.familyDocument.delete({ where: { id } });
     }
 };
@@ -65,6 +65,6 @@ exports.DocumentsService = DocumentsService;
 exports.DocumentsService = DocumentsService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        cloudinary_service_1.CloudinaryService])
+        storage_service_1.LocalStorageService])
 ], DocumentsService);
 //# sourceMappingURL=documents.service.js.map

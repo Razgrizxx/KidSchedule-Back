@@ -6,20 +6,17 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MomentsModule = void 0;
+exports.LocalStorageModule = void 0;
 const common_1 = require("@nestjs/common");
-const moments_service_1 = require("./moments.service");
-const moments_controller_1 = require("./moments.controller");
-const family_module_1 = require("../family/family.module");
-const stripe_module_1 = require("../stripe/stripe.module");
-let MomentsModule = class MomentsModule {
+const storage_service_1 = require("./storage.service");
+let LocalStorageModule = class LocalStorageModule {
 };
-exports.MomentsModule = MomentsModule;
-exports.MomentsModule = MomentsModule = __decorate([
+exports.LocalStorageModule = LocalStorageModule;
+exports.LocalStorageModule = LocalStorageModule = __decorate([
+    (0, common_1.Global)(),
     (0, common_1.Module)({
-        imports: [family_module_1.FamilyModule, stripe_module_1.StripeModule],
-        providers: [moments_service_1.MomentsService],
-        controllers: [moments_controller_1.MomentsController],
+        providers: [storage_service_1.LocalStorageService],
+        exports: [storage_service_1.LocalStorageService],
     })
-], MomentsModule);
-//# sourceMappingURL=moments.module.js.map
+], LocalStorageModule);
+//# sourceMappingURL=storage.module.js.map

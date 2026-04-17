@@ -12,17 +12,17 @@ export declare class DocumentsController {
         };
     } & {
         id: string;
+        category: import("@prisma/client").$Enums.DocumentCategory;
+        title: string;
+        description: string | null;
+        fileUrl: string;
+        cloudinaryPublicId: string;
+        mimeType: string | null;
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
         childId: string | null;
-        title: string;
-        description: string | null;
-        category: import("@prisma/client").$Enums.DocumentCategory;
-        cloudinaryPublicId: string;
         uploadedBy: string;
-        fileUrl: string;
-        mimeType: string | null;
     }>;
     findAll(familyId: string, childId?: string, category?: DocumentCategory): Promise<({
         child: {
@@ -36,17 +36,17 @@ export declare class DocumentsController {
         };
     } & {
         id: string;
+        category: import("@prisma/client").$Enums.DocumentCategory;
+        title: string;
+        description: string | null;
+        fileUrl: string;
+        cloudinaryPublicId: string;
+        mimeType: string | null;
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
         childId: string | null;
-        title: string;
-        description: string | null;
-        category: import("@prisma/client").$Enums.DocumentCategory;
-        cloudinaryPublicId: string;
         uploadedBy: string;
-        fileUrl: string;
-        mimeType: string | null;
     })[]>;
     remove(user: {
         id: string;

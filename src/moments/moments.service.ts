@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
-import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { LocalStorageService } from '../storage/storage.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CreateMomentDto } from './dto/moment.dto';
 import { SubscriptionService, FREE_MOMENTS_LIMIT } from '../stripe/subscription.service';
@@ -15,7 +15,7 @@ export class MomentsService {
   constructor(
     private prisma: PrismaService,
     private familyService: FamilyService,
-    private cloudinary: CloudinaryService,
+    private storage: LocalStorageService,
     private subService: SubscriptionService,
     private notifications: NotificationsService,
   ) {}
@@ -39,7 +39,7 @@ export class MomentsService {
       }
     }
 
-    const result = await this.cloudinary.upload(
+    const result = await this.storage.upload(
       file,
       `kidschedule/moments/${familyId}`,
     );
@@ -97,7 +97,7 @@ export class MomentsService {
       throw new ForbiddenException('Only uploader can delete');
 
     if (moment.cloudinaryPublicId) {
-      await this.cloudinary.delete(moment.cloudinaryPublicId);
+      await this.storage.delete(moment.cloudinaryPublicId);
     }
 
     await this.prisma.moment.delete({ where: { id: momentId } });

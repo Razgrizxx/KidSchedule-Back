@@ -1,94 +1,44 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Resend } from 'resend';
-import emailjs from '@emailjs/nodejs';
+import * as nodemailer from 'nodemailer';
+import type { Transporter } from 'nodemailer';
 
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
-  private readonly resend: Resend;
+  private transporter: Transporter;
   private readonly from: string;
   private readonly appUrl: string;
 
-  // EmailJS config
-  private readonly useEmailJs: boolean;
-  private readonly ejsServiceId: string;
-  private readonly ejsTemplateId: string;
-  private readonly ejsPublicKey: string;
-  private readonly ejsPrivateKey: string;
-
   constructor(private config: ConfigService) {
-    this.resend = new Resend(config.getOrThrow<string>('RESEND_API_KEY'));
-    this.from = config.get<string>('RESEND_FROM', 'KidSchedule <noreply@kidschedule.app>');
+    const host = config.getOrThrow<string>('SMTP_HOST');
+    const port = Number(config.getOrThrow<string>('SMTP_PORT'));
+    const user = config.getOrThrow<string>('SMTP_USER');
+    const pass = config.getOrThrow<string>('SMTP_PASS');
+
+    this.transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure: port === 465,
+      auth: { user, pass },
+    });
+
+    this.from = `KidSchedule <${user}>`;
     this.appUrl = config.get<string>('FRONTEND_URL', 'http://localhost:5173');
 
-    this.useEmailJs = config.get<string>('USE_EMAILJS', 'false') === 'true';
-    this.ejsServiceId = config.get<string>('EMAILJS_SERVICE_ID', '');
-    this.ejsTemplateId = config.get<string>('EMAILJS_MASTER_TEMPLATE_ID', '');
-    this.ejsPublicKey = config.get<string>('EMAILJS_PUBLIC_KEY', '');
-    this.ejsPrivateKey = config.get<string>('EMAILJS_PRIVATE_KEY', '');
-
-    if (this.useEmailJs) {
-      this.logger.log('Email provider: EmailJS (Resend as fallback)');
-    } else {
-      this.logger.log('Email provider: Resend');
-    }
+    this.logger.log(`Email provider: SMTP (${host}:${port})`);
   }
 
   // ── Generic send ──────────────────────────────────────────────────────────
 
   async sendEmail(to: string, subject: string, html: string): Promise<void> {
-    if (this.useEmailJs) {
-      await this.sendViaEmailJs(to, subject, html);
-    } else {
-      await this.sendViaResend(to, subject, html);
-    }
-  }
-
-  private async sendViaEmailJs(to: string, subject: string, html: string): Promise<void> {
     try {
-      this.logger.log(`[EmailJS] Sending "${subject}" → ${to}`);
-      const result = await emailjs.send(
-        this.ejsServiceId,
-        this.ejsTemplateId,
-        {
-          to_email: to,
-          subject,
-          email_body: html,
-        },
-        {
-          publicKey: this.ejsPublicKey,
-          privateKey: this.ejsPrivateKey,
-        },
-      );
-      this.logger.log(`[EmailJS] Sent — status ${result.status} "${result.text}" → ${to}`);
-    } catch (err) {
-      let errMsg: string;
-      if (err instanceof Error) {
-        errMsg = err.message;
-      } else if (err && typeof err === 'object') {
-        errMsg = JSON.stringify(err);
-      } else {
-        errMsg = String(err);
-      }
-      this.logger.error(`[EmailJS] Failed to send "${subject}" → ${to}: ${errMsg}`);
-      this.logger.warn(`[EmailJS] Falling back to Resend for → ${to}`);
-      await this.sendViaResend(to, subject, html);
-    }
-  }
-
-  private async sendViaResend(to: string, subject: string, html: string): Promise<void> {
-    try {
-      this.logger.log(`[Resend] Sending "${subject}" → ${to}`);
-      const { data, error } = await this.resend.emails.send({ from: this.from, to, subject, html });
-      if (error) {
-        this.logger.error(`[Resend] API error for "${subject}" → ${to}: ${JSON.stringify(error)}`);
-        return;
-      }
-      this.logger.log(`[Resend] Sent — id ${data?.id} → ${to}`);
+      this.logger.log(`[SMTP] Sending "${subject}" → ${to}`);
+      const info = await this.transporter.sendMail({ from: this.from, to, subject, html });
+      this.logger.log(`[SMTP] Sent — ${info.messageId} → ${to}`);
     } catch (err) {
       this.logger.error(
-        `[Resend] Exception sending "${subject}" → ${to}`,
+        `[SMTP] Failed to send "${subject}" → ${to}`,
         err instanceof Error ? err.stack : String(err),
       );
     }
@@ -565,4 +515,3 @@ function buildOrgRosterInviteEmail(p: {
     `,
   });
 }
-
