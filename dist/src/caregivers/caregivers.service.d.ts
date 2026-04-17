@@ -10,12 +10,12 @@ export declare class CaregiversService {
     private config;
     constructor(prisma: PrismaService, familyService: FamilyService, mail: MailService, config: ConfigService);
     create(familyId: string, userId: string, dto: CreateCaregiverDto): Promise<{
+        name: string;
         id: string;
         email: string | null;
         phone: string | null;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         familyId: string | null;
         relationship: string | null;
         visibility: import("@prisma/client").$Enums.CaregiverVisibility;
@@ -48,12 +48,12 @@ export declare class CaregiversService {
             assignedAt: Date;
         })[];
     } & {
+        name: string;
         id: string;
         email: string | null;
         phone: string | null;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         familyId: string | null;
         relationship: string | null;
         visibility: import("@prisma/client").$Enums.CaregiverVisibility;
@@ -67,12 +67,12 @@ export declare class CaregiversService {
         createdBy: string;
     })[]>;
     findOne(familyId: string, caregiverId: string, userId: string): Promise<{
+        name: string;
         id: string;
         email: string | null;
         phone: string | null;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         familyId: string | null;
         relationship: string | null;
         visibility: import("@prisma/client").$Enums.CaregiverVisibility;
@@ -86,12 +86,12 @@ export declare class CaregiversService {
         createdBy: string;
     }>;
     update(familyId: string, caregiverId: string, userId: string, dto: UpdateCaregiverDto): Promise<{
+        name: string;
         id: string;
         email: string | null;
         phone: string | null;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         familyId: string | null;
         relationship: string | null;
         visibility: import("@prisma/client").$Enums.CaregiverVisibility;

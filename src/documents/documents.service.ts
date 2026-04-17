@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { LocalStorageService } from '../storage/storage.service';
 import { DocumentCategory } from '@prisma/client';
 
 @Injectable()
 export class DocumentsService {
   constructor(
     private prisma: PrismaService,
-    private cloudinary: CloudinaryService,
+    private storage: LocalStorageService,
   ) {}
 
   async upload(
@@ -21,7 +21,7 @@ export class DocumentsService {
       childId?: string;
     },
   ) {
-    const result = await this.cloudinary.upload(
+    const result = await this.storage.upload(
       file,
       `kidschedule/families/${familyId}/documents`,
       'raw',
@@ -63,7 +63,7 @@ export class DocumentsService {
     if (!doc) throw new NotFoundException('Document not found');
     if (doc.uploadedBy !== userId) throw new ForbiddenException('Only the uploader can delete');
 
-    await this.cloudinary.delete(doc.cloudinaryPublicId);
+    await this.storage.delete(doc.cloudinaryPublicId);
     await this.prisma.familyDocument.delete({ where: { id } });
   }
 }

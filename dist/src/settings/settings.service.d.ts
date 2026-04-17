@@ -1,13 +1,13 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
-import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { LocalStorageService } from '../storage/storage.service';
 import { UpdateFamilySettingsDto } from './dto/update-family-settings.dto';
 import { UpdateUserSettingsDto } from './dto/update-user-settings.dto';
 export declare class SettingsService {
     private prisma;
     private familyService;
-    private cloudinary;
-    constructor(prisma: PrismaService, familyService: FamilyService, cloudinary: CloudinaryService);
+    private storage;
+    constructor(prisma: PrismaService, familyService: FamilyService, storage: LocalStorageService);
     getFamilySettings(familyId: string, userId: string): Promise<{
         id: string;
         createdAt: Date;

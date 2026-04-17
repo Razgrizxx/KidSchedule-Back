@@ -17,10 +17,10 @@ export declare class ScheduleService {
     constructor(prisma: PrismaService, familyService: FamilyService, generator: ScheduleGeneratorService, audit: AuditService, eventEmitter: EventEmitter2);
     create(familyId: string, userId: string, dto: CreateScheduleDto): Promise<{
         schedule: {
+            name: string;
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            name: string;
             familyId: string;
             childId: string;
             pattern: import("@prisma/client").$Enums.CustodyPattern;
@@ -47,10 +47,10 @@ export declare class ScheduleService {
             color: string;
         };
     } & {
+        name: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         familyId: string;
         childId: string;
         pattern: import("@prisma/client").$Enums.CustodyPattern;
@@ -69,12 +69,12 @@ export declare class ScheduleService {
             color: string;
         };
     } & {
+        date: Date;
         id: string;
         createdAt: Date;
         familyId: string;
         childId: string;
         scheduleId: string;
-        date: Date;
         custodianId: string;
         isOverride: boolean;
         googleEventId: string | null;
@@ -84,12 +84,12 @@ export declare class ScheduleService {
         cleaned: number;
     }>;
     overrideDay(familyId: string, scheduleId: string, date: string, custodianId: string, userId: string): Promise<{
+        date: Date;
         id: string;
         createdAt: Date;
         familyId: string;
         childId: string;
         scheduleId: string;
-        date: Date;
         custodianId: string;
         isOverride: boolean;
         googleEventId: string | null;

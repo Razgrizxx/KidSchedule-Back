@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.EventsService = void 0;
 const common_1 = require("@nestjs/common");
 const event_emitter_1 = require("@nestjs/event-emitter");
-const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
+const openai_1 = __importDefault(require("openai"));
 const prisma_service_1 = require("../prisma/prisma.service");
 const family_service_1 = require("../family/family.service");
 const notifications_service_1 = require("../notifications/notifications.service");
@@ -27,7 +27,7 @@ let EventsService = class EventsService {
     eventEmitter;
     notifications;
     audit;
-    anthropic = new sdk_1.default();
+    openai = new openai_1.default({ apiKey: process.env.OPENAI_API_KEY });
     constructor(prisma, familyService, eventEmitter, notifications, audit) {
         this.prisma = prisma;
         this.familyService = familyService;
@@ -194,17 +194,16 @@ let EventsService = class EventsService {
     async extractFromImage(familyId, userId, file) {
         await this.familyService.assertMember(familyId, userId);
         const base64 = file.buffer.toString('base64');
-        const mediaType = file.mimetype;
-        const response = await this.anthropic.messages.create({
-            model: 'claude-haiku-4-5-20251001',
+        const response = await this.openai.chat.completions.create({
+            model: 'gpt-4o',
             max_tokens: 2048,
             messages: [
                 {
                     role: 'user',
                     content: [
                         {
-                            type: 'image',
-                            source: { type: 'base64', media_type: mediaType, data: base64 },
+                            type: 'image_url',
+                            image_url: { url: `data:${file.mimetype};base64,${base64}` },
                         },
                         {
                             type: 'text',
@@ -224,7 +223,7 @@ Return [] if no events are found.`,
                 },
             ],
         });
-        const raw = response.content[0].text.trim();
+        const raw = (response.choices[0].message.content ?? '').trim();
         const clean = raw.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
         try {
             const events = JSON.parse(clean);

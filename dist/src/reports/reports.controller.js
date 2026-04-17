@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ReportsController = void 0;
 const common_1 = require("@nestjs/common");
+const throttler_1 = require("@nestjs/throttler");
 const reports_service_1 = require("./reports.service");
 const report_dto_1 = require("./dto/report.dto");
 const jwt_auth_guard_1 = require("../common/guards/jwt-auth.guard");
@@ -38,6 +39,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ReportsController.prototype, "generate", null);
 exports.ReportsController = ReportsController = __decorate([
+    (0, throttler_1.Throttle)({ ai: { ttl: 60_000, limit: 3 } }),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)('families/:familyId/reports'),
     __metadata("design:paramtypes", [reports_service_1.ReportsService])

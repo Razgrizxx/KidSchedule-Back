@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
-import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { LocalStorageService } from '../storage/storage.service';
 import {
   CreateHealthRecordDto,
   UpdateHealthRecordDto,
@@ -25,7 +25,7 @@ export class HealthService {
   constructor(
     private prisma: PrismaService,
     private familyService: FamilyService,
-    private cloudinary: CloudinaryService,
+    private storage: LocalStorageService,
   ) {}
 
   // ── Health Records ────────────────────────────────────────────────────────
@@ -91,7 +91,7 @@ export class HealthService {
     // Delete associated documents from Cloudinary
     for (const doc of record.documents) {
       if (doc.cloudinaryPublicId) {
-        await this.cloudinary.delete(doc.cloudinaryPublicId).catch(() => {});
+        await this.storage.delete(doc.cloudinaryPublicId).catch(() => {});
       }
     }
 
@@ -114,7 +114,7 @@ export class HealthService {
       if (!record) throw new NotFoundException('Record not found');
     }
 
-    const result = await this.cloudinary.upload(file, `kidschedule/health/${familyId}`);
+    const result = await this.storage.upload(file, `kidschedule/health/${familyId}`);
 
     return this.prisma.healthDocument.create({
       data: {
@@ -154,7 +154,7 @@ export class HealthService {
     if (doc.uploadedBy !== userId) throw new ForbiddenException('Only uploader can delete');
 
     if (doc.cloudinaryPublicId) {
-      await this.cloudinary.delete(doc.cloudinaryPublicId).catch(() => {});
+      await this.storage.delete(doc.cloudinaryPublicId).catch(() => {});
     }
 
     await this.prisma.healthDocument.delete({ where: { id: documentId } });

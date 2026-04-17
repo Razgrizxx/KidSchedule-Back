@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Throttle } from '@nestjs/throttler';
 import { EventsService } from './events.service';
 import { BulkImportDto, CreateEventDto, UpdateEventDto } from './dto/event.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -50,6 +51,7 @@ export class EventsController {
     return this.eventsService.getHolidays(familyId, user.id, year, country);
   }
 
+  @Throttle({ ai: { ttl: 60_000, limit: 5 } })
   @Post('extract-from-image')
   @UseInterceptors(FileInterceptor('image'))
   extractFromImage(

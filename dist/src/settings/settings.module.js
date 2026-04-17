@@ -12,13 +12,12 @@ const settings_controller_1 = require("./settings.controller");
 const settings_service_1 = require("./settings.service");
 const prisma_module_1 = require("../prisma/prisma.module");
 const family_module_1 = require("../family/family.module");
-const cloudinary_module_1 = require("../cloudinary/cloudinary.module");
 let SettingsModule = class SettingsModule {
 };
 exports.SettingsModule = SettingsModule;
 exports.SettingsModule = SettingsModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule, family_module_1.FamilyModule, cloudinary_module_1.CloudinaryModule],
+        imports: [prisma_module_1.PrismaModule, family_module_1.FamilyModule],
         controllers: [settings_controller_1.SettingsController],
         providers: [settings_service_1.SettingsService],
         exports: [settings_service_1.SettingsService],

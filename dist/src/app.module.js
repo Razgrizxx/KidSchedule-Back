@@ -10,6 +10,8 @@ exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const event_emitter_1 = require("@nestjs/event-emitter");
+const throttler_1 = require("@nestjs/throttler");
+const core_1 = require("@nestjs/core");
 const prisma_module_1 = require("./prisma/prisma.module");
 const mail_module_1 = require("./mail/mail.module");
 const auth_module_1 = require("./auth/auth.module");
@@ -40,14 +42,32 @@ const handoffs_module_1 = require("./handoffs/handoffs.module");
 const dashboard_module_1 = require("./dashboard/dashboard.module");
 const emergency_contacts_module_1 = require("./emergency-contacts/emergency-contacts.module");
 const documents_module_1 = require("./documents/documents.module");
+const storage_module_1 = require("./storage/storage.module");
+const test_module_1 = require("./test/test.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
+        providers: [
+            { provide: core_1.APP_GUARD, useClass: throttler_1.ThrottlerGuard },
+        ],
         imports: [
             config_1.ConfigModule.forRoot({ isGlobal: true }),
             event_emitter_1.EventEmitterModule.forRoot(),
+            storage_module_1.LocalStorageModule,
+            throttler_1.ThrottlerModule.forRoot([
+                {
+                    name: 'default',
+                    ttl: 60_000,
+                    limit: 100,
+                },
+                {
+                    name: 'ai',
+                    ttl: 60_000,
+                    limit: 10,
+                },
+            ]),
             notifications_module_1.NotificationsModule,
             audit_module_1.AuditModule,
             mail_module_1.MailModule,
@@ -78,6 +98,7 @@ exports.AppModule = AppModule = __decorate([
             dashboard_module_1.DashboardModule,
             emergency_contacts_module_1.EmergencyContactsModule,
             documents_module_1.DocumentsModule,
+            test_module_1.TestModule,
         ],
     })
 ], AppModule);

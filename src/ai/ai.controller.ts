@@ -1,5 +1,6 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import Anthropic from '@anthropic-ai/sdk';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
 interface ToneAnalysisResult {
@@ -8,6 +9,7 @@ interface ToneAnalysisResult {
   rewrite: string | null;
 }
 
+@Throttle({ ai: { ttl: 60_000, limit: 10 } })
 @UseGuards(JwtAuthGuard)
 @Controller('ai')
 export class AiController {

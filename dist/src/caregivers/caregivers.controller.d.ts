@@ -5,12 +5,12 @@ export declare class CaregiversController {
     private caregiversService;
     constructor(caregiversService: CaregiversService);
     create(user: AuthUser, familyId: string, dto: CreateCaregiverDto): Promise<{
+        name: string;
         id: string;
         email: string | null;
         phone: string | null;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         familyId: string | null;
         relationship: string | null;
         visibility: import("@prisma/client").$Enums.CaregiverVisibility;
@@ -43,12 +43,12 @@ export declare class CaregiversController {
             assignedAt: Date;
         })[];
     } & {
+        name: string;
         id: string;
         email: string | null;
         phone: string | null;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         familyId: string | null;
         relationship: string | null;
         visibility: import("@prisma/client").$Enums.CaregiverVisibility;
@@ -62,12 +62,12 @@ export declare class CaregiversController {
         createdBy: string;
     })[]>;
     findOne(user: AuthUser, familyId: string, caregiverId: string): Promise<{
+        name: string;
         id: string;
         email: string | null;
         phone: string | null;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         familyId: string | null;
         relationship: string | null;
         visibility: import("@prisma/client").$Enums.CaregiverVisibility;
@@ -81,12 +81,12 @@ export declare class CaregiversController {
         createdBy: string;
     }>;
     update(user: AuthUser, familyId: string, caregiverId: string, dto: UpdateCaregiverDto): Promise<{
+        name: string;
         id: string;
         email: string | null;
         phone: string | null;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
         familyId: string | null;
         relationship: string | null;
         visibility: import("@prisma/client").$Enums.CaregiverVisibility;

@@ -1,100 +1,82 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 var MailService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MailService = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
-const resend_1 = require("resend");
-const nodejs_1 = __importDefault(require("@emailjs/nodejs"));
+const nodemailer = __importStar(require("nodemailer"));
 let MailService = MailService_1 = class MailService {
     config;
     logger = new common_1.Logger(MailService_1.name);
-    resend;
+    transporter;
     from;
     appUrl;
-    useEmailJs;
-    ejsServiceId;
-    ejsTemplateId;
-    ejsPublicKey;
-    ejsPrivateKey;
     constructor(config) {
         this.config = config;
-        this.resend = new resend_1.Resend(config.getOrThrow('RESEND_API_KEY'));
-        this.from = config.get('RESEND_FROM', 'KidSchedule <noreply@kidschedule.app>');
+        const host = config.getOrThrow('SMTP_HOST');
+        const port = Number(config.getOrThrow('SMTP_PORT'));
+        const user = config.getOrThrow('SMTP_USER');
+        const pass = config.getOrThrow('SMTP_PASS');
+        this.transporter = nodemailer.createTransport({
+            host,
+            port,
+            secure: port === 465,
+            auth: { user, pass },
+        });
+        this.from = `KidSchedule <${user}>`;
         this.appUrl = config.get('FRONTEND_URL', 'http://localhost:5173');
-        this.useEmailJs = config.get('USE_EMAILJS', 'false') === 'true';
-        this.ejsServiceId = config.get('EMAILJS_SERVICE_ID', '');
-        this.ejsTemplateId = config.get('EMAILJS_MASTER_TEMPLATE_ID', '');
-        this.ejsPublicKey = config.get('EMAILJS_PUBLIC_KEY', '');
-        this.ejsPrivateKey = config.get('EMAILJS_PRIVATE_KEY', '');
-        if (this.useEmailJs) {
-            this.logger.log('Email provider: EmailJS (Resend as fallback)');
-        }
-        else {
-            this.logger.log('Email provider: Resend');
-        }
+        this.logger.log(`Email provider: SMTP (${host}:${port})`);
     }
     async sendEmail(to, subject, html) {
-        if (this.useEmailJs) {
-            await this.sendViaEmailJs(to, subject, html);
-        }
-        else {
-            await this.sendViaResend(to, subject, html);
-        }
-    }
-    async sendViaEmailJs(to, subject, html) {
         try {
-            this.logger.log(`[EmailJS] Sending "${subject}" → ${to}`);
-            const result = await nodejs_1.default.send(this.ejsServiceId, this.ejsTemplateId, {
-                to_email: to,
-                subject,
-                email_body: html,
-            }, {
-                publicKey: this.ejsPublicKey,
-                privateKey: this.ejsPrivateKey,
-            });
-            this.logger.log(`[EmailJS] Sent — status ${result.status} "${result.text}" → ${to}`);
+            this.logger.log(`[SMTP] Sending "${subject}" → ${to}`);
+            const info = await this.transporter.sendMail({ from: this.from, to, subject, html });
+            this.logger.log(`[SMTP] Sent — ${info.messageId} → ${to}`);
         }
         catch (err) {
-            let errMsg;
-            if (err instanceof Error) {
-                errMsg = err.message;
-            }
-            else if (err && typeof err === 'object') {
-                errMsg = JSON.stringify(err);
-            }
-            else {
-                errMsg = String(err);
-            }
-            this.logger.error(`[EmailJS] Failed to send "${subject}" → ${to}: ${errMsg}`);
-            this.logger.warn(`[EmailJS] Falling back to Resend for → ${to}`);
-            await this.sendViaResend(to, subject, html);
-        }
-    }
-    async sendViaResend(to, subject, html) {
-        try {
-            this.logger.log(`[Resend] Sending "${subject}" → ${to}`);
-            const { data, error } = await this.resend.emails.send({ from: this.from, to, subject, html });
-            if (error) {
-                this.logger.error(`[Resend] API error for "${subject}" → ${to}: ${JSON.stringify(error)}`);
-                return;
-            }
-            this.logger.log(`[Resend] Sent — id ${data?.id} → ${to}`);
-        }
-        catch (err) {
-            this.logger.error(`[Resend] Exception sending "${subject}" → ${to}`, err instanceof Error ? err.stack : String(err));
+            this.logger.error(`[SMTP] Failed to send "${subject}" → ${to}`, err instanceof Error ? err.stack : String(err));
         }
     }
     async sendWelcomeEmail(userEmail, firstName) {

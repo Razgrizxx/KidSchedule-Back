@@ -6,12 +6,12 @@ export declare class ExpensesService {
     private familyService;
     constructor(prisma: PrismaService, familyService: FamilyService);
     create(familyId: string, userId: string, dto: CreateExpenseDto): Promise<{
+        date: Date;
         id: string;
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
         childId: string | null;
-        date: Date;
         description: string;
         category: import("@prisma/client").$Enums.ExpenseCategory;
         amount: import("@prisma/client-runtime-utils").Decimal;
@@ -30,12 +30,12 @@ export declare class ExpensesService {
             lastName: string;
         };
     } & {
+        date: Date;
         id: string;
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
         childId: string | null;
-        date: Date;
         description: string;
         category: import("@prisma/client").$Enums.ExpenseCategory;
         amount: import("@prisma/client-runtime-utils").Decimal;
@@ -54,12 +54,12 @@ export declare class ExpensesService {
             lastName: string;
         };
     } & {
+        date: Date;
         id: string;
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
         childId: string | null;
-        date: Date;
         description: string;
         category: import("@prisma/client").$Enums.ExpenseCategory;
         amount: import("@prisma/client-runtime-utils").Decimal;
@@ -72,12 +72,12 @@ export declare class ExpensesService {
         recurringId: string | null;
     }>;
     update(familyId: string, expenseId: string, userId: string, dto: UpdateExpenseDto): Promise<{
+        date: Date;
         id: string;
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
         childId: string | null;
-        date: Date;
         description: string;
         category: import("@prisma/client").$Enums.ExpenseCategory;
         amount: import("@prisma/client-runtime-utils").Decimal;
@@ -99,12 +99,12 @@ export declare class ExpensesService {
             lastName: string;
         };
     } & {
+        date: Date;
         id: string;
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
         childId: string | null;
-        date: Date;
         description: string;
         category: import("@prisma/client").$Enums.ExpenseCategory;
         amount: import("@prisma/client-runtime-utils").Decimal;
@@ -123,12 +123,12 @@ export declare class ExpensesService {
             lastName: string;
         };
     } & {
+        date: Date;
         id: string;
         createdAt: Date;
         updatedAt: Date;
         familyId: string;
         childId: string | null;
-        date: Date;
         description: string;
         category: import("@prisma/client").$Enums.ExpenseCategory;
         amount: import("@prisma/client-runtime-utils").Decimal;

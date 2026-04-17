@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EventType, EventVisibility, Prisma } from '@prisma/client';
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { PrismaService } from '../prisma/prisma.service';
 import { FamilyService } from '../family/family.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -12,7 +12,7 @@ import type { CalendarEventUpsertPayload, CalendarEventDeletePayload } from '../
 
 @Injectable()
 export class EventsService {
-  private readonly anthropic = new Anthropic();
+  private readonly openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   constructor(
     private prisma: PrismaService,
@@ -197,18 +197,17 @@ export class EventsService {
     await this.familyService.assertMember(familyId, userId);
 
     const base64 = file.buffer.toString('base64');
-    const mediaType = file.mimetype as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
 
-    const response = await this.anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+    const response = await this.openai.chat.completions.create({
+      model: 'gpt-4o',
       max_tokens: 2048,
       messages: [
         {
           role: 'user',
           content: [
             {
-              type: 'image',
-              source: { type: 'base64', media_type: mediaType, data: base64 },
+              type: 'image_url',
+              image_url: { url: `data:${file.mimetype};base64,${base64}` },
             },
             {
               type: 'text',
@@ -229,7 +228,7 @@ Return [] if no events are found.`,
       ],
     });
 
-    const raw = (response.content[0] as { text: string }).text.trim();
+    const raw = (response.choices[0].message.content ?? '').trim();
     const clean = raw.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
 
     try {
